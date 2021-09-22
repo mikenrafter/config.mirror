@@ -6,3 +6,4 @@
 *.pyc
 *.error
 *.errors
+*.log

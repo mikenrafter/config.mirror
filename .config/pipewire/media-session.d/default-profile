@@ -1,5 +1,0 @@
-{
- "default.profile.alsa_card.usb-Logitech_Logitech_G35_Headset-00": { "name": "pro-audio" },
- "default.profile.alsa_card.usb-Blue_Microphones_Yeti_Stereo_Microphone_REV8-00": { "name": "pro-audio" },
- "default.profile.alsa_card.pci-0000_01_00.1": { "name": "off" }
-}
