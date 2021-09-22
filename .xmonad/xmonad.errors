@@ -1,0 +1,4 @@
+<command line>: cannot satisfy -package-id json-0.10-86e81cc2a5b61a1e999aa12f6da69657f4148da6275a0b2a9d25b8e02bb6c9a4: 
+    json-0.10-86e81cc2a5b61a1e999aa12f6da69657f4148da6275a0b2a9d25b8e02bb6c9a4 is unusable due to missing dependencies:
+      syb-0.7.2.1-3xY4rP4sCya5e1GEYcCWbY
+    (use -v for more information)

@@ -1,0 +1,143 @@
+- Personal man-pages, for the whims of my heart, and all its future beats:
+# vim: set foldenable fdl=0 fdm=indent
+- Vim modelines are a huge security hole, so, feel free to paste these into your vim instance, instead of enabling them.
+- za to toggle a fold, zm to close all, zR to open all
+
+Superior content format
+	- explained in itself :)
+	subject heading
+		smaller subject
+			- these are all things that follow this rule, but this' the only section in this sub and try to fold as little as possible, split it into multiple ideas, for better note consumption
+			some things as
+			outlined above,
+			only
+			Capitalize
+			big section headers, that are also persons/titles/places, maybe brand names
+			also, one per line, you can/should always fold!
+			Avoid chopping your lines, at all costs
+		another subject
+			sub
+				sub 1
+					etc
+					etc
+					some notes and things here
+				sub 2
+					some notes and things here
+					etc
+				another sub topic: but one that has little to say here
+				sub topic:         blah blah | -sub
+				sub topic, now
+				the list
+				is really
+				long
+				and
+					"sub: blah" loses
+				readability
+					use this instead
+				sub
+					use space indenting like seen above to match logically similar or list-like in nature items, for easier reading, do not use tab characters here
+					do not use the "sub: topics" style when lines go past the 80th column
+				something discussed in greater detail elsewhere | ..that-elsewhere
+				sub e.g | vim-fold navig
+					you don't need to always be overly specific
+					ensure that it can be found reliably
+					keep this in mind as you add new sections
+	subject heading 2
+		always use tab indentation, that way it's interpreted reasonably on non-monospaced fonts.
+	misc
+		avoid newlines between subject groups
+		but, especially when regarding top-level subjects, this rule can be laid back, just keep it readable
+	--- unsorted:
+
+	try to keep as little of things here as possible, try to fit it into your
+	structure like above, make a misc fold if need be!
+Config file organization
+	- TODO finish this section
+	groupings are done with
+		#{- section description
+		blah blah
+		#-} where "#" is the single-line comment string
+		this works really nicely with haskell, and can also be configured on a per-file type, or per file location/name basis | vim-fold config
+Vim
+	implements superior content format really well | superior-content-format
+	- TODO finish this section
+	fold configuration
+		...
+	- yet to implement
+	Fold navigation technique
+		"| ..unique-case-insensitive-identifiers" <- make folds navigatable via
+			a keybind that looks at that from under the cursor, if no fold with that identifier, place innermost identifier in search queue (/)
+		mark last location, with the mark 'o
+		starting with "-" means that the path is local to its calling point
+		goes until the end of the line, this is to ensure that spaces are respected in the pattern without causing too much overhead
+		allow "..", also allow it to be escaped, when using this, no "-" is necessary before, or after, see first use case for example, same logical operation as in file paths
+		allow "-"s to be escaped, but also, when pattern matching, trigger upon patterns matching both "-" and " ", when either (assuming escaped hyphens) is used in a
+		pattern
+
+Nvidia GPUs
+	Nvidia GPUs are a royal pain in the butt.
+	but, when you do get them working (see proprietary nvidia drivers & optimus-manager (for laptops))
+	use these env-vars to force dedicated GPU usage
+		__NV_PRIME_RENDER_OFFLOAD=1
+		__GLX_VENDOR_LIBRARY_NAME=nvidia
+
+Servers
+	Containerization
+		Podman
+			compatible, but superior in every way, with/to Docker
+
+Random things
+	srb2kart
+		totally tubular sonic racing game
+	graalVM
+		do NOT install via the AUR
+
+Nix
+	Flakes / multi-dependency management
+		- credit to: @ilikecan:matrix.org
+		If you are using flakes, you can just specify the different channel as a separate input like:
+			inputs = {
+				nixpkgs.url = "github:NixOS/nixpkgs/nixos-21.05";
+				nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
+				nixos-hardware.url = "github:NixOS/nixos-hardware/master";
+				nur.url = "github:nix-community/NUR";
+				home-manager = {
+					url = "github:nix-community/home-manager/release-21.05";
+					inputs.nixpkgs.follows = "nixpkgs";
+				};
+			};
+		Here nixos-21.05 and nixos-unstable is used but you can use any channel version. Afterwards you can pass these inputs as a parameter of the modules system using either `_module.args` or `specialArgs`. Like
+			outputs = { self, nixpkgs, ... }@inputs: {
+				nixosConfigurations = {
+					alpha = nixpkgs.lib.nixosSystem {
+						system = "x86_64-linux";
+				
+						modules = [
+							({ config, ... }: {
+								_module.args.unstablePkgs = import inputs.nixpkgs-unstable {
+									inherit (config.nixpkgs) config system;
+								};
+							})
+							./alpha/configuration.nix
+						];
+					};
+				};
+			};
+		Here I passed the Nixpkgs function from `inputs.nixpkgs-unstable` called with the `system` and `config` values taken from `config.nixpkgs` (main channel, nixos-21.05 in this case) and named the expression `unstablePkgs. Then you can have a configuration.nix as:
+			{
+				pkgs,
+				unstablePkgs,
+				...
+			}:
+		
+			{
+				environment = {
+					systemPackages = [
+						pkgs.A
+						unstablePkgs.B
+					];
+				};
+			}
+		To use package `A` from nixos-21.05 and package `B` from nixos-unstable.
+
+		

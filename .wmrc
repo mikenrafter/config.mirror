@@ -1,0 +1,67 @@
+# allow passing in mhome, from xmonad
+if [ "$1" == "" ]; then
+	home=$HOME
+else
+	home=$1
+fi
+
+
+### ### ### ###
+# dis == stay on restart
+# uni == kill any other instances before running
+### ### ### ###
+
+
+### ### ### ###
+#
+# DIS
+#
+# map keybindings correctly
+dis xmodmap $home/.Xmodmap
+
+### ### ### ###
+#
+# DIS UNI
+#
+# improve playerctl pause-play intelligence
+dis uni playerctld
+# 10% nice halt, 7% forceful halt -- prefer killing web processes -- avoid
+# common important programs
+dis uni earlyoom -m 10,7 -s 20 -n --prefer "Web Content|java" --avoid "alacritty|(ba|fi)sh|getty|xmonad|vim"
+# start easyeffects in the background by default
+dis uni easyeffects --gapplication-service
+
+### ### ### ###
+#
+# UNI
+#
+# touchpad gestures
+uni touchegg &
+# compositor
+uni picom &
+
+### ### ### ###
+#
+# & only
+#
+# dies on restart
+# keep awake button
+caffiene &
+# bluetooth connector
+blueman-applet &
+# network manager
+nm-applet &
+# kde connect indicator
+kdeconnect-indicator &
+# screenshot tool daemon
+flameshot &
+
+### ### ### ###
+#
+# linear
+#
+# quick-exit things
+# connect to vpn on startup
+pkexec vpn `cat $home/.wg-default`
+# background
+nitrogen --random --set-zoom-fill

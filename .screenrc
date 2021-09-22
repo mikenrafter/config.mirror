@@ -1,0 +1,13 @@
+startup_message off
+# this might break something, idk
+setenv TERM alacritty
+termcapinfo alacritty ti@:te@
+altscreen on
+defscrollback 10000
+# apparently these need to be ran after the terminal loads!?
+# allow reformat characters, this sort of fixes alsamixer, doesn't effect vim.
+defbce on
+defc1 on
+c1 on
+sleep 1 && screen -R scratch -X "^a:c1^M" & # lousy attempt at overcoming the manual usage of screen drawing fixes
+
