@@ -1,0 +1,10 @@
+font:
+  #Normal (roman) font face
+  normal:
+    #Font family
+     Default:
+       - (macOS) Menlo
+       - (Linux/BSD) Monospace
+       - (Windows) Consolas
+     family: mononoki nerd font
+

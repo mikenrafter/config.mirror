@@ -1,0 +1,32 @@
+##nix-env -rif
+# ^ pseudo shebang, see .vimrc
+
+# my old NIX config - non-home-manager style
+
+#{- Initial Declarations
+{ n ? import <nixpkgs> {} }:
+let
+inherit (n.pkgs) haskellPackages;
+#-}
+#{- basic configuration
+nixos = false;
+#-}
+#{- packages groups
+#-}
+#{- selections
+in
+{
+env = n.buildEnv {
+  name = "env";
+  paths = builtins.concatLists [
+  (map n.lib.hiPrio [ n.nix ])
+
+  # NixOS only:
+# (map (lib.mkIf nixos) [ group ])
+
+  # blah
+# group
+  ];
+};
+}
+#-}
