@@ -33,7 +33,7 @@ SETUVAR fish_color_selection:white\x1e\x2d\x2dbold\x1e\x2d\x2dbackground\x3dbrbl
 SETUVAR fish_color_status:red
 SETUVAR fish_color_user:brgreen
 SETUVAR fish_color_valid_path:\x2d\x2dunderline
-SETUVAR fish_greeting:\x1b\x5b38\x3b2\x3b0\x3b187\x3b255mDid\x20you\x20hear\x20about\x20the\x20herpes\x20program\x20for\x20Linux\x3f\x1b\x28B\x1b\x5bm\x20\x7c\x20\x1b\x5b38\x3b2\x3b0\x3b255\x3b187mIt\x27s\x20open\x20sores
+SETUVAR fish_greeting:\x1b\x5b38\x3b2\x3b0\x3b187\x3b255mContradictions\x20do\x20not\x20exist\x2e\x20Whenever\x20you\x20think\x20you\x20are\x20facing\x20a\x20contradiction\x2c\x1b\x28B\x1b\x5bm\x20\x7c\x20\x1b\x5b38\x3b2\x3b0\x3b255\x3b187mcheck\x20your\x20premises\x2e\x20You\x20will\x20find\x20that\x20one\x20of\x20them\x20is\x20wrong\x2e
 SETUVAR fish_key_bindings:fish_vi_key_bindings
 SETUVAR fish_pager_color_completion:\x1d
 SETUVAR fish_pager_color_description:B3A06D\x1eyellow
