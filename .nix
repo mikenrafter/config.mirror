@@ -8,13 +8,7 @@
 let
 n = pkgs;
 #inherit (n) haskellPackages;
-nur = import (
-	pkgs.fetchFromGitHub {
-		owner = "nixos";
-		repo = "nixpkgs";
-	}
-);
-#nur = import (builtins.fetchTarball "https://github.com/nix-community/NUR/archive/master.tar.gz") {pkgs = n;};
+nur = import (builtins.fetchTarball "https://github.com/nix-community/NUR/archive/master.tar.gz") {pkgs = n;};
 #-}
 #{- basic configuration
 nixos = false;
