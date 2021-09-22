@@ -1,2 +1,6 @@
 .files
 .config/fish/fish_variables
+*.o
+*~
+*.hi
+*.pyc
