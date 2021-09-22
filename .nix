@@ -8,7 +8,13 @@
 let
 n = pkgs;
 #inherit (n) haskellPackages;
-nur = import (builtins.fetchTarball "https://github.com/nix-community/NUR/archive/master.tar.gz") {pkgs = n;};
+nur = import (
+	pkgs.fetchFromGitHub {
+		owner = "nixos";
+		repo = "nixpkgs";
+	}
+);
+#nur = import (builtins.fetchTarball "https://github.com/nix-community/NUR/archive/master.tar.gz") {pkgs = n;};
 #-}
 #{- basic configuration
 nixos = false;
@@ -556,7 +562,7 @@ selections = builtins.concatLists [
   core # source compiles won't work without it
   etc
   xorg
-  [flakes]
+   [flakes]
 
   extras
   code

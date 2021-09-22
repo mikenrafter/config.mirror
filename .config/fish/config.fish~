@@ -1,0 +1,41 @@
+#!/bin/fish
+set nix_path $HOME/.config/fish/functions/nix_path.fish
+[ -f "$nix_path" ] && . $nix_path
+[ -f "$HOME/abbr.fish" ] && . $HOME/abbr.fish
+set -p PATH $HOME/appimages # handled by nix's home-manager now
+
+set -u fish_greeting ( set_color 0bf )(
+	string replace -a '"' ( set_color yellow )'"'( set_color 0fb ) (
+		string replace -a '	' ( set_color normal )' | '( set_color 0fb ) (
+			random choice ( string split \n "\
+What's the only way to generate a truly random string?	Put a Windows user in front of VI and tell him to quit.
+Why do people on the iss use linux	You can't open windows in space
+Who Has The Highest Rank in the Linux Military?	The kernel.
+How do you copy in Linux? You press Ctrl and C at t-	\\^C Process aborted
+I have a Linux joke...	But some of you would not apt-get it.
+How would you spot a linux user?	Don't worry they will tell you themselves!
+A Linux sysadmin walks into a pharmacy.	\"ephedrine\" \"I can't serve you that!\" \"sudoephedrine\" \"There you go\".
+Why can't you eliminate Satan from Linux?	Because 666 isn't executable.
+What did the Linux admin say to his racoon friend?	I am root.
+A Linux user, a vegan, and an atheist walk into a bar....	I know because they told everybody there
+What do you call Linux' bodyguards with no balls?	Unix
+New user: \"Why new printer no work?\" Linus: \"You need the right driver.\"	\"^_- My chauffeur's outside.\"
+Did you hear about the herpes program for Linux?	It's open sores
+I think a lot of linux package handling systems aren't good enough for the task.	But the one with Ubuntu is apt.
+What is a Linux user's favorite game?	sudo ku
+Most appliances use a Linux based OS	But washing machines have windows
+What killed the Linux user?	A terminal disease.
+Daddy, what are clouds made of?	Linux servers, mostly.
+How do you get the most recent posts in r/linux?	Sort by GNU.
+Why are linux geeks very introvertish?	Because they never get out of their shell
+Why do Linux admins always take Xanax?	Because they're constantly battling their daemons.
+What do you call a group of Linux users?	*Club Penguin.*
+How to make Gnu+Linux run Photoshop?	You serve it WINE.
+Why do vampire's use linux?	Because they don't like windows in their house. Ba^Dum^Tss
+I just donated some money to the maintainers of a Linux distribution derived from Red Hat	\\*tips fedora\\*
+What were the favorite Linux text editors of 8 randomly selected Monty Python fans?	vim, vim, vim, vim, vim, vim, emacs, and vim."
+			)
+		)
+	)
+)
+

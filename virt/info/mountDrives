@@ -1,0 +1,7 @@
+sudo qemu-nbd --connect=/dev/nbd2 ../kali.qcow2
+and
+sudo qemu-nbd --disconnect /dev/nbd2
+
+(win7: nbd0)
+(win10: nbd1)
+(kali: nbd2)

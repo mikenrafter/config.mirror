@@ -1,0 +1,8 @@
+#!/bin/env bash
+
+EXEC=$1
+shift 1
+for i in "$@"; do
+	$EXEC $i &
+done
+jobs

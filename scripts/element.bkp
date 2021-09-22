@@ -1,0 +1,5 @@
+#!/bin/env fish
+echo instance $argv[1]
+set -x XDG_CONFIG_HOME ~/data/configs/element.bkp/$argv[1]
+mkdir -p $XDG_CONFIG_HOME/Element
+element-desktop

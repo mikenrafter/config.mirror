@@ -1,0 +1,10 @@
+#!/bin/env fish
+#echo instance $argv[1]
+#set -x XDG_CONFIG_HOME ~/data/configs/element/$argv[1]
+#mkdir -p $XDG_CONFIG_HOME/Element
+#element-desktop
+
+echo instance $argv[1]
+set path (realpath ~/data/configs/element/$argv[1])
+mkdir -p $path/Element
+element-desktop --profile $argv[1] --profile-dir $path

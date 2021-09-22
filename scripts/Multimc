@@ -1,0 +1,4 @@
+#!/bin/env bash
+# setsid -f multimc &> /tmp/multimc.log
+~/scripts/gpu multimc &> /tmp/multimc.log
+

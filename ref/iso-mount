@@ -1,0 +1,9 @@
+#!/bin/bash -i
+# w/	mount
+# run	sudo mount /path.iso /mnt -o loop
+
+read -p "iso location" iso
+read -p "mount location (?|/mnt)" mnt
+[ -z "$mnt" ] && mnt="/mnt"
+
+sudo mount $iso $mnt -o loop

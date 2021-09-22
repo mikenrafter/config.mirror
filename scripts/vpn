@@ -1,0 +1,11 @@
+#!/bin/env fish
+while echo 1 &>/dev/null
+	set base (ip a | tail -n6 | head -n1)
+	set interface (echo $base | cut -d":" -f2 | cut -d" " -f2)
+	sudo wg-quick down $interface &>/dev/null || break
+	echo "removed $interface"
+end
+sleep 1
+[ "$argv[1]" = "" ] ||
+	sudo wg-quick up $argv[1]
+

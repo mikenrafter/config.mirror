@@ -1,0 +1,49 @@
+#!/bin/env fish
+set -g updates "" ""
+
+function die;
+	notify-send FAILED (checkupdates | wc -l) -u critical -i alert
+	exit 69
+end
+
+function update-list;
+	if [ $argv[1] = 1 ];
+		set -g updates (checkupdates | cut -d" " -f1 | head -n3 2>/dev/null)
+	elif [ $argv[1] = cuda ];
+		set -g updates (checkupdates | cut -d" " -f1 | grep cuda | head -n1 2>/dev/null)
+	else
+		set -g updates (checkupdates | cut -d" " -f1 | grep -v linux | grep -v cuda | head -n3 2>/dev/null)
+	end
+	notify-send (checkupdates | wc -l) left!
+end
+
+function chunk-update-pacman;
+	update-list $argv[1]
+	# sudo paccache -ruk0
+	clear
+	echo ''
+	echo ''
+	echo $updates
+	# don't continue, when irrational
+	echo $updates | wc -w | grep 0 >/dev/null && return
+	echo ''
+	echo ''
+	echo $argv[1] | grep cuda >/dev/null || sudo pacman -Scc --noconfirm
+	paru -S --noconfirm $updates || die
+	# recursion!
+	chunk-update-pacman $argv[1]
+end
+
+# update caches
+update-list 0
+paru -Sy $updates[1] --noconfirm
+
+chunk-update-pacman 0
+notify-send phase finished -u critical -i alert && sleep 3
+chunk-update-pacman cuda
+notify-send phase finished -u critical -i alert && sleep 3
+chunk-update-pacman 1
+notify-send completely finished -u critical -i alert && sleep 5
+
+# catch any stragglers
+paru -Syu

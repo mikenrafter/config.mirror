@@ -1,0 +1,16 @@
+#!/bin/bash -i
+# w/	cifs-utils
+# run	sudo mount -t cifs -o username=<win_share_user> //WIN_SHARE_IP/<share_name> /mnt/win_share
+# credentials = username=xyz\npassword=xyz\ndomain=xyz
+
+read -p "share ip/name " name
+read -p "mount point (?|/mnt) " mnt
+[ -z "$mnt" ] && mnt="/mnt"
+read -p "credentials file (optional) " creds
+
+if [ -f "$creds" ]; then
+	sudo mount -t cifs -o credentials=$creds //WIN_SHARE_IP/$name /mnt/$mnt
+else
+	read -p "login user " user
+	sudo mount -t cifs -o username=$user //WIN_SHARE_IP/$name /mnt/$mnt
+fi
