@@ -6,13 +6,13 @@ authors = ["Your Name <you@example.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-fawkes = "^1.0.2"
 "discord.py" = "^1.7.1"
 batchelor = "^0.5.8"
-tensorflow = "^2.4.1"
 btrfs = "^13"
 ytfs = "^0.99a5"
 "fs.youtube" = "^0.3.1"
+pywal = "^3.3.0"
+bs4 = "^0.0.1"
 
 [tool.poetry.dev-dependencies]
 

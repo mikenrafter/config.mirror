@@ -7,6 +7,8 @@ function fish_prompt --description 'Write out the prompt'
 	set -l normal (set_color normal)
 	set fish_user_color blue
 
+	set -l cwd		# initialize cwd var
+
 	# user-dependent functions
 	if fish_is_root_user
 		if set -q fish_color_cwd_root
@@ -21,21 +23,31 @@ function fish_prompt --description 'Write out the prompt'
 		else
 			set user $USER
 		end
+		set -l poetry (string split ' ' $PATH | grep '/pypoetry/')
+		set -l nix (string split ' ' $PATH | grep '/nix/store' | grep -v '/pypoetry/')
+		# Identify subshells and modifiers
+		if test -n "$poetry"
+			set -a shells poetry
+		end
+		if test -n "$nix"
+			set -a shells nix
+		end
+		if test -n "$NUX"
+			set -a shells nux
+		end
 	end
 
-	fish_git_prompt &>/dev/null && set suffix ''
+	if test (fish_vcs_prompt)
+		set cwd (prompt_pwd)
+		set suffix ''
+	else
+		set cwd (fish_shorten_path)
+	end
 
 	if test $fish_show_stats -gt 0
 		# Write pipestatus
 		set prompt_status (__fish_print_pipestatus " " "" " " (set_color $fish_color_status) (set_color --bold $fish_color_status) $last_pipestatus)
 		set suffix '↑'
-	end
-
-	# Identify subshells and modifiers
-	if test -n "$NUX"
-		set -a shells nux
-	else if test (echo $PATH | grep '/nix/store')
-		set -a shells nix
 	end
 
 	# If we're running via SSH, change the host color.
@@ -45,7 +57,7 @@ function fish_prompt --description 'Write out the prompt'
 		set -l host @(prompt_hostname)
 	end
 
-	set shell_colors 'blue' 'brblack' 'yellow'
+	set shell_colors 'yellow' 'yellow' 'brblack'
 	for x in (seq (count $shells) )
 		if test $shells[$x]
 			echo -n (set_color $shell_colors[$x])$shells[$x]' '
@@ -55,9 +67,34 @@ function fish_prompt --description 'Write out the prompt'
 	echo -n -s \
 $normal (set_color $fish_user_color) $user \
 $normal (set_color $color_host) $host \
-$normal ' ' (set_color $color_cwd) (fish_shorten_path) \
+$normal ' ' (set_color $color_cwd) $cwd \
 $normal (fish_vcs_prompt) \
 $normal $prompt_status \
 $normal $suffix \
 ' '
 end
+
+# another prompt
+# function fish_prompt --description 'Write out the prompt'
+#     set -l last_status $status
+# 
+#     prompt_login
+# 
+#     echo -n ':'
+# 
+#     # PWD
+#     set_color $fish_color_cwd
+#     echo -n (prompt_pwd)
+#     set_color normal
+# 
+#     __terlar_git_prompt
+#     fish_hg_prompt
+#     echo
+# 
+#     if not test $last_status -eq 0
+#         set_color $fish_color_error
+#     end
+# 
+#     echo -n '➤ '
+#     set_color normal
+# end
