@@ -39,11 +39,18 @@ end
 
 function fish_right_prompt
 	set -l colors brblack cyan blue
+	if set -q VIRTUAL_ENV; and contains -- $PATH $VIRTUAL_ENV $VIRTUAL_ENV/bin
+		set -a out $VIRTUAL_ENV
+	end
+
 	if set -q out
 		for x in (seq (count $out ) )
 			set out[$x] (fish_shorten_path $out[$x])
 		end
 	end
+	
+	set out (string split ' ' $out | uniq)
+
 	set -la output (timer)
 	set -la output (job_count)
 	set -la output (fish_mode_prompt_override)

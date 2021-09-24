@@ -18,5 +18,6 @@ function nux
 		end
 		set -gx NUX 1
 	end
+	set -x PATH (string split ' ' $PATH | uniq)
 	return 0
 end

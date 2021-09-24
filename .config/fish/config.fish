@@ -6,6 +6,8 @@ set SHELL (which fish)
 
 set -q fish_greeting && set fish_greeting (random_quote)
 
+set fish_user_color blue
+
 for file in ~/.config/fish/functions/init/*
 	. $file
 end

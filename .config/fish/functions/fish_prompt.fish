@@ -5,7 +5,6 @@ function fish_prompt --description 'Write out the prompt'
 	set -l n /dev/null
 	set -l last_pipestatus $pipestatus
 	set -l normal (set_color normal)
-	set fish_user_color blue
 
 	set -l cwd		# initialize cwd var
 
@@ -24,7 +23,7 @@ function fish_prompt --description 'Write out the prompt'
 			set user $USER
 		end
 		set -l poetry (string split ' ' $PATH | grep '/pypoetry/')
-		set -l nix (string split ' ' $PATH | grep '/nix/store' | grep -v '/pypoetry/')
+		set -l nix (string split ' ' $PATH | grep '/nix/store' | grep -v 'python' | grep -v 'poetry')
 		# Identify subshells and modifiers
 		if test -n "$poetry"
 			set -a shells poetry
@@ -39,15 +38,23 @@ function fish_prompt --description 'Write out the prompt'
 
 	if test (fish_vcs_prompt)
 		set cwd (prompt_pwd)
-		set suffix ''
+		set suffix ' '
 	else
 		set cwd (fish_shorten_path)
 	end
 
+	# order's important here
+	# any suffix set before this, gets a space after it
+	# any after doesn't
+	if test -n "$suffix"
+		set suffix $suffix' '
+	end
+
+
 	if test $fish_show_stats -gt 0
 		# Write pipestatus
 		set prompt_status (__fish_print_pipestatus " " "" " " (set_color $fish_color_status) (set_color --bold $fish_color_status) $last_pipestatus)
-		set suffix '↑'
+		set suffix '⇡' #⇀↳」︺↑ # https://coolsymbol.com/
 	end
 
 	# If we're running via SSH, change the host color.
@@ -70,31 +77,5 @@ $normal (set_color $color_host) $host \
 $normal ' ' (set_color $color_cwd) $cwd \
 $normal (fish_vcs_prompt) \
 $normal $prompt_status \
-$normal $suffix \
-' '
+$normal $suffix
 end
-
-# another prompt
-# function fish_prompt --description 'Write out the prompt'
-#     set -l last_status $status
-# 
-#     prompt_login
-# 
-#     echo -n ':'
-# 
-#     # PWD
-#     set_color $fish_color_cwd
-#     echo -n (prompt_pwd)
-#     set_color normal
-# 
-#     __terlar_git_prompt
-#     fish_hg_prompt
-#     echo
-# 
-#     if not test $last_status -eq 0
-#         set_color $fish_color_error
-#     end
-# 
-#     echo -n '➤ '
-#     set_color normal
-# end

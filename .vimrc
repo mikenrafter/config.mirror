@@ -1,4 +1,4 @@
-" a really cool .vimrc --> :set foldmethod=marker foldmarker={-,-} foldlevel=0" plugins {-
+" a really cool .vimrc --> :set foldmethod=marker foldmarker={,} foldlevel=0" plugins {-
 " plugins
 "set rtp+=~/.vim/bundle/Vundle.vim
 "call vundle#begin()
@@ -117,7 +117,7 @@ set autoread smartindent noexpandtab softtabstop=0 tabstop=4 shiftwidth=4
 " folding {-
 " maximum fold level
 " setlocal is used for folding elsewhere, this is the default
-set foldnestmax=10 foldmarker={-,-} foldmethod=indent
+set foldnestmax=10 foldmarker={,} foldmethod=indent
 
 " enable folding # disabled, is enabled in autocommand, only enabled when file
 " size is reasonable
@@ -460,10 +460,10 @@ nnor Q @q
 " insert {-
 
 " control-backspace
-inor <c-bs> <c-w>
+inor <c-h> <c-w>
 
 " completions
-inor <silent> <leader><tab> <c-n>
+inor <silent> <tab><tab> <c-o>:call Completions()<cr><c-n>
 
 " more deletions
 inor <s-bs> <c-o>db
@@ -577,6 +577,33 @@ set pastetoggle=<f2>
 
 "-}
 " functions {-
+fun! UnComplete() "{-
+	silent! iunmap <tab>
+	silent! iunmap <space>
+	silent! iunmap <cr>
+	silent! iunmap <esc>
+	silent! iunmap <left>
+	silent! iunmap <right>
+	silent! iunmap <up>
+	silent! iunmap <down>
+	silent! iunmap <c-o>
+	inor <silent> <tab><tab> <c-o>:call Completions()<cr><c-n>
+endf "-}
+fun! Completions() "{-
+	iunmap <tab><tab>
+	inor <tab>   <c-n>
+
+	inor <c-o>   <c-o>:call UnComplete()<cr><c-o>
+	inor <space> <c-o>:call UnComplete()<cr><space>
+	inor <cr>    <c-o>:call UnComplete()<cr>
+	inor <esc>   <c-o>:call UnComplete()<cr>
+
+	inor <left>     <left><c-o>:call UnComplete()<cr>
+	inor <right>     <right><c-o>:call UnComplete()<cr>
+
+	inor <up>     <c-p>
+	inor <down>     <c-n>
+endf "-}
 fun! Nop(a) "{-
 	return
 endf "-}
@@ -895,6 +922,7 @@ fun! CursorHold() "{-
 	end
 endf "-}
 fun! CursorMoved() "{-
+	call UnComplete()
 endf "-}
 fun! BufRead() "{-
 	" if file starts less than 500kb (1k(b) * 500)
@@ -921,6 +949,7 @@ fun! InsertEnter() "{-
 endf "-}
 fun! InsertLeave() "{-
 	set timeout timeoutlen=600
+	call UnComplete()
 endf "-}
 fun! SwapExists() "{-
 	" no windows crap here!

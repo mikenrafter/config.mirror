@@ -91,6 +91,9 @@ Random things
 		totally tubular sonic racing game
 	graalVM
 		do NOT install via the AUR
+	pywal
+		command: wal --saturate 0.4 --iterative  -i ~/wall-disabled/DTwallpapers
+		nice bg: DTWallpapers/(0153-6,158)
 
 Nix
 	Flakes / multi-dependency management
@@ -140,4 +143,4 @@ Nix
 			}
 		To use package `A` from nixos-21.05 and package `B` from nixos-unstable.
 
-		
+
