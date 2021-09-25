@@ -1,19 +1,22 @@
 ## cd ~/nix && nix build .#home.v0id.activationPackage && ./result/activate #
 {
-#{ inputs
+inputs = {
 	# split nix inputs for groups with large packages
-	inputs.unstable1.url = "github:NixOS/nixpkgs/nixos-unstable";
-	inputs.unstable2.url = "github:NixOS/nixpkgs/nixos-unstable";
-	inputs.stable1.url = "github:NixOS/nixpkgs/nixos-21.05";
-	inputs.stable2.url = "github:NixOS/nixpkgs/nixos-21.05";
+	unstable1.url = "github:NixOS/nixpkgs/nixos-unstable";
+	unstable2.url = "github:NixOS/nixpkgs/nixos-unstable";
+	stable1.url = "github:NixOS/nixpkgs/nixos-21.05";
+	stable2.url = "github:NixOS/nixpkgs/nixos-21.05";
 
-	inputs.nur.url = "github:nix-community/NUR/master";
+	nur.url = "github:nix-community/NUR/master";
+#	nixGL.url = "github:guibou/nixGL/main"; # no flake.nix :/
 
-	inputs.homeManager.url = "github:nix-community/home-manager";
-	inputs.homeManager.inputs.nixpkgs.follows = "unstable1";
-#}
+	homeManager.url = "github:nix-community/home-manager";
+	homeManager.inputs.nixpkgs.follows = "unstable1";
+	flake-utils.url = "github:numtide/flake-utils";
+
+};
 #{ outputs
-	outputs = {self, homeManager,
+	outputs = {self, homeManager, flake-utils,
 		stable1, stable2,
 		unstable1, unstable2,
 		nur }: {
@@ -26,6 +29,8 @@
 				stable2  =stable2  .legacyPackages.x86_64-linux;
 				unstable1=unstable1.legacyPackages.x86_64-linux;
 				unstable2=unstable2.legacyPackages.x86_64-linux;
+				nur      =nur      .legacyPackages.x86_64-linux;
+#				nixGL    =nixGL    .legacyPackages.x86_64-linux;
 			};
 			configuration = { pkgs, lib, ... }: {
 				imports = [ ./.nix ];

@@ -699,7 +699,7 @@ in
 			# install manpages for packages too
 			extraOutputsToInstall = ["doc" "info" "devdoc"];
 			# apply selections | selections
-			packages = [(map lib.hiPrio [ u1.nixUnstable s1.home-manager ]  )] ++ selections;
+			packages = (map lib.hiPrio [ u1.nixUnstable s1.home-manager ]  ) ++ selections;
 		};
 	};
 }
