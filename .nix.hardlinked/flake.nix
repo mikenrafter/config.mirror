@@ -23,25 +23,27 @@ inputs = {
 		home = {
 			#https://github.com/nix-community/home-manager/blob/4320399a3e5f3afb8a867324901a559f23be8178/flake.nix#L35
 			v0id = homeManager.lib.homeManagerConfiguration {
-			# later on: flake-utils
-			extraSpecialArgs = {
-				stable1  =stable1  .legacyPackages.x86_64-linux;
-				stable2  =stable2  .legacyPackages.x86_64-linux;
-				unstable1=unstable1.legacyPackages.x86_64-linux;
-				unstable2=unstable2.legacyPackages.x86_64-linux;
-				nur      =nur      .legacyPackages.x86_64-linux;
-#				nixGL    =nixGL    .legacyPackages.x86_64-linux;
-			};
-			configuration = { pkgs, lib, ... }: {
-				imports = [ ./.nix ];
-				nixpkgs = {
-					#overlays = [ emacs.overlay ];
-					config = { allowUnfree = true; };
+				homeDirectory = "/home/v0id";
+				username = "v0id";
+				# later on: flake-utils
+				extraSpecialArgs = {
+					stable1  =stable1  .legacyPackages.x86_64-linux;
+					stable2  =stable2  .legacyPackages.x86_64-linux;
+					unstable1=unstable1.legacyPackages.x86_64-linux;
+					unstable2=unstable2.legacyPackages.x86_64-linux;
+					nur      =nur      .legacyPackages.x86_64-linux;
+#					nixGL    =nixGL    .legacyPackages.x86_64-linux; # missing flake, also's very impure
 				};
-			};
-			system = "x86_64-linux";
-			homeDirectory = "/home/v0id";
-			username = "v0id";
+				configuration = { pkgs, lib, ... }: {
+					imports = [ ./.nix ];
+					nixpkgs = {
+						#overlays = [ emacs.overlay ];
+						# only applies to `pkgs`, therefore, only use within unfree
+						# group, to prevent accidents (pkgs follows unstable1)
+						config = { allowUnfree = true; };
+					};
+				};
+				system = "x86_64-linux";
 			};
 		};
 	};

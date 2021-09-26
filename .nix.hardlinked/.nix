@@ -9,8 +9,8 @@
 	unstable1, unstable2,
 	...
 }:
-let
 #}
+let
 # config {
 nixos = false;
 #}
@@ -30,7 +30,7 @@ kernel = with s1.linuxPackages-libre; [
 
 # -}
 # unfree {
-]; unfree = with s1; [
+]; unfree = with pkgs; [
 
 # lutris                    # games, but uses steam, so proprietary...
 # discord                   # friends - nope, too creepy, I'll use it over my
@@ -103,10 +103,27 @@ kernel = with s1.linuxPackages-libre; [
 
 #}
 # editors {
-]; editors = with s1; [
+]; editors = with s2; [
 
   arduino                   # arduino programming
-  neovim amp kakoune        # similar to vim
+  (neovim.override {        # vim+++
+	configure = {
+		packages.myPlugins = with s1.vimPlugins; {
+			start = [ nvim-compe ];
+			opt = [
+				nvim-web-devicons
+				nvim-tree-lua
+
+				nvim-lspconfig
+
+				nvim-treesitter
+				nvim-colorizer-lua
+			];
+		};
+	};
+  }
+  )
+  amp kakoune               # similar to vim
   micro                     # similar to nano
   notepadqq                 # GUI text editor
 
@@ -563,18 +580,11 @@ gui = with s1; [
 #}
 # selections {
 selections = builtins.concatLists [
-# [n.home-manager] -- TODO add -rif style removal support, then
-  #integrate home-manager into it
-
-  # temporary orphans
-  [
-#(nur.repos.mic92.hello-nur) # pkgs)
-  ]
   # things that need high package priority to work:
   (map lib.hiPrio [ packages.haskell ])
 
   # NixOS only:
-  (map (lib.mkIf nixos) [ kernel ])
+  (map (lib.mkIf nixos) [ kernel packages.python ])
 
   # Essentials
   unfree
@@ -595,7 +605,6 @@ selections = builtins.concatLists [
   media.capturing
   media.viewing
 
-#Bpackages.python # doesn't work, and causes compile errors outside nixOS
   packages.vim
 
   utils.terminals
@@ -604,6 +613,10 @@ selections = builtins.concatLists [
   utils.shells
   utils.cli
   utils.gui
+  # temporary orphans
+  [
+  #(nur.repos.mic92.hello-nur) # pkgs)
+  ]
 ];
 #}
 in
@@ -694,12 +707,13 @@ in
 			"~/appimages"
 			];
 			#}
-			username = user;
-			homeDirectory = "/home/" + user;
+			# now inherited from flake.nix
+			# username = user;
+			# homeDirectory = "/home/" + user;
 			# install manpages for packages too
 			extraOutputsToInstall = ["doc" "info" "devdoc"];
 			# apply selections | selections
-			packages = (map lib.hiPrio [ u1.nixUnstable s1.home-manager ]  ) ++ selections;
+			packages = (map lib.hiPrio [ u1.nixUnstable u1.home-manager ]  ) ++ selections;
 		};
 	};
 }

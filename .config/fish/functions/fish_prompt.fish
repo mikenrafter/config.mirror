@@ -43,18 +43,17 @@ function fish_prompt --description 'Write out the prompt'
 		set cwd (fish_shorten_path)
 	end
 
+	if test $fish_show_stats -gt 0
+		# Write pipestatus
+		set prompt_status (__fish_print_pipestatus " " "" " " (set_color $fish_color_status) (set_color --bold $fish_color_status) $last_pipestatus)
+		set suffix '⇡' #⇀↳」︺↑ # https://coolsymbol.com/
+	end
+
 	# order's important here
 	# any suffix set before this, gets a space after it
 	# any after doesn't
 	if test -n "$suffix"
 		set suffix $suffix' '
-	end
-
-
-	if test $fish_show_stats -gt 0
-		# Write pipestatus
-		set prompt_status (__fish_print_pipestatus " " "" " " (set_color $fish_color_status) (set_color --bold $fish_color_status) $last_pipestatus)
-		set suffix '⇡' #⇀↳」︺↑ # https://coolsymbol.com/
 	end
 
 	# If we're running via SSH, change the host color.
