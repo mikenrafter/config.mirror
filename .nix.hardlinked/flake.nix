@@ -1,5 +1,7 @@
 ##cd ~/.nix && nix build .#home.v0id.activationPackage && ./result/activate #
 {
+# `nix flake lock` to lock dependency versions
+# `nix flake update` to update dependency versions
 inputs = {
 	# split nix inputs for groups with large packages
 	unstable1.url = "github:NixOS/nixpkgs/nixos-unstable";

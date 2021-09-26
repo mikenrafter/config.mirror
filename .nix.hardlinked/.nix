@@ -560,7 +560,7 @@ gui = with s1; [
   brightnessctl             # manage brightness
   remmina                   # remote connection client
   cinnamon.warpinator       # LAN file sharer
-  xfce.thunar               # file manager
+  xfce.thunar gvfs          # file manager + trash support
   xfce.xfce4-notifyd        # notification system
   caffeine-ng               # stop screen-locking
   blueman                   # bluetooth tray
