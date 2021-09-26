@@ -46,7 +46,7 @@ kernel = with s1.linuxPackages-libre; [
 
   coreutils                 # don't piss GNU+Stallman off!
   fish dash                 # main shell & sh
-  u1.vim                       # editor le supreme
+  u1.vim                    # editor le supreme
   xterm                     # basic terminal, as a backup only
   bitwarden                 # Password manager, it's that simple :)
 
@@ -106,23 +106,24 @@ kernel = with s1.linuxPackages-libre; [
 ]; editors = with s2; [
 
   arduino                   # arduino programming
-  (neovim.override {        # vim+++
-	configure = {
-		packages.myPlugins = with s1.vimPlugins; {
-			start = [ nvim-compe ];
-			opt = [
-				nvim-web-devicons
-				nvim-tree-lua
-
-				nvim-lspconfig
-
-				nvim-treesitter
-				nvim-colorizer-lua
-			];
-		};
-	};
-  }
-  )
+  neovim                    # nvim
+#  (neovim.override {        # vim+++
+#	configure = {
+#		packages.myPlugins = with s1.vimPlugins; {
+#			start = [ nvim-compe ];
+#			opt = [
+#				nvim-web-devicons
+#				nvim-tree-lua
+#
+#				nvim-lspconfig
+#
+#				nvim-treesitter
+#				nvim-colorizer-lua
+#			];
+#		};
+#	};
+#  }
+#  )
   amp kakoune               # similar to vim
   micro                     # similar to nano
   notepadqq                 # GUI text editor

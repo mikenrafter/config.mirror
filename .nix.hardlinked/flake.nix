@@ -1,4 +1,4 @@
-## cd ~/nix && nix build .#home.v0id.activationPackage && ./result/activate #
+##cd ~/.nix && nix build .#home.v0id.activationPackage && ./result/activate #
 {
 inputs = {
 	# split nix inputs for groups with large packages
@@ -8,7 +8,8 @@ inputs = {
 	stable2.url = "github:NixOS/nixpkgs/nixos-21.05";
 
 	nur.url = "github:nix-community/NUR/master";
-#	nixGL.url = "github:guibou/nixGL/main"; # no flake.nix :/
+#	nixGL.url = "github:guibou/nixGL/main";
+#	nixGL.flake = false;
 
 	homeManager.url = "github:nix-community/home-manager";
 	homeManager.inputs.nixpkgs.follows = "unstable1";

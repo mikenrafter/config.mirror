@@ -5,7 +5,6 @@ else
 	home=$1
 fi
 
-
 ### ### ### ###
 # dis == stay on restart
 # uni == kill any other instances before running

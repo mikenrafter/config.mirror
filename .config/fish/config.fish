@@ -4,7 +4,7 @@ set path_path $HOME/.path.fish
 set SHELL (which fish)
 [ -f "$HOME/abbr.fish" ] && . $HOME/abbr.fish
 
-set -q fish_greeting && set fish_greeting (random_quote)
+set -q fish_greeting || set fish_greeting (random_quote)
 
 set fish_user_color blue
 
