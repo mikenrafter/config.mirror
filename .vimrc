@@ -494,8 +494,8 @@ inor <silent> <down> <c-o>gj
 inor <silent> <up> <c-o>gk
 
 " paste system clipboards
-inor <silent> <middle> .<bs><c-o>"*P
-inor <silent>    <c-v> .<bs><c-o>"+P
+inor <silent> <middle> .<bs><c-o>"*p
+inor <silent>    <c-v> .<bs><c-o>"+p
 "inor <silent>  <c-s-v> <c-o>:set paste<cr><c-r>*<c-o>:set nopaste<cr>
 inor <silent>    <m-p> .<bs><c-o>P
 

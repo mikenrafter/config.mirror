@@ -1,4 +1,4 @@
-##home-manager switch #
+##cd ~/.nix && nix build .#home.v0id.activationPackage && ./result/activate #
 # ^ pseudo shebang, see .vimrc
 
 # my NIX config
@@ -49,11 +49,13 @@ kernel = with s1.linuxPackages-libre; [
   u1.vim                    # editor le supreme
   xterm                     # basic terminal, as a backup only
   bitwarden                 # Password manager, it's that simple :)
+  gnome.gnome-keyring       # Keyring, manages DBs other than pw-managers
 
+  auto-cpufreq              # dynamic CPU frequency scaler
   earlyoom                  # oomKiller sucks! But this doesn't.
 
   nitrogen                  # wallpaper manager
-#?  picom                     # compositor
+#?picom                     # compositor
 
 #Bcmake                     # for source builds
 #Bbinutils                  # for source builds
@@ -157,6 +159,7 @@ kernel = with s1.linuxPackages-libre; [
 
   sl                        # to fix ls typos, of course
   bsod                      # wine but better XD
+  vitetris                  # epic terminal-based tetris game
 #Belectricsheep             # A p2p artwork creating screensaver
   breeze-icons              # icon theme
   libsForQt5.qtstyleplugins # let QT themes apply properly
@@ -191,6 +194,8 @@ kernel = with s1.linuxPackages-libre; [
 # xorg {
 ]; xorg = with s1.xorg; [
 
+  s1.autorandr              # display manager
+  s1.xdotool                # virtual keypress util
   libXrandr                 # res change lib
   xrandr                    # change your resolution
 
@@ -438,9 +443,9 @@ media = {
 managing = with s1; [
   alsa-firmware             # firmware for soundcards
   pulseaudio                # I really hate typing that, but alsa just doesn't work
-# pavucontrol               # pulseaudio manager
+  pavucontrol               # pulseaudio manager
   playerctl                 # manage media easier
-# easyeffects               # apply effects to audio in pw
+  u1.easyeffects            # apply effects to audio in pw
 ];
 #}
 # capturing {
@@ -697,7 +702,7 @@ in
 			#}
 			# env vars {
 			sessionVariables = {
-				EDITOR = "nvim";
+				EDITOR = "nVim"; # custom script pointing to nvim
 				BROWSER = "librewolf";
 				XDG_DATA_DIRS = lib.concatStringsSep ":" (map (profile: "${profile}/share") [ "/nix/var/nix/profiles/default" config.home.profileDirectory "/usr"]);
 				QT_QPA_PLATFORMTHEME = "qt5ct";
