@@ -45,7 +45,7 @@ uni picom &
 #
 # dies on restart
 # keep awake button
-caffiene &
+caffeine &
 # bluetooth connector
 blueman-applet &
 # network manager

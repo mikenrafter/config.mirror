@@ -1,4 +1,4 @@
-#!/bin/env bash ~/.nix/build.sh
+##bash ~/.nix/build.sh
 
 # my NIX config
 
@@ -110,6 +110,7 @@ kernel = with s1.linuxPackages-libre; [
 ]; editors = with s2; [
 
   arduino                   # arduino programming
+  nvimpager                 # why not?
   nvim                      # my custom nvim
   amp kakoune               # similar to vim
   micro                     # similar to nano
@@ -700,8 +701,9 @@ in
 			#}
 			# env vars {
 			sessionVariables = {
-				EDITOR = "nVim"; # custom script pointing to nvim
+				EDITOR = "nvim"; # custom script pointing to nvim
 				BROWSER = "librewolf";
+				PAGER = "nvimpager";
 				XDG_DATA_DIRS = lib.concatStringsSep ":" (map (profile: "${profile}/share") [ "/nix/var/nix/profiles/default" config.home.profileDirectory "/usr"]);
 				QT_QPA_PLATFORMTHEME = "qt5ct";
 			};
