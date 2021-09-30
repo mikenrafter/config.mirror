@@ -72,7 +72,7 @@ mterminal = "alacritty"
 mshell = "fish"  -- "bash"
 
 -- gridselect...
-meditor' = "nVim"  -- assumeS CLI in scratch.hs
+meditor' = "nvim"  -- assumeS CLI in scratch.hs
 meditor f = mconsole' $ meditor' <> " " <> f
 --}
 --{- environment programs

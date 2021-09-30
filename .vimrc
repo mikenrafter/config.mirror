@@ -43,7 +43,8 @@ hi SpellCap ctermfg=blue ctermbg=black cterm=underline term=underline gui=underl
 " dim whitespace indicators
 " 241 is darker than darkgray, but still noticeable and lighter than my bg
 " nvim likes to be special!
-hi Whitespace ctermfg=241 ctermbg=235 guifg=darkgray
+hi Whitespace ctermfg=238 ctermbg=235 guifg=black
+"hi Whitespace ctermfg=241 ctermbg=235 guifg=darkgray
 " regular vim mode
 hi SpecialKey ctermfg=241 ctermbg=235 guifg=darkgray
 " changes the color of space indents
@@ -51,7 +52,8 @@ hi Indents ctermfg=245 ctermbg=none cterm=bold
 " change color of escaped characters
 hi Escaped ctermfg=red ctermbg=none cterm=bold
 " really long lines, past the 80 mark is this color
-hi Long ctermbg=236 cterm=none
+hi Long ctermbg=235 cterm=none
+"hi Long ctermbg=236 cterm=none
 " color at line 80
 hi ColorColumn ctermbg=236
 " color the tabline bg the same as the bg
@@ -1005,7 +1007,7 @@ let filetypes={'c': 'gcc', 'sh': 'bash', 'hs': 'ghc', 'html': "$BROWSER", 'xml':
 let scriptExtensions = [ 'sh', 'fish', 'py', 'nim', 'zsh' ]
 " fold some config files other ways
 " [['glob/path/or/containing/dir', 'foldnow,stopfold'],['second param for each item is optional']]
-let g:fakeOrgMode = [['~/.config/'],['~/data/configs/'], ['~/.?*'],['~/.?*/'], ['~/*.conf']]
+let g:fakeOrgMode = [['~/.config/'],['~/data/configs/'], ['~/.?*'],['~/.?*/'], ['~/*.conf']] ", ['~/.vimrc', '{-,-}']]
 " any dotfile under ~
 " any file in a dotfolder under ~
 " any .conf file

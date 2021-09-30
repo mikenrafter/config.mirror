@@ -1,5 +1,4 @@
-##cd ~/.nix && nix build .#home.v0id.activationPackage && ./result/activate #
-# ^ pseudo shebang, see .vimrc
+#!/bin/env bash ~/.nix/build.sh
 
 # my NIX config
 
@@ -7,6 +6,7 @@
 { config, lib, pkgs,
 	stable1, stable2,
 	unstable1, unstable2,
+	nur, nixGL,
 	...
 }:
 #}
@@ -17,9 +17,10 @@ nixos = false;
 # aliases {
 s1 =   stable1; s2 =   stable2;
 u1 = unstable1; u2 = unstable2;
-user = "v0id";
-#inherit (n) haskellPackages;
-#nur = import (builtins.fetchTarball "https://github.com/nix-community/NUR/archive/master.tar.gz") {pkgs = n;};
+ifNix = package: lib.mkIf nixos package;
+#}
+# custom packages {
+nvim = import ./programs/nvim.nix { inherit u1; inherit s1; };
 #}
 # package groups {
 # libre-kernel {
@@ -74,7 +75,7 @@ kernel = with s1.linuxPackages-libre; [
 #+onlyoffice.drv
 #+feral/gamemode.drv
 #Bgolly                     # Game of Life
-  (lib.mkIf nixos firefox)  #-84-0-1 <- pin | FF meh, librewolf tho
+  (ifNix firefox)           #-84-0-1 <- pin | FF meh, librewolf tho
   brave                     # backup browser -- somehow works w/ nvidia acceleration despite lack of nixGL
   thunderbird               # Mozillas mail client
   libreoffice               # office suite
@@ -93,14 +94,15 @@ kernel = with s1.linuxPackages-libre; [
   rustc                     # rust compiler
   nim                       # nim compiler
   jdk                       # java runtime
-(lib.mkIf nixos python27)   # python interpreter 2.7
-(lib.mkIf nixos python38)   # python interpreter 3.8
+  (ifNix python27)          # python interpreter 2.7
+  (ifNix python38)          # python interpreter 3.8
 
 # package managers
   cargo                     # rust package manager
   poetry                    # python package-manager
   cabal-install             # haskell package-manager
   stack                     # haskell package-manager
+  yarn                      # JS dep-manager | coc.vim needs it
 
 
 #}
@@ -108,24 +110,7 @@ kernel = with s1.linuxPackages-libre; [
 ]; editors = with s2; [
 
   arduino                   # arduino programming
-  neovim                    # nvim
-#  (neovim.override {        # vim+++
-#	configure = {
-#		packages.myPlugins = with s1.vimPlugins; {
-#			start = [ nvim-compe ];
-#			opt = [
-#				nvim-web-devicons
-#				nvim-tree-lua
-#
-#				nvim-lspconfig
-#
-#				nvim-treesitter
-#				nvim-colorizer-lua
-#			];
-#		};
-#	};
-#  }
-#  )
+  nvim                      # my custom nvim
   amp kakoune               # similar to vim
   micro                     # similar to nano
   notepadqq                 # GUI text editor
@@ -135,20 +120,23 @@ kernel = with s1.linuxPackages-libre; [
 # fonts {
 ]; fonts = with s1; [
 
-  mononoki                  # my favorite
-  meslo-lgs-nf
+  (nerdfonts.override {
+	fonts = [
+		"Mononoki"
+		"Meslo"
+		"FiraCode"
+		"Terminus"
+  ];
+  })
+
   noto-fonts
   noto-fonts-cjk
   noto-fonts-emoji
   liberation_ttf
-  fira-code
-  fira-code-symbols
   mplus-outline-fonts
   dina-font
   (lib.hiPrio proggyfonts)
   uw-ttyp0
-  terminus_font
-  terminus_font_ttf
   tamzen
   powerline-fonts
 
@@ -211,7 +199,19 @@ kernel = with s1.linuxPackages-libre; [
 
 
 #}
+# flossGames {
+]; flossGames = with s2; [
+
+  superTuxKart              # super-tux-kart!
+
+
+#}
 ];
+
+# gpu wrappers {
+#gpu = with nixGL; [ nixGLDefault ]; # top.nixGLNvidia ]; # auto.nixGLDefault ];
+#}
+
 
 # xmonad {
 
@@ -531,6 +531,7 @@ shells = with s1; [
 #}
 # cli {
 cli = with s1; [
+  hostname                  # the ability to modify your hostname | un-nix?
   bat exa fd                # better coreutils in rust
   lzip gzip bzip2 xz        # zippers
   curl wget                 # downloaders
@@ -549,7 +550,7 @@ cli = with s1; [
   snapper snapper-gui       # btrfs snapshot management utility
   btrfs-progs               # betterfs tools
   screen                    # multiplex/session manager
-  neofetch                  # show off your system
+  neofetch pfetch           # show off your system
   remake                    # better verson of GNU make
 ];
 #}
@@ -560,8 +561,8 @@ gui = with s1; [
   transmission-gtk          # torrent tool! also has cli
   sxiv                      # simple x image viewer
   parcellite                # clipboard manager
-  xzoom                     # screen magnifier   | These work well
-  colorpicker               # hex value of pixel | together.
+  xzoom                     # screen magnifier   : These work well
+  colorpicker               # hex value of pixel : together.
   brightnessctl             # manage brightness
   remmina                   # remote connection client
   cinnamon.warpinator       # LAN file sharer
@@ -576,8 +577,10 @@ gui = with s1; [
   mate.engrampa             # Archive tool GUI
 # ark                       # Archive tool GUI
   qalculate-gtk             # nice calculator
+  kmplot                    # plotting software (graphing calc)
   tilem                     # TI# calculator emulator (needs ROM file)
   usermount                 # automatically mount drives as they appear
+  gnome.dconf-editor        # dconf editor, duh
 ];
 #}
 
@@ -590,14 +593,13 @@ selections = builtins.concatLists [
   (map lib.hiPrio [ packages.haskell ])
 
   # NixOS only:
-  (map (lib.mkIf nixos) [ kernel packages.python ])
+  (map ifNix [ kernel packages.python ])
 
   # Essentials
   unfree
   core # source compiles won't work without it
   etc
   xorg
-  packages.flakes
   fonts
 
   extras
@@ -605,6 +607,10 @@ selections = builtins.concatLists [
   editors
   hacking
   vm
+
+  flossGames
+
+# gpu
 
   media.managing
   media.creation
@@ -658,19 +664,11 @@ in
 		#qt.enable = true;
 		#qt.platformTheme = "gtk";
 		#}
+		# dconf {
+		
+		# }
+		fonts.fontconfig.enable = true;
 		services = {
-#			# enable NUR #2 {
-#				unison = {
-#					enable = true;
-#					profiles = {
-#						org = {
-#							src = "/home/moredhel/org";
-#							dest = "/home/moredhel/org.backup";
-#							extraArgs = "-batch -watch -ui text -repeat 60 -fat";
-#						};
-#					};
-#				};
-#			#}
 			#udiskie = {
 			#	enable = true;
 			#	automount = true;
@@ -713,9 +711,6 @@ in
 			"~/appimages"
 			];
 			#}
-			# now inherited from flake.nix
-			# username = user;
-			# homeDirectory = "/home/" + user;
 			# install manpages for packages too
 			extraOutputsToInstall = ["doc" "info" "devdoc"];
 			# apply selections | selections
@@ -726,7 +721,6 @@ in
 
 
 # things to look into {
-#with import <nixpkgs> {};
 # # generate emulator config
 #androidenv.emulateApp {
 #  name = "emulate-MyAndroidApp";
@@ -734,8 +728,8 @@ in
 #  abiVersion = "x86"; # armeabi-v7a, mips, x86_64
 #  systemImageType = "google_apis_playstore";
 #}
+#`environment.etc.nixpkgs.source = inputs.nixpkgs;` to link the flake's nixpkgs to `/etc/nixpkgs`, and add `nixpkgs=/etc/nixpkgs` to `nix.nixPath`
 #
-# TODO: topographical sort of dependencies, grouped into individual inputs,
-# based on a threshold, for saving disk space, while maintaining nix-niceties
-# (likely to be a waste of time)
+#if you want something approximating environment.etc.<name>.source under Home Manager, you could use xdg.dataFile.<name>.source
+#then you could use ~/.local/share/nixpkgs
 #}

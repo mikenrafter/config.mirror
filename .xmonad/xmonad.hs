@@ -484,12 +484,12 @@ lay name count space layout =
 -- windowArrange $
    renamed [Replace name]
  $ (if space > 0 then mspacing space else nospace)
- $ limitWindows count
+ $ limitWindows (if count > 0 then count else 100)
  $ minimize
  $ layout
 --}
 --{- selected layouts
-accordion =    lay "acc" 8  2 $ Accordion
+accordion =    lay "acc" 0  2 $ Accordion
 spiral =       lay "spi" 8  2 $ LS.spiral (3/5)
 spiral' =      lay "+sp" 8  2 $ magnifier (LS.spiral (3/5) )
 tall1 =        lay "tl1" 10 2 $ Tall 1 (3/100) (1/2)
