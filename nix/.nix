@@ -3,12 +3,13 @@
 # my NIX config
 
 # imports {
-{ config, lib, pkgs,
-	stable1, stable2,
-	unstable1, unstable2,
-	nur, nixGL,
-	...
-}:
+imports: with (imports // imports.config // imports.lib // imports.unstable1);
+#{ config, lib, pkgs,
+#	stable1, stable2,
+#	unstable1, unstable2,
+#	nur, nixGL,
+#	...
+#}:
 #}
 let
 # config {
@@ -31,14 +32,12 @@ kernel = with s1.linuxPackages-libre; [
 
 # -}
 # unfree {
-]; unfree = with pkgs; [
+]; unfree = with (import stable1 { config = { allowUnfree = true; }; }); [
 
-# lutris                    # games, but uses steam, so proprietary...
-# discord                   # friends - nope, too creepy, I'll use it over my
-# browser now, if at all
+##games:
+# lutris                    # integrates with steam - proprietary...
   steam                     # games, proprietary, yep
   multimc                   # better minecrft launcher, except minecraft is unfree...
-# intelliJ stuff here later, maybe...
 
 
 #}
@@ -210,7 +209,11 @@ kernel = with s1.linuxPackages-libre; [
 ];
 
 # gpu wrappers {
-#gpu = with nixGL; [ nixGLDefault ]; # top.nixGLNvidia ]; # auto.nixGLDefault ];
+gpu = with (import nixGL { inherit pkgs; }); [
+	nixGLIntel
+	auto.nixGLDefault
+	auto.nixGLNvidia
+];
 #}
 
 
@@ -611,7 +614,7 @@ selections = builtins.concatLists [
 
   flossGames
 
-# gpu
+  gpu
 
   media.managing
   media.creation
