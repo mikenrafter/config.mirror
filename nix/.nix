@@ -3,16 +3,13 @@
 # my NIX config
 
 # imports {
-inputs: with (inputs // inputs.config // inputs.lib // inputs.unstable1);
+	inputs: with inputs; with { inherit config lib nixos; };
 #}
 let
-# config {
-nixos = false;
-#}
 # aliases {
-s1 =   stable1; s2 =   stable2;
-u1 = unstable1; u2 = unstable2;
+# u1,u2,etc now dynamically handled in flake.nix
 ifNix = package: lib.mkIf nixos package;
+proprietary = (import _u1{config.allowUnfree=true;} );
 #}
 # custom packages {
 nvim = import ./programs/nvim.nix { inherit u1; inherit s1; };
@@ -26,8 +23,7 @@ kernel = with s1.linuxPackages-libre; [
 
 # -}
 # unfree {
-]; unfree = with pkgs; [
-#]; unfree = with (import stable1 { config = { allowUnfree = true; }; }); [
+]; unfree = with proprietary; [
 
 ##games:
 # lutris                    # integrates with steam - proprietary...
@@ -204,7 +200,7 @@ kernel = with s1.linuxPackages-libre; [
 ];
 
 # gpu wrappers {
-gpu = with (import nixGL { inherit pkgs; }); [
+gpu = with (import nixGL { pkgs=proprietary; }); [
 	nixGLIntel
 	auto.nixGLDefault
 	auto.nixGLNvidia
