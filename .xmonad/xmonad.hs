@@ -433,7 +433,8 @@ mbarHook pipe = do
    -- mark urgent WS's
    , ppUrgent          = fc(fg!3) (bg!3) . pad . clickable
    -- current WS -- TODO add bottom/top border instead of bg color
-   , ppCurrent         = {-xmobarBorder-} fc(bg!1) (fg!2) . pad . clickable
+   , ppCurrent         = fc(fg!2) (bg!1) . (\x-> "<box type=VBoth width=2 color=" ++ fg!1 ++ ">" ++ (pad x) ++ "</box>") . clickable
+-- , ppCurrent         = {-xmobarBorder-} fc(bg!1) (fg!2) . pad . clickable
    , ppHidden          = check
    , ppHiddenNoWindows = fc(bg!4) (bg!2) . pad . \x -> take 2 x
    , ppTitle           = fc(fg!5) (bg!2) . pad . shorten 40

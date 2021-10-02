@@ -1,2 +1,2 @@
-#!/usr/bin/bash
+#!/bin/env bash
 checkupdates | wc -l

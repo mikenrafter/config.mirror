@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/env bash
 
 map=setxkbmap
 $map -query | grep variant >/dev/null || variant='colemak'

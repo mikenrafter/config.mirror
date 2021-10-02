@@ -3,13 +3,7 @@
 # my NIX config
 
 # imports {
-imports: with (imports // imports.config // imports.lib // imports.unstable1);
-#{ config, lib, pkgs,
-#	stable1, stable2,
-#	unstable1, unstable2,
-#	nur, nixGL,
-#	...
-#}:
+inputs: with (inputs // inputs.config // inputs.lib // inputs.unstable1);
 #}
 let
 # config {
@@ -32,7 +26,8 @@ kernel = with s1.linuxPackages-libre; [
 
 # -}
 # unfree {
-]; unfree = with (import stable1 { config = { allowUnfree = true; }; }); [
+]; unfree = with pkgs; [
+#]; unfree = with (import stable1 { config = { allowUnfree = true; }; }); [
 
 ##games:
 # lutris                    # integrates with steam - proprietary...

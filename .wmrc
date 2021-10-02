@@ -54,6 +54,8 @@ nm-applet &
 kdeconnect-indicator &
 # screenshot tool daemon
 flameshot &
+# GPU
+optimus-manager-qt &
 
 ### ### ### ###
 #

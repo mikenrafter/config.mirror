@@ -18,13 +18,13 @@ n  notes
 m  media
 f  files
 p  passwords
-TODO
- c  calculator
- v  volume
+c  calculator
+e  easy effects
+v  volume
 
 --}
 mscratch' =
- [ "t", "/", "n", "m", "f", "p", "c", "v", "S-v", "s" ]
+ [ "t", "/", "n", "m", "f", "p", "c", "v", "e", "s" ]
 
 mscratch =
  [ NS  (sc!1) t  tF  $ cfloat 1 -- t erminal
@@ -35,7 +35,7 @@ mscratch =
  , NS  (sc!6) p  pF  $ cfloat 1 -- p assword manager
  , NS  (sc!7) c  cF  $ cfloat 0 -- c alculator
  , NS  (sc!8) v  vF  $ cfloat 0 -- v olume management
- , NS  (sc!9) sv svF $ cfloat 0 -- v olume management
+ , NS  (sc!9) e  eF  $ cfloat 0 -- e asy effects
  , NS (sc!10) s  sF  $ cfloat 1 -- s ystem monitor
  ]
  where
@@ -73,8 +73,8 @@ mscratch =
   v   = "pavucontrol"
   vF  = className ~? "pavucontrol"
 
-  sv   = "easyeffects"
-  svF  = title =? "EasyEffects"
+  e    = "easyeffects"
+  eF   = title =? "EasyEffects"
 
   s   = mconsole (sn!9) "btm"
   sF  = consoleMatch 9
