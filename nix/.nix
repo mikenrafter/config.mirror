@@ -7,7 +7,9 @@ let
 # aliases {
 # u1,u2,etc now dynamically handled in flake.nix
 ifNix = package: lib.mkIf nixos package;
-proprietary = (import _u1{config.allowUnfree=true;} );
+over = set: set; # disabled variant, for when there are no overlays
+#over = set: {inherit overlays;} // set;
+proprietary = (import _u1 (over {config.allowUnfree=true;}) );
 #}
 # custom packages {
 nvim = import ./programs/nvim.nix { inherit u1; inherit s1; };
@@ -34,7 +36,10 @@ kernel = with s1.linuxPackages-libre; [
 ]; core = with s1; [
 
   coreutils                 # don't piss GNU+Stallman off!
-  fish dash                 # main shell & sh
+  libtool                   # more gnu tools
+  lsof strace               # identify open files
+  usbutils                  # lsusb+
+  fish dash bash            # main shell & sh + bash, for compatability
   u1.vim                    # editor le supreme
   xterm                     # basic terminal, as a backup only
   bitwarden                 # Password manager, it's that simple :)
@@ -49,6 +54,7 @@ kernel = with s1.linuxPackages-libre; [
 #Bcmake                     # for source builds
 #Bbinutils                  # for source builds
 #Bgcc                       # compiler
+  xsecurelock               # secure lockscreen
   xss-lock                  # lockscreen as screensaver
   nix-bundle                # https://github.com/matthewbauer/nix-bundle
 
@@ -141,6 +147,7 @@ kernel = with s1.linuxPackages-libre; [
   breeze-icons              # icon theme
   libsForQt5.qtstyleplugins # let QT themes apply properly
   qt5ct                     # theming for stuff inside xorg
+  xsettingsd                # application settings, alternative to gsettingsd
   lxappearance              # theming
   touchegg                  # touch gestures
 
@@ -175,6 +182,8 @@ kernel = with s1.linuxPackages-libre; [
   s1.xdotool                # virtual keypress util
   libXrandr                 # res change lib
   xrandr                    # change your resolution
+  xwininfo                  # like xprop
+  xev                       # input tester
 
 
 #}
@@ -196,6 +205,14 @@ kernel = with s1.linuxPackages-libre; [
 
 #}
 ];
+# experimental things {
+experimental = with u1; [
+  dpkg                      # debian
+  apt                       # ubuntu
+  pacman                    # arch
+  libdnf                    # redhat (rpm)
+  ];
+#}
 
 # gpu wrappers {
 gpu = with (import nixGL { pkgs=proprietary; }); [
@@ -553,7 +570,8 @@ gui = with s1; [
   czkawka                   # file duplicate management tool
   transmission-gtk          # torrent tool! also has cli
   sxiv                      # simple x image viewer
-  parcellite                # clipboard manager
+  clipit                    # clipboard manager
+# parcellite                # clipboard manager
   xzoom                     # screen magnifier   : These work well
   colorpicker               # hex value of pixel : together.
   brightnessctl             # manage brightness
@@ -583,10 +601,17 @@ gui = with s1; [
 # selections {
 selections = builtins.concatLists [
   # things that need high package priority to work:
-  (map lib.hiPrio [ packages.haskell ])
+  (map lib.hiPrio [ packages.haskell
+  xm.defaultPackage         # wm
+  xmc.defaultPackage        # xmonad stuff
+ ])
 
   # NixOS only:
-  (map ifNix [ kernel packages.python ])
+  (map ifNix [
+  kernel
+  packages.python
+# experimental # other distro's package managers
+  ])
 
   # Essentials
   unfree
@@ -595,15 +620,16 @@ selections = builtins.concatLists [
   xorg
   fonts
 
+  # Likely desired
   extras
   code
   editors
   hacking
   vm
+  gpu
 
   flossGames
 
-  gpu
 
   media.managing
   media.creation
@@ -674,9 +700,9 @@ in
 			#blueman.enable = true;
 			#blueman-applet.enable = true;
 			#screen-locker = {
-			#	enable = false;
-			#	lockCmd = "${pkgs.slock}/bin/slock";
-			#	inactiveInterval = 10;
+			#	enable = true;
+			#	lockCmd = "${s1.xsecurelock}/bin/xsecurelock";
+			#	inactiveInterval = 1;
 			#};
 		};
 #		programs = {
@@ -726,4 +752,5 @@ in
 #
 #if you want something approximating environment.etc.<name>.source under Home Manager, you could use xdg.dataFile.<name>.source
 #then you could use ~/.local/share/nixpkgs
+#services.printing.drivers = with pkgs; [ gutenprint gutenprintBin epson-201106w epson-alc1100 epson-escpr epson-escpr2 epson-workforce-635-nx625-series epson_201207w ]
 #}
