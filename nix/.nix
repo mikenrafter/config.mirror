@@ -2,9 +2,7 @@
 
 # my NIX config
 
-# imports {
-	inputs: with inputs; with { inherit config lib nixos; };
-#}
+inputs: with inputs; with { inherit config lib nixos; };
 let
 # aliases {
 # u1,u2,etc now dynamically handled in flake.nix

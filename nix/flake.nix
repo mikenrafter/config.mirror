@@ -23,6 +23,9 @@ inputs = {
 		inputs.nixpkgs.follows = "unstable1";
 	};
 
+	xmgit.url  = "path:./xm-test/flake.nix";
+	xmcgit.url = "path:./xm-test-contrib/flake.nix";
+
 };
 #{ outputs
 	outputs = inputs: with inputs; let

@@ -38,6 +38,8 @@ dis uni easyeffects --gapplication-service
 uni touchegg &
 # compositor
 uni picom &
+# clipboard manager
+uni clipit &
 
 ### ### ### ###
 #
@@ -52,10 +54,11 @@ blueman-applet &
 nm-applet &
 # kde connect indicator
 kdeconnect-indicator &
+# allow optimus to function + applet
+prime-offload & \
+	optimus-manager-qt &
 # screenshot tool daemon
 flameshot &
-# GPU
-optimus-manager-qt &
 
 ### ### ### ###
 #
