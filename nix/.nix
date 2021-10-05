@@ -223,7 +223,7 @@ gpu = with (import nixGL { pkgs=proprietary; }); [
 #}
 
 
-packages = with s1 // { overlays=[ xm.overlay xmc.overlay ]; } ; {
+packages = with s1; {
 
 # haskell {
 # use ghcWithHoogle rather than ghcWithPackages, this way you get nice haddock
@@ -404,16 +404,15 @@ gui = with s1; [
 # selections {
 selections = builtins.concatLists [
   # things that need high package priority to work:
-  (map lib.hiPrio [ packages.haskell
-# xm.defaultPackage.x86_64-linux         # wm
-# xmc.defaultPackage.x86_64-linux        # xmonad stuff
- ])
+  (map lib.hiPrio [
+  packages.haskell
+  ])
 
   # NixOS only:
   (map ifNix [
   kernel
   packages.python
-# experimental # other distro's package managers
+# experimental  # other distro's package managers
   ])
 
   # Essentials
