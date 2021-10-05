@@ -223,213 +223,16 @@ gpu = with (import nixGL { pkgs=proprietary; }); [
 #}
 
 
-# xmonad {
+packages = with s1 // { overlays=[ xm.overlay xmc.overlay ]; } ; {
 
-# git {
-# xmonad {
-#monadg = pkgs: with pkgs;
-#(callPackage
-# ({ mkDerivation, base, containers, data-default, directory
-#  , extensible-exceptions, filepath, mtl, process, QuickCheck
-#  , setlocale, unix, utf8-string, X11
-#  }:
-# mkDerivation {
-#  pname = "xmonad-git";
-#  version = "0.17";
-#  sha256 = "16wxp2k918c3c0lnalg5x8ag0v4wcij9bajpf0bq81lr51q6qx3q";
-#  src = fetchGit {
-#    url = "https://github.com/xmonad/xmonad";
-#    ref = "master";
-#    rev = "4a0b166998a838d91f002991da82507a2d04d3bb";
-#  };
-#  isLibrary = true;
-#  isExecutable = true;
-#  libraryHaskellDepends = [
-#    base containers data-default directory extensible-exceptions
-#    filepath mtl process setlocale unix utf8-string X11
-#  ];
-#  executableHaskellDepends = [ base mtl unix X11 ];
-#  testHaskellDepends = [
-#    base containers extensible-exceptions QuickCheck X11
-#  ];
-#  postInstall = ''
-#   install -D man/xmonad.1 ''${!outputDoc}/share/man/man1/xmonad.1
-#   install -D man/xmonad.hs ''${!outputDoc}/share/doc/$name/sample-xmonad.hs
-#  '';
-#  description = "A tiling window manager";
-#  license = lib.licenses.bsd3;
-#  maintainers = with lib.maintainers; [ peti ];
-# })
-#}); {
-#}
-# xmonad-contrib {
-#monad-contribg = pkgs: with pkgs;
-# let xmonada = (xmonadg pkgs); in
-#(callPackage
-# ({ mkDerivation, alsa-mixer, base, bytestring, containers, hint
-#  , libmpd, mtl, network, regex-posix, X11, xmonad-git
-#  }:
-# mkDerivation {
-#  pname = "xmonad-contrib";
-#  version = "0.17";
-#  sha256 = "0vzi9cfgbdk0hsapb3skh2la2aic1lmbs0rfr6xli6l5wsbr8xl9";
-#  src = fetchGit {
-#   url = "https://github.com/xmonad/xmonad-contrib";
-#   ref = "master";
-#   rev = "902c2bb17d1a1ee4a56944dbf952d6f95d5700c6";
-#  };
-#  configureFlags = [
-#    "-f-with_hlist" "-fwith_parsec" "-fwith_split"
-#  ];
-#  libraryHaskellDepends = [
-#    alsa-mixer base bytestring containers hint libmpd mtl network
-#    regex-posix X11 xmonad xmonad-contrib
-#    QuickCheck hspec
-#  ];
-#  description = "Third party extensions for xmonad with wacky dependencies";
-#  license = lib.licenses.bsd3;
-# })
-#}); {
-#}
-# xmonad-extras {
-#monad-extrasg = pkgs: with pkgs;
-#let xmonada = xmonadg pkgs; xmonad-contriba = xmonad-contribg pkgs; in
-#(callPackage
-# ({ mkDerivation, alsa-mixer, base, bytestring, containers, hint
-#  , libmpd, mtl, network, regex-posix, X11, xmonada, xmonad-contriba
-#  }:
-# mkDerivation {
-#  pname = "xmonad-extras";
-#  version = "0.17";
-#  src = fetchGit {
-#    url = "https://github.com/xmonad/xmonad-extras";
-#    ref = "master";
-#    rev = "d45b4cbfadbd8a6c2f0c062e5027a1c800b0e959";
-#  };
-#  sha256 = "1r4wgs1r7grh14kjsplcjy14wm799pq7zgsl7v2z7sjii63hicab";
-#  configureFlags = [
-#    "-f-with_hlist" "-fwith_parsec" "-fwith_split"
-#  ];
-#  libraryHaskellDepends = [
-#    alsa-mixer base bytestring containers hint libmpd mtl network
-#    regex-posix X11 xmonad xmonad-contrib
-#  ];
-#  description = "Third party extensions for xmonad with wacky dependencies";
-#  license = lib.licenses.bsd3;
-# })
-#}); {
-#}
-#}
-# non-git {
-#xmonadg = pkgs: with pkgs; xmonad;
-#xmonad-contribg = pkgs: with pkgs; xmonad-contrib;
-#xmonad-extrasg = pkgs: with pkgs; xmonad-extras;
-#}
-
-
-#}
-
-packages = with s1; {
-
-# flakes {
-flakes = [(pkgs.writeScriptBin "flakes" ''
-	exec ${pkgs.nixUnstable}/bin/nix --experimental-features "nix-command flakes" "$@"
-	'')];
-#}
 # haskell {
 # use ghcWithHoogle rather than ghcWithPackages, this way you get nice haddock
 # pages, and a localhost hoogle instance!
 haskell = haskellPackages.ghcWithHoogle (pkgs: with pkgs; [
-## xmonad {
-#  (callPackage
-#  ({ mkDerivation, base, containers, data-default, directory
-#   , extensible-exceptions, filepath, mtl, process, QuickCheck
-#   , setlocale, unix, utf8-string, X11
-#   }:
-#  mkDerivation {
-#   pname = "xmonad-git";
-#   version = "0.17";
-#   sha256 = "16wxp2k918c3c0lnalg5x8ag0v4wcij9bajpf0bq81lr51q6qx3q";
-#   src = fetchGit {
-#     url = "https://github.com/xmonad/xmonad";
-#     ref = "master";
-#     rev = "4a0b166998a838d91f002991da82507a2d04d3bb";
-#   };
-#   isLibrary = true;
-#   isExecutable = true;
-#   libraryHaskellDepends = [
-#     base containers data-default directory extensible-exceptions
-#     filepath mtl process setlocale unix utf8-string X11
-#   ];
-#   executableHaskellDepends = [ base mtl unix X11 ];
-#   testHaskellDepends = [
-#     base containers extensible-exceptions QuickCheck X11
-#   ];
-#   postInstall = ''
-#    install -D man/xmonad.1 ''${!outputDoc}/share/man/man1/xmonad.1
-#    install -D man/xmonad.hs ''${!outputDoc}/share/doc/$name/sample-xmonad.hs
-#   '';
-#   description = "A tiling window manager";
-#   license = lib.licenses.bsd3;
-#   maintainers = with lib.maintainers; [ peti ];
-#  })
-#  {})
-##}
-## xmonad-contrib {
-#  (callPackage
-#  ({ mkDerivation, alsa-mixer, base, bytestring, containers, hint
-#   , libmpd, mtl, network, regex-posix, X11 #, xmonad-git
-#   }:
-#  mkDerivation {
-#   pname = "xmonad-contrib-git";
-#   version = "0.17";
-#   sha256 = "0vzi9cfgbdk0hsapb3skh2la2aic1lmbs0rfr6xli6l5wsbr8xl9";
-#   src = fetchGit {
-#    url = "https://github.com/xmonad/xmonad-contrib";
-#    ref = "master";
-#    rev = "902c2bb17d1a1ee4a56944dbf952d6f95d5700c6";
-#   };
-#   configureFlags = [
-#     "-f-with_hlist" "-fwith_parsec" "-fwith_split"
-#   ];
-#   libraryHaskellDepends = [
-#     alsa-mixer base bytestring containers hint libmpd mtl network
-#     regex-posix X11 xmonad xmonad-contrib
-#     QuickCheck hspec
-#   ];
-#   description = "Third party extensions for xmonad with wacky dependencies";
-#   license = lib.licenses.bsd3;
-#  })
-#  {})
-##}
-## xmonad-extras {
-#  (callPackage
-#  ({ mkDerivation, alsa-mixer, base, bytestring, containers, hint
-#   , libmpd, mtl, network, regex-posix, X11 #, xmonad-git, xmonad-contrib-git
-#   }:
-#  mkDerivation {
-#   pname = "xmonad-extras-git";
-#   version = "0.17";
-#   src = fetchGit {
-#     url = "https://github.com/xmonad/xmonad-extras";
-#     ref = "master";
-#     rev = "d45b4cbfadbd8a6c2f0c062e5027a1c800b0e959";
-#   };
-#   sha256 = "1r4wgs1r7grh14kjsplcjy14wm799pq7zgsl7v2z7sjii63hicab";
-#   configureFlags = [
-#     "-f-with_hlist" "-fwith_parsec" "-fwith_split"
-#   ];
-#   libraryHaskellDepends = [
-#     alsa-mixer base bytestring containers hint libmpd mtl network
-#     regex-posix X11 xmonad xmonad-contrib
-#   ];
-#   description = "Third party extensions for xmonad with wacky dependencies";
-#   license = lib.licenses.bsd3;
-#  })
-#  {})
-##}
   xmonad                    # wm
   xmonad-contrib            # xmonad stuff
+# (lib.hiPrio xm.defaultPackage.x86_64-linux)
+# (lib.hiPrio xmc.defaultPackage.x86_64-linux)
   xmonad-extras             # xmonad-contrib++
   xmonad-utils              # xmonad more more stuff stuff
 # DescriptiveKeys           # xmonad stuff more in the more of the stuff
@@ -602,8 +405,8 @@ gui = with s1; [
 selections = builtins.concatLists [
   # things that need high package priority to work:
   (map lib.hiPrio [ packages.haskell
-  xm.defaultPackage         # wm
-  xmc.defaultPackage        # xmonad stuff
+# xm.defaultPackage.x86_64-linux         # wm
+# xmc.defaultPackage.x86_64-linux        # xmonad stuff
  ])
 
   # NixOS only:
@@ -652,9 +455,6 @@ selections = builtins.concatLists [
 #}
 in
 { # main
-#	# enable NUR {
-#	imports = lib.attrValues nur.repos.moredhel.hmModules.modules;
-#	#}
 	options.profiles.dev.enable =
 		lib.mkOption {
 			description = "enable profile";

@@ -740,6 +740,7 @@ fun! Launch(extra) "{-
 		let l:bang = getbufline(bufnr(@%), 1, 1)[0]
 		let l:line = l:bang
 		let l:binary = '' " failsafe
+		# more launch {
 		if match(l:bang, '^[^a-zA-Z\d]{2}') == 0 " if first 2 characters are symbols
 			" shebang nonexistant, so ignore for other shebang checks
 			let l:bang = ''
