@@ -265,10 +265,11 @@ mkeys =
   aNext, aPrev, fUp, fDown :: X ()
   fullFloat :: Window -> WindowSet -> WindowSet
   --}
-  aNext = withAll (\_ -> safeShift Next <+> safeMove Prev) <+> safeMove Next <+> wreverse -- <+> up
-  aPrev = withAll (\_ -> safeShift Prev <+> safeMove Next) <+> safeMove Prev <+> wreverse -- <+> up
+  allSafe fwd bak = withAll (\_ -> safeShift fwd <+> safeMove bak) <+> safeMove fwd <+> wreverse <+> up -- leave `up` here, other up happens before
+  aNext = allSafe Next Prev
+  aPrev = allSafe Prev Next
   fullFloat = flip W.float $ W.RationalRect 0 0 1 1
-  up = updatePointer (0.985, 0.5) (0, 0)
+  up = updatePointer (0.5, 0.5) (0.75, 0.75)
   wrev2 = \_ -> W.modify' $
    -- completely reverse stack (kinda)
    \(W.Stack f u d) -> W.Stack (last d) [] (reverse (init d) <> u <> [f])
@@ -278,13 +279,17 @@ mkeys =
 --{- disaster town
   -- complex functions to replace *.focusUp/down
   -- adds support for tab layout to B.focusUp
-  -- adds support for floating window visibility whilst switching
+  -- adds support for floating window visibility whilst switching (broken ATM)
   fUp =
-   ifLay' "tab" (windows W.focusUp) B.focusUp
+   windows W.focusUp
+   --B.focusUp
+   --ifLay' "tab" (windows W.focusUp) B.focusUp
    -- <+> ifFloat W.shiftMaster)
    -- <+> up
   fDown =
-   ifLay' "tab" (windows W.focusDown) B.focusDown
+   windows W.focusDown
+   --B.focusDown
+   --ifLay' "tab" (windows W.focusDown) B.focusDown
    -- <+> up
    -- <+> ifFloat' (mapM_ ifFloat [W.swapMaster, W.swapUp, W.focusMaster]) B.focusDown
    -- <+> ifFloat' (ifFloat (W.swapUp <+> W.focusMaster)) B.focusDown
@@ -393,8 +398,6 @@ twoK modif first list =
 --}
 
 {- references
-{- -- this tricks vim, enabling syntax highlighting
--}
 --{- organize: takes all other floats windows and places them below the focus
 -- sort-of replaces trackFloating, but seems to be a more expensive operation,
 -- tbh, just use that, but here's an amazing example on how to modify the

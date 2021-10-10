@@ -2,14 +2,10 @@
 
 # my NIX config
 
-inputs: with inputs; with { inherit config lib nixos; };
-let
+inputs: with inputs; let
 # aliases {
-# u1,u2,etc now dynamically handled in flake.nix
+# flake.nix: u1,u2,etc
 ifNix = package: lib.mkIf nixos package;
-over = set: set; # disabled variant, for when there are no overlays
-#over = set: {inherit overlays;} // set;
-proprietary = (import _u1 (over {config.allowUnfree=true;}) );
 #}
 # custom packages {
 nvim = import ./programs/nvim.nix { inherit u1; inherit s1; };
@@ -23,7 +19,7 @@ kernel = with s1.linuxPackages-libre; [
 
 # -}
 # unfree {
-]; unfree = with proprietary; [
+]; unfree = with inputs.unfree.unstable1; [
 
 ##games:
 # lutris                    # integrates with steam - proprietary...
@@ -215,7 +211,7 @@ experimental = with u1; [
 #}
 
 # gpu wrappers {
-gpu = with (import nixGL { pkgs=proprietary; }); [
+	gpu = with nixGL; [
 	nixGLIntel
 	auto.nixGLDefault
 	auto.nixGLNvidia
@@ -223,17 +219,17 @@ gpu = with (import nixGL { pkgs=proprietary; }); [
 #}
 
 
-packages = with s1; {
+ packages = with u1; {
 
 # haskell {
 # use ghcWithHoogle rather than ghcWithPackages, this way you get nice haddock
 # pages, and a localhost hoogle instance!
-haskell = haskellPackages.ghcWithHoogle (pkgs: with pkgs; [
+haskell = haskellPackages.ghcWithHoogle (p: with p; [
+  s1.wayland s1.wayland-scanner
+  inputs.waymonad           # experimental WM
   xmonad                    # wm
   xmonad-contrib            # xmonad stuff
-# (lib.hiPrio xm.defaultPackage.x86_64-linux)
-# (lib.hiPrio xmc.defaultPackage.x86_64-linux)
-  xmonad-extras             # xmonad-contrib++
+# xmonad-extras             # xmonad-contrib++ # needs transition to flakes
   xmonad-utils              # xmonad more more stuff stuff
 # DescriptiveKeys           # xmonad stuff more in the more of the stuff
   haskell.lib.appendConfigureFlag xmobar ("-f all_extensions")                    # xmobar addition for xmonad
@@ -405,7 +401,7 @@ gui = with s1; [
 selections = builtins.concatLists [
   # things that need high package priority to work:
   (map lib.hiPrio [
-  packages.haskell
+#  packages.haskell
   ])
 
   # NixOS only:
@@ -414,6 +410,8 @@ selections = builtins.concatLists [
   packages.python
 # experimental  # other distro's package managers
   ])
+
+  [packages.haskell]
 
   # Essentials
   unfree

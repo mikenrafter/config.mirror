@@ -23,6 +23,12 @@ inputs = {
 		inputs.nixpkgs.follows = "unstable1";
 	};
 
+	waymonad = {
+		url = github:L-as/waymonad;
+		flake = false;
+		inputs.nixpkgs.follows = "stable1";
+	};
+
 	xm = {
 		url  = path:./xm-test;
 		inputs.nixpkgs.follows = "unstable1";
@@ -40,39 +46,50 @@ inputs = {
 		# is user on nixos?
 		nixos = false;
 		passthrough = { inherit username nixos system; };
-		otherChannels = { # channels w/ flakes only or no legacyPackages
-		inherit
-			nixGL
-		;
+
+		unfree = utils.enslave { # usage: unfree.name
+			inherit unstable1 stable1;
 		};
-		overlayPackages = [xm xmc];
+		otherChannels = { # channels w/ flakes only or no legacyPackages
+			nixGL = import nixGL {pkgs=unfree.unstable1;};
+			waymonad = import waymonad { pkgs=(import stable1 {}); };
+		};
+		overlays = utils.overlay [
+			xm
+			xmc
+		];
 
 		# legacy: names like u1, s1
-		shorthand  = attrMap inputs firstLast;
-		# flake: names like _u1, _s1
-		_fy        = attrMap shorthand (n: "_"+n);
+		shorthand  = with utils; attrMapFn inputs firstLast;
 		# flake: names like _unstable1, _stable1
-		flaky      = attrMap inputs (n: "_"+n);
+		flaky      = with utils; attrMapFn inputs (n: "_"+n);
+		# flake: names like _u1, _s1
+		_fy        = with utils; attrMapFn shorthand (n: "_"+n);
 
-		libChannel = stable1;
+		libs = stable1;
 
 		# mini-utils {
-		extraSpecialArgs = channels // otherChannels // flaky // _fy // passthrough;
-		channels = with lc; lib.mapAttrs (_:
-			set: builtins.getAttr system set.legacyPackages
-		) (overlay ( inputs // shorthand ));
+		# keep overlays, for weird scenarios (hopefully not!)
+		extraSpecialArgs = with utils; channels // otherChannels // flaky // _fy // passthrough // { inherit unfree overlays;};
+		# with utils; - allow self-references
+		utils = with builtins; with libs.lib; rec {
+			enslave = mapAttrs (_: set: 
+				import set {config.allowUnfree=true;}
+			);
+			channels = mapAttrs (_: set:
+				import set {inherit overlays;}
+			) ( inputs // shorthand );
 
-		overlays = builtins.map (p: p.overlay) overlayPackages;
-		overlay = with lc; lib.attrsets.mapAttrs (_: v: v // { inherit overlays; });
+			overlay = map (p: p.overlay);
 
-		attrMap = with lc; set: op: lib.attrsets.mapAttrs'
-			(n: v:
-				lib.attrsets.nameValuePair
-				(op n) v
-			) set;
-		firstLast = with builtins; s: let l = stringLength s - 1; in elm s 0 + elm s l;
-		elm = with builtins; s: x: substring x 1 s;
-		lc = libChannel;
+			attrMapFn = set: op: attrsets.mapAttrs'
+				(n: v:
+					attrsets.nameValuePair
+					(op n) v
+				) set;
+			firstLast = s: let l = stringLength s - 1; in elm s 0 + elm s l;
+			elm = s: x: substring x 1 s;
+		};
 		#}
 	in {
 		#https://github.com/nix-community/home-manager/blob/4320399a3e5f3afb8a867324901a559f23be8178/flake.nix#L35
@@ -82,7 +99,7 @@ inputs = {
 				imports = [ ./.nix ];
 				nixpkgs = {
 					#source = unstable1;
-					overlays = [ xm.overlay xmc.overlay ];
+					inherit overlays;
 				};
 			};
 			homeDirectory = "/home/" + username;

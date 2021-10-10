@@ -109,7 +109,5 @@ mprompts :: [(String, XPConfig -> X ())]
 --}
 
 {- references
-{- -- this tricks vim, enabling syntax highlighting
--}
 --}
 

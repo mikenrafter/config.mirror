@@ -65,7 +65,5 @@ colors :: a -> Bool -> X (String, String)
 --}
 
 {- references
-{- -- this tricks vim, enabling syntax highlighting
--}
 --}
 

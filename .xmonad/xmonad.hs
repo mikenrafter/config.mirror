@@ -6,11 +6,9 @@
 {- LANGUAGE NoMonomorphismRestriction #-} -- ?
 {- LANGUAGE NamedFieldPuns #-} -- ?
 {- LANGUAGE FlexibleContexts #-} -- ?
+{-# OPTIONS_GHC -Wno-deprecations #-}
 
 -- import XMonad.Hooks.FadeWindows (isFloating) -- for later
-import Control.Monad
-import Data.Monoid
-import XMonad.Actions.UpdatePointer
 -- my xmonad config, see ../.vimrc for navigation
 --{- imports
 --{- global
@@ -27,6 +25,7 @@ import System.IO (hPutStrLn, Handle)
 import Control.Monad
 --}
 --{- data
+import Control.Monad
 import Data.Monoid
 import Data.List (isInfixOf)
 import Data.Char (isSpace, toLower)
@@ -35,6 +34,7 @@ import Data.Maybe (fromJust)
 --}
 --{- actions
 import XMonad.Actions.SpawnOn
+import XMonad.Actions.UpdatePointer
 --}
 --{- hooks
 import XMonad.Hooks.DynamicLog (dynamicLogWithPP, pad, xmobarPP, xmobarColor, PP(..), shorten, xmobarStrip)
@@ -54,8 +54,10 @@ import qualified XMonad.Layout.Spiral as LS
 import XMonad.Layout.GridVariants (Grid(Grid))
 import XMonad.Layout.ResizableTile
 import XMonad.Layout.Tabbed
+import XMonad.Layout.MultiDishes
 import XMonad.Layout.Accordion
 import XMonad.Layout.SubLayouts
+import XMonad.Layout.LayoutBuilder
 --}
 --{- effects
 --{- testing
@@ -238,7 +240,7 @@ act action joining_operator [identifier] [tailed] [exact], eg:
  act (shift 1) (>>|) [className, title] [] [] = (never) --> shift 1
 --}
 mmanageHook =
- let up = updatePointer (0.5, 0.5) (0, 0)
+ let up = updatePointer (0.5, 0.5) (1, 1)
  in
  -- manage floating, and fullscreen
  -- change the stack as new windows arrive
@@ -432,7 +434,6 @@ mbarHook pipe = do
    , ppSep             = " "
    -- mark urgent WS's
    , ppUrgent          = fc(fg!3) (bg!3) . pad . clickable
-   -- current WS -- TODO add bottom/top border instead of bg color
    , ppCurrent         = fc(fg!2) (bg!1) . (\x-> "<box type=VBoth width=2 color=" ++ fg!1 ++ ">" ++ (pad x) ++ "</box>") . clickable
 -- , ppCurrent         = {-xmobarBorder-} fc(bg!1) (fg!2) . pad . clickable
    , ppHidden          = check
@@ -442,7 +443,7 @@ mbarHook pipe = do
 
    -- other items
    , ppExtras = [windowCount]
-   , ppOrder  = \(ws:lay:title:extra) -> [lay, ws] <> extra <> [title] -- use w/ statusBar: [(xmobarRaw . (\w -> if null w then "untitled" else w title]
+   , ppOrder  = \(ws:lay:title:extra) -> [take 10 lay, ws] <> extra <> [title] -- use w/ statusBar: [(xmobarRaw . (\w -> if null w then "untitled" else w title]
    , ppSort = mkWsSort getWsCompare
 
    }
@@ -453,7 +454,9 @@ mlayoutHook mBG mFG =
    mods
    -- windowNavigation .
    -- subLayout [0] (tabs mBG mFG)
- $ accordion
+   $   dishess mBG mFG
+-- ||| tabPlus mBG mFG
+   ||| accordion
    ||| spiral
    ||| spiral'
    ||| tall1
@@ -466,6 +469,7 @@ mlayoutHook mBG mFG =
      -- withUrgencyHookC BorderUrgencyHook { urgencyBorderColor = mFG } urgencyConfig { suppressWhen = Never } .
      showWName' (mshowWNameTheme mBG mFG) .
      avoidStruts .
+--   minimize .
      boringAuto .
      -- boringWindows .
      -- keep floating grouped above last focused tiled
@@ -478,7 +482,7 @@ mlayoutHook mBG mFG =
 mshowWNameTheme :: [Char] -> [Char] -> SWNConfig
 --}
 --{- global settings
--- i --> inner x*, innex y*, outer x*, outer y*
+-- i --> inner x*, inner y*, outer x*, outer y*
 mspacing i = spacingRaw True (Border (i) (i) (i*2) (i*2)) True (Border i i i i) True
 nospace = spacingRaw False bnull False bnull False where bnull = Border 0 0 0 0
 lay name count space layout =
@@ -490,13 +494,21 @@ lay name count space layout =
  $ layout
 --}
 --{- selected layouts
+--             lay name  # ' ' $ layout
+--tabPlus mBG mFG =  lay "+tb" 0 2 $ (layoutN 3 (relBox 0 0 0.5 1) (Just $ relBox 0 0 1 1)   $ tabs mBG mFG)
+--                                 $ (layoutN 3 (relBox 0.5 0 1 1) Nothing                   $ tabs mBG mFG)
+--                                 $  layoutAll (relBox 0 0.4 1 1)                           $ tabs mBG mFG
+dishess mBG mFG = lay "dis" 6 0 $ magnifier $ MultiDishes 2 4 (3/7)
+--dishess mBG mFG = ( layoutN 6 (relBox 0 0 1 (4/7)) (Just $ relBox 0 0 1 1) $ magnifier $ MultiDishes 2 4 (3/7))
+--                  $ layoutAll (relBox 0 (4/7) 1 1)                         $ full
+--dishess mBG mFG = lay "dis" 0  2 $ (layoutN 6 (relBox 0 0 1 (4/7)) (Just $ relBox 0 0 1 1) $ magnifier $ MultiDishes 2 4 (3/7))
+--                                 $  layoutAll (relBox 0 (4/7) 1 1)                         $ tabs mBG mFG
 accordion =    lay "acc" 0  2 $ Accordion
 spiral =       lay "spi" 8  2 $ LS.spiral (3/5)
-spiral' =      lay "+sp" 8  2 $ magnifier (LS.spiral (3/5) )
+spiral' =      lay "+sp" 8  2 $ magnifier $ LS.spiral (3/5)
 tall1 =        lay "tl1" 10 2 $ Tall 1 (3/100) (1/2)
 tall2 =        lay "tl2" 20 3 $ Tall 2 (3/100) (1/2)
-tabs mBG mFG = lay "tab" 50 0
- $ tabbed shrinkText mtabConfig
+tabs mBG mFG = lay "tab" 50 0 $ tabbed shrinkText mtabConfig
  where --{-
   mtabConfig =
    def
@@ -576,7 +588,11 @@ main = do
   --}
   --}
 
+{- TODOs
+look into: X.L.Hidden instead of minimize
+IfMax instead of layoutBuilder
+StateFull instead of janky floating done now
+X.L.Stoppable -- save CPU with bg processes! Use with caution.
+--}
 {- references
-{- -- this tricks vim, enabling syntax highlighting
--}
 --}
