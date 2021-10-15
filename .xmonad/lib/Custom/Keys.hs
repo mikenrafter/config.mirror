@@ -31,6 +31,7 @@ import XMonad.Actions.WithAll
 -- import XMonad.Actions.Sink (sink)
 import qualified XMonad.Actions.Search as S
 import XMonad.Actions.Minimize
+import XMonad.Layout.Hidden
 --}
 --{- layouts
 import XMonad.Layout.LimitWindows (limitWindows)
@@ -60,7 +61,8 @@ import Data.Maybe (isJust, fromMaybe)
 --}
 --{- keys
 --{- type definitions
-moverrides, mkeys :: [(String, X ())]
+moverrides :: [(String, X ())]
+mkeys :: [String] -> [String] -> [(String, X ())]
 --}
 --{- overrides
 moverrides =
@@ -106,7 +108,7 @@ moverrides =
   --}
 --}
 --{- my keys
-mkeys =
+mkeys bgs fgs =
  -- Instead of clumsy log hook version of updatePointer, activate after every
  -- hotkey. This way it doesn't activate upon notifications!
  map (\(k, a) -> (k, a *> up)) ([
@@ -133,8 +135,10 @@ mkeys =
  -- , ("M-C-a", rotAllUp)                -- Rotate all up
  -- , ("M-C-r", rotAllDown)              -- Rotate all down
  
- , ("M-z",   withFocused minimizeWindow)
- , ("M-S-z", withLastMinimized maximizeWindowAndFocus)
+ , ("M-z",   withFocused hideWindow)
+ , ("M-S-z", popNewestHiddenWindow)
+-- ("M-z",   withFocused minimizeWindow)
+-- ("M-S-z", withLastMinimized maximizeWindowAndFocus)
 --}
 --{-  layouts
  , ("M-S-<Tab>", sendMessage FirstLayout)
@@ -153,10 +157,10 @@ mkeys =
  , ("M-<Space>" , toggleWS' ["NSP"])
  , ("M-C-S-M1-<Space>", appendWorkspace "oioi")
  , ("M-C-S-M1-1", setWorkspaceIndex 5)
- , ("M-C-S-M1-2", addWorkspacePrompt promptConf)
- , ("M-C-S-M1-3", renameWorkspace promptConf)
+ , ("M-C-S-M1-2", addWorkspacePrompt $ promptConf bgs fgs)
+ , ("M-C-S-M1-3", renameWorkspace  $ promptConf bgs fgs)
  , ("M-C-S-M1-4", addWorkspace "test")
- , ("M-C-S-M1-5", selectWorkspace promptConf)
+ , ("M-C-S-M1-5", selectWorkspace  $ promptConf bgs fgs)
  , ("M-C-S-M1-6", addHiddenWorkspace "wow")
  , ("M-C-S-M1-s", renameWorkspaceByName "ay")
  -- , ("M-M1-C-S-<Return>", activateProject currentProject)
@@ -223,8 +227,8 @@ mkeys =
  <> twoK "M" "p" [(k, allNamedScratchpadAction mscratch k ) | k     <- mscratch'   ]  -- scratchpads
  --}
  --{- prompts
- <> twoK "M" "s" [(k, S.promptSearch promptConf' f )     | (k,f) <- msearches   ]  -- search prompts
- <>              [("M-" <> k, f promptConf' )            | (k,f) <- mprompts    ]  -- other prompts
+ <> twoK "M" "s" [(k, S.promptSearch (promptConf' bgs fgs) f )     | (k,f) <- msearches   ]  -- search prompts
+ <>              [("M-" <> k, f (promptConf' bgs fgs))            | (k,f) <- mprompts    ]  -- other prompts
  --}
  --{- gridselects
  <> twoK "M" "\\" mgrids

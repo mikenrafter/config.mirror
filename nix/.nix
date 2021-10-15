@@ -225,8 +225,8 @@ experimental = with u1; [
 # use ghcWithHoogle rather than ghcWithPackages, this way you get nice haddock
 # pages, and a localhost hoogle instance!
 haskell = haskellPackages.ghcWithHoogle (p: with p; [
-  s1.wayland s1.wayland-scanner
-  inputs.waymonad           # experimental WM
+# s1.wayland s1.wayland-scanner
+# inputs.waymonad           # experimental WM
   xmonad                    # wm
   xmonad-contrib            # xmonad stuff
 # xmonad-extras             # xmonad-contrib++ # needs transition to flakes
@@ -462,7 +462,7 @@ in
 		# makes themes, and other things work better off of nixOS
 		targets.genericLinux.enable = ! nixos;
 		# theming {
-		xsession.windowManager.command = "$HOME/.nix-profile/bin/xmonad";
+		xsession.windowManager.command = "$HOME/scripts/wm";
 		xsession.enable = true;
 		xsession.numlock.enable = true;
 		# cursor theme

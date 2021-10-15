@@ -25,6 +25,8 @@ set synmaxcol=200
 syntax on
 "-}
 " highlighting {-
+" change vertical splic color
+hi VertSplit ctermbg=black ctermfg=darkgrey guifg=black guibg=darkgrey
 " enable highlighting based on current line
 "set cursorline " has been causing performance issues
 " highlight current line number

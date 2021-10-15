@@ -28,14 +28,14 @@ import XMonad.Prompt.Shell
 --}
 --}
 --{- prompt config
-promptConf =
+promptConf bgs fgs =
  def
   { font                = mfont
-  , bgColor             = bg !! 0
-  , fgColor             = fg !! 0
-  , bgHLight            = bg !! 0
-  , fgHLight            = fg !! 1
-  , borderColor         = bg !! 2
+  , bgColor             = bgs !! 0
+  , fgColor             = fgs !! 0
+  , bgHLight            = bgs !! 0
+  , fgHLight            = fgs !! 1
+  , borderColor         = bgs !! 2
   , promptBorderWidth   = 2
   , promptKeymap        = promptKeys -- vimLikeXPKeymap
   , position            = Bottom -- CenteredAt { xpCenterY = 0.025, xpWidth = 1 } -- Top
@@ -51,7 +51,7 @@ promptConf =
   , alwaysHighlight     = True
   , maxComplRows        = Just 10 -- Nothing
   }
-promptConf' = promptConf { autoComplete = Nothing }
+promptConf' bgs fgs = (promptConf bgs fgs) { autoComplete = Nothing }
 --}
 --{- keybinds
 -- A list of all of the standard Xmonad prompts and a key press assigned to them.

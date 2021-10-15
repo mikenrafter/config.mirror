@@ -239,6 +239,8 @@ mfloat = "~"
 -- types that use ambiguous letters are intentionally generalized
 prioritize :: [[a]] -> [[a]]
 hex6, caps, findProcess, mconsole' :: String -> String
+grabColors :: Char -> Char -> String -> [String]
+wordsWhen :: (Char -> Bool) -> (String -> String) -> String -> [String]
 cons, scon :: [a] -> [a]
 wraps :: [a] -> [a] -> [a]
 joins :: [a] -> [[a]] -> [a]
@@ -267,11 +269,19 @@ prioritize l =
    [length l, length l-1 .. 1])
    l
 hex6 h =
- head h : concat (
+ let h' = tail h in
+ head h : (take 6 $ concat (
   -- if string is longer than 4 characters, then double e.g #123 -> #112233
   -- exclude first character, ofc
-  map (\x -> replicate (if (length h') > 4 then 1 else 2) x) h'
-  ) where h' = tail h
+  map (\x -> flip replicate x $ if (length h') > 4 then 1 else 2) h'
+  ))
+grabColors sep comment = wordsWhen (== sep) $ takeWhile (/= comment)
+-- split-on function grabbed from stackOverflow
+wordsWhen pred fn str =
+ case dropWhile pred str of
+  "" -> []
+  str' -> fn w : wordsWhen pred fn tr
+   where (w, tr) = break pred str'
 --}
 --{- lists,arrays,strings
 cons arr = tail arr <> [head arr]

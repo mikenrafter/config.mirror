@@ -3,9 +3,22 @@
 
 function fish_prompt --description 'Write out the prompt'
 	set -l n /dev/null
-	set -l last_pipestatus $pipestatus
+	set last_pipestatus $pipestatus
+	set -x __fish_last_status $status
 	set -l normal (set_color normal)
 
+	if functions -q _old_fish_prompt
+		functions -e fish_prompt
+		functions -c _old_fish_prompt fish_prompt
+		functions -e _old_fish_prompt
+		for x in (seq 2)
+			tput el1 && tput el # clear line
+			tput cuu1           # go up 1 line
+		end
+		echo -ne "\r" # reset line position
+		fish_prompt
+		return 0
+	end
 	set -l cwd		# initialize cwd var
 
 	# user-dependent functions

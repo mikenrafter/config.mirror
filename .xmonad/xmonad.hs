@@ -1,12 +1,13 @@
 --xmonad #
-{-# LANGUAGE LambdaCase #-}
 {-# OPTIONS_GHC -Wno-missing-signatures -Wno-orphans #-}
+{-# LANGUAGE FlexibleContexts #-} -- for L.Hidden
+{-# LANGUAGE LambdaCase #-}
+{-# OPTIONS_GHC -Wno-deprecations #-} -- TODO: REMOVE DEPRECATED FNs
+
 {- LANGUAGE ViewPatterns #-} -- ?
 {- LANGUAGE ParallelListComp #-} -- ?
 {- LANGUAGE NoMonomorphismRestriction #-} -- ?
 {- LANGUAGE NamedFieldPuns #-} -- ?
-{- LANGUAGE FlexibleContexts #-} -- ?
-{-# OPTIONS_GHC -Wno-deprecations #-}
 
 -- import XMonad.Hooks.FadeWindows (isFloating) -- for later
 -- my xmonad config, see ../.vimrc for navigation
@@ -20,8 +21,10 @@ import Custom.Vars
 --}
 --{- standards
 import XMonad
+import XMonad.Prelude
 import qualified XMonad.StackSet as W
 import System.IO (hPutStrLn, Handle)
+import System.Directory
 import Control.Monad
 --}
 --{- data
@@ -78,6 +81,7 @@ import XMonad.Layout.MultiToggle.Instances (StdTransformers(NBFULL, MIRROR, NOBO
 import XMonad.Layout.Renamed (renamed, Rename(..))
 import XMonad.Layout.WindowArranger (windowArrange, WindowArrangerMsg(..))
 import qualified XMonad.Layout.ToggleLayouts as T (toggleLayouts, ToggleLayout(Toggle))
+import XMonad.Layout.Hidden
 import XMonad.Layout.Minimize
 import XMonad.Layout.BoringWindows (boringWindows, boringAuto)
 --}
@@ -104,18 +108,21 @@ import XMonad.Util.Run
 --}
 --{- autostart
 --{- type definitions
-mstartupHook :: X ()
+mstartupHook :: [String] -> [String] -> X ()
 --}
-mstartupHook = do
+mstartupHook bcs fcs = do
  setDefaultCursor xC_left_ptr
  setWMName mwm
- -- note: (spawnpipe mbar) is used in main()
- mapM_ (\x -> spawnOnce $ x ++ " &") $ mlock ++ msession
- mapM_ (\x -> unspawn x <+> spawn ("sleep 1;" ++ x)) $ mtray (bg!1) : mrestart
+ mapM_
+  ( \x -> spawnOnce $ x <> " &" )
+  $ mlock <> msession
+ mapM_
+  ( \x -> unspawn x <+> spawn ("sleep 1;" ++ x) )
+  $ mtray (bcs!1) : mrestart
  where
   mlock =
-   [ "xset s " ++ show (60 * mtimeout)
-   , "xss-lock " ++ mlocker
+   [ "xset s " <> show (60 * mtimeout)
+   , "xss-lock " <> mlocker
    ]
 --}
 --{- workspaces
@@ -199,8 +206,7 @@ mprojects =
 --{- type definitions
 mmanageHook :: XMonad.Query (Data.Monoid.Endo WindowSet)
 mhandleEventHook :: Event -> X All
-mlogHook :: Handle -> X ()
-mbarHook :: Handle -> X ()
+mlogHook, mbarHook :: Handle -> [String] -> [String] -> X ()
 --mlayoutHook :: String -> String -> l0 Window
 --mlayoutHook :: ()
 --}
@@ -301,14 +307,14 @@ mmanageHook =
    fn `compare`
    concat
    [  [never]
-   ++ [x ~? y  | y <- n0]
-   ++ [x ~~? y | y <- n1]
+   <> [x ~? y  | y <- n0]
+   <> [x ~~? y | y <- n1]
       | x <- values ]
   or' a = foldr1 (<||>) a
   and' a = foldr1 (<&&>) a
-  (>>|) a b = or' b --> a
+  (>>|) a b = or'  b --> a
   (>>&) a b = and' b --> a
-  (>?|) a b = or' b -?> a
+  (>?|) a b = or'  b -?> a
   (>?&) a b = and' b -?> a
   -- see above, https://github.com/TheMC47/dotfiles/blob/master/.xmonad/src/Config.hs
   --{- ignore
@@ -411,7 +417,7 @@ mhandleEventHook =
 
 --}
 --{- logHook
-mlogHook pipe =
+mlogHook pipe bcs fcs =
  -- counterpart to handleEventHook for refocusLast
  refocusLastLogHook
  -- change opacity of unfocused windows, 1 is opaque, 0 transparent
@@ -419,10 +425,10 @@ mlogHook pipe =
  -- for changing to/from the last focused workspace
  <+> workspaceHistoryHook
  -- pass pipe in, for status bar
- <+> mbarHook pipe
+ <+> mbarHook pipe fcs bcs
 --}
 --{- barHook
-mbarHook pipe = do
+mbarHook pipe fg bg = do
  -- for copied windows, e.g media player
  copies <- wsContainingCopies
  let check x | x `elem` copies = fc (fg!3) (bg!2) $ " + "
@@ -490,7 +496,8 @@ lay name count space layout =
    renamed [Replace name]
  $ (if space > 0 then mspacing space else nospace)
  $ limitWindows (if count > 0 then count else 100)
- $ minimize
+-- minimize
+ $ hiddenWindows
  $ layout
 --}
 --{- selected layouts
@@ -539,10 +546,28 @@ main :: IO ()
 --{- definitions
 main = do
  pipe <- spawnPipe mbar
- fgc <- rand fg'
- bgc <- rand bg'
---et mBG = bg!2; mFG = fg!1 in
- let mBG = bgc;  mFG = fgc  in
+ --{- dynamic colors
+ let getColors = tryReadFile . (mhome <>)
+ let stringify colors = foldr1 (\a b -> a <> "\n" <> b) colors
+
+ wmbc <- getColors "/.cache/wal/wmbc"
+     <|> getColors "/.wmbc"
+     <|> (pure $ stringify bg)
+ wmfc <- getColors "/.cache/wal/wmfc"
+     <|> getColors "/.wmfc"
+     <|> (pure $ stringify fg)
+ let fcs = map hex6 $ grabColors '\n' ' ' wmfc
+ let bcs = map hex6 $ grabColors '\n' ' ' wmbc
+ fc   <- rand $ prioritize fcs
+ bc   <- rand $ prioritize bcs
+
+ let
+  mFG = fc
+  mBG = bc
+  mk = mkeys bcs fcs
+  keys = ("M-h", checkKeymap (ewmh def `additionalKeysP` mk) mk) : mk
+  in
+ --}
   xmonad
   --}
   --{- hooks  {
@@ -552,13 +577,13 @@ main = do
   $ withUrgencyHook LibNotifyUrgencyHook
   -- apply urgency hook w/ borders
   $ withUrgencyHookC BorderUrgencyHook { urgencyBorderColor = mFG } urgencyConfig { suppressWhen = Never }
---  $ dynamicProjects mprojects
+ -- $ dynamicProjects mprojects
   $ ewmh def
-   { manageHook = mmanageHook
+   { manageHook      = mmanageHook
    , handleEventHook = mhandleEventHook
-   , logHook = mlogHook pipe
-   , startupHook = mstartupHook
-   , layoutHook  = mlayoutHook mBG mFG
+   , logHook         = mlogHook pipe    bcs fcs
+   , startupHook     = mstartupHook     bcs fcs
+   , layoutHook      = mlayoutHook      mBG mFG
    --}
    --{- settings
    , workspaces         = mworkspaces
@@ -567,7 +592,7 @@ main = do
    , modMask     = super
    , terminal    = mterminal
    --}
-   --{- colors }
+   --{- colors
    , borderWidth        = borderW
    , normalBorderColor  = mBG
    , focusedBorderColor = mFG
@@ -582,11 +607,12 @@ main = do
    `removeKeysP` [ a | (a,b) <- keys]
    -- apply your config
    `additionalKeysP` keys
-  where --{-
-   keys =
-    ("M-h", checkKeymap (ewmh def `additionalKeysP` mkeys) mkeys) : mkeys
   --}
-  --}
+
+tryReadFile :: FilePath -> IO String
+tryReadFile f = do
+ guard =<< doesFileExist f
+ readFile f
 
 {- TODOs
 look into: X.L.Hidden instead of minimize

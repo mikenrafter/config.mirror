@@ -68,4 +68,6 @@ flameshot &
 # connect to vpn on startup
 pkexec vpn `cat $home/.wg-default`
 # background
-nitrogen --random --set-zoom-fill
+#nitrogen 
+# see scripts/wm
+#nitrogen --random --set-zoom-fill
