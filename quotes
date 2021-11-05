@@ -1,86 +1,77 @@
-# tech/comedy																:
+- tech/comedy																:
+	- Moss & Roy
+		Have you tried turning it off and again?	This box is the internet, Jen.
+	- u/Zyansheep
+		After many attempts, I have finally managed to get my system to run from a nix flake.	I feel as though I am at the pinnacle of system configuration, staring down at all the normies running arch installs below.	What's a Gentoo? Sounds like a waste of CPU.
+	- u/YuraKuzin
+		Every error in windows makes me feel weaker.	And every error in Linux makes me stronger.
+	- Linux Jokes
+		A Linux sysadmin walks into a pharmacy.	"ephedrine" "I can't serve you that!" "sudoephedrine" "There you go".
+		A Linux user, a vegan, and an atheist walk into a bar....	I know because they told everybody there
+		Daddy, what are clouds made of?	Linux servers, mostly.
+		Did you hear about the herpes program for Linux?	It's open sores
+		How do you copy in Linux? You press Ctrl and C at t-	^C Process aborted
+		How do you get the most recent posts in r/Linux?	Sort by GNU.
+		How to make Gnu+Linux run Photoshop?	You serve it WINE.
+		How would you spot a Linux user?	Don't worry they will tell you themselves!
+		I have a Linux joke...	But some of you would not apt-get it.
+		I just donated some money to the maintainers of a Linux distribution derived from Red Hat	*tips fedora*
+		I think a lot of Linux package handling systems aren't good enough for the task.	But the one with Ubuntu is apt.
+		Most appliances use a Linux based OS	But washing machines have windows
+		New user: "Why's my new printer not working?" Linus: "You need the right driver."	"^_- My chauffeur's outside."
+		What did the Linux admin say to his racoon friend?	I am root.
+		What do you call Linux' bodyguards with no balls?	Unix
+		What do you call a group of Linux users?	*Club Penguin.*
+		What is a Linux user's favorite game?	sudo ku
+		What killed the Linux user?	A terminal disease.
+		What were the favorite Linux text editors of 8 randomly selected Monty Python fans?	vim, vim, vim, vim, vim, vim, emacs, and vim.
+		What's the only way to generate a truly random string?	Put a Windows user in front of VI and tell him to quit.
+		Who Has The Highest Rank in the Linux Military?	The kernel.
+		Why are Linux geeks very introvertish?	Because they never get out of their shell
+		Why can't you eliminate Satan from Linux?	Because 666 isn't executable.
+		Why do Linux admins always take Xanax?	Because they're constantly battling their daemons.
+		Why do people on the ISS use Linux	You can't open windows in space
+		Why do vampire's use Linux?	Because they don't like windows in their house. Ba^Dum^Tss
+- philosophy																:
+	- Ayn Rand
+		A businessman cannot force you to buy his product; if he makes a mistake, he suffers the consequences; if he fails, he takes the loss.	If bureaucrat makes a mistake, you suffer the consequences; if he fails, he passes the loss on to you.
+		Contradictions do not exist. Whenever you think you are facing a contradiction,	check your premises. You will find that one of them is wrong.
+		Do not keep silent when your own ideas and values are being attacked. If a dictatorship ever comes to this country, it will be by the fault of those who keep silent.	We are still free enough to speak. Do we have time? No one can tell.
+		Since there is no such entity as 'the public,' since the public is merely a number of individuals, the idea that 'the public interest' supersedes private interests and rights can have but one meaning	that the interests and rights of some individuals take precedence over the interests and rights of others.
+		The government was set to protect man from criminals-and the constitution was written to protect man from the government. The Bill of Rights was not directed at private citizens, but against the government-as an	explicit declaration that individual rights supersede any public or social power.
+		The majority of those who are loosely identified by the term 'liberals' are afraid to let themselves discover that what they advocate is statism. They want to keep all the advantages and effects of capitalism, while destroying the cause, and they want to establish statism without its necessary effects.	They do not want to know or to admit that they are the champions of dictatorship and slavery.
+		The smallest minority on earth is the individual.	Those who deny individual rights cannot claim to be defenders of minorities.
+		There is a level of cowardice lower than that of the conformist	the fashionable non-conformist.
+		There is no difference between communism and socialism, except in the means of achieving the same ultimate end	communism proposes to enslave men by force, socialism - by vote. It is merely the difference between murder and suicide.
+		We can evade reality, but we cannot evade the	consequences of evading reality
+		Wealth is the product	of man's capacity to think.
+		When you see that trading is done, not by consent, but by compulsion - when you see that in order to produce, you need to obtain permission from men who produce nothing - when you see that money is flowing to those who deal, not in goods, but in favors - when you see that men get richer by graft and by pull than by work, and your laws don't protect you against them, but protect them against you - when you see corruption being rewarded and honesty becoming a self-sacrifice -	you may know that your society is doomed.
 
-# Moss & Roy
-Have you tried turning it off and again?	This box is the internet, Jen.
-
-# u/Zyansheep
-After many attempts, I have finally managed to get my system to run from a nix flake.	I feel as though I am at the pinnacle of system configuration, staring down at all the normies running arch installs below.	What's a Gentoo? Sounds like a waste of CPU.
-
-# u/YuraKuzin
-Every error in windows makes me feel weaker.	And every error in Linux makes me stronger.
-
-# Linux Jokes
-A Linux sysadmin walks into a pharmacy.	"ephedrine" "I can't serve you that!" "sudoephedrine" "There you go".
-A Linux user, a vegan, and an atheist walk into a bar....	I know because they told everybody there
-Daddy, what are clouds made of?	Linux servers, mostly.
-Did you hear about the herpes program for Linux?	It's open sores
-How do you copy in Linux? You press Ctrl and C at t-	^C Process aborted
-How do you get the most recent posts in r/Linux?	Sort by GNU.
-How to make Gnu+Linux run Photoshop?	You serve it WINE.
-How would you spot a Linux user?	Don't worry they will tell you themselves!
-I have a Linux joke...	But some of you would not apt-get it.
-I just donated some money to the maintainers of a Linux distribution derived from Red Hat	*tips fedora*
-I think a lot of Linux package handling systems aren't good enough for the task.	But the one with Ubuntu is apt.
-Most appliances use a Linux based OS	But washing machines have windows
-New user: "Why's my new printer not working?" Linus: "You need the right driver."	"^_- My chauffeur's outside."
-What did the Linux admin say to his racoon friend?	I am root.
-What do you call Linux' bodyguards with no balls?	Unix
-What do you call a group of Linux users?	*Club Penguin.*
-What is a Linux user's favorite game?	sudo ku
-What killed the Linux user?	A terminal disease.
-What were the favorite Linux text editors of 8 randomly selected Monty Python fans?	vim, vim, vim, vim, vim, vim, emacs, and vim.
-What's the only way to generate a truly random string?	Put a Windows user in front of VI and tell him to quit.
-Who Has The Highest Rank in the Linux Military?	The kernel.
-Why are Linux geeks very introvertish?	Because they never get out of their shell
-Why can't you eliminate Satan from Linux?	Because 666 isn't executable.
-Why do Linux admins always take Xanax?	Because they're constantly battling their daemons.
-Why do people on the ISS use Linux	You can't open windows in space
-Why do vampire's use Linux?	Because they don't like windows in their house. Ba^Dum^Tss
-
-
-# philosophy																:
-
-
-# Ayn Rand
-A businessman cannot force you to buy his product; if he makes a mistake, he suffers the consequences; if he fails, he takes the loss.	If bureaucrat makes a mistake, you suffer the consequences; if he fails, he passes the loss on to you.
-Contradictions do not exist. Whenever you think you are facing a contradiction,	check your premises. You will find that one of them is wrong.
-Do not keep silent when your own ideas and values are being attacked. If a dictatorship ever comes to this country, it will be by the fault of those who keep silent.	We are still free enough to speak. Do we have time? No one can tell.
-Since there is no such entity as 'the public,' since the public is merely a number of individuals, the idea that 'the public interest' supersedes private interests and rights can have but one meaning	that the interests and rights of some individuals take precedence over the interests and rights of others.
-The government was set to protect man from criminals-and the constitution was written to protect man from the government. The Bill of Rights was not directed at private citizens, but against the government-as an	explicit declaration that individual rights supersede any public or social power.
-The majority of those who are loosely identified by the term 'liberals' are afraid to let themselves discover that what they advocate is statism. They want to keep all the advantages and effects of capitalism, while destroying the cause, and they want to establish statism without its necessary effects.	They do not want to know or to admit that they are the champions of dictatorship and slavery.
-The smallest minority on earth is the individual.	Those who deny individual rights cannot claim to be defenders of minorities.
-There is a level of cowardice lower than that of the conformist	the fashionable non-conformist.
-There is no difference between communism and socialism, except in the means of achieving the same ultimate end	communism proposes to enslave men by force, socialism - by vote. It is merely the difference between murder and suicide.
-We can evade reality, but we cannot evade the	consequences of evading reality
-Wealth is the product	of man's capacity to think.
-When you see that trading is done, not by consent, but by compulsion - when you see that in order to produce, you need to obtain permission from men who produce nothing - when you see that money is flowing to those who deal, not in goods, but in favors - when you see that men get richer by graft and by pull than by work, and your laws don't protect you against them, but protect them against you - when you see corruption being rewarded and honesty becoming a self-sacrifice -	you may know that your society is doomed.
-
-Do not let your fire go out, spark by irreplaceable spark in the hopeless swamps of the not-quite, the not-yet, and the not-at-all. Do not let the hero in your soul perish in lonely frustration for the life you deserved and have never been able to reach.	The world you desire can be won. It exists.. it is real.. it is possible.. it's yours.
-If you don't know, the thing to do is not to get scared	but to learn.
-Learn to value yourself, which means	fight for your happiness.
-I could die for you.	But I couldn't, and wouldn't, live for you.
-Freedom (n.): To ask nothing.	To expect nothing.	To depend on nothing.
-People think that a liar gains a victory over his victim. What I’ve learned is that a lie is an act of self-abdication, because one surrenders one’s reality to the person to whom one lies, making that person one’s master, condemning oneself from then on to faking the sort of reality that person’s view requires to be faked	The man who lies to the world, is the world’s slave from then on	There are no white lies, there is only the blackest of destruction, and a white lie is the blackest of all.
-To say "I love you"	one must know first how to say the "I".
-A creative man is motivated by the desire to achieve	not by the desire to beat others.
-I swear by my life and my love of it that I will never live for the sake of another man	nor ask another man to live for mine.
-Why do they always teach us that it's easy and evil to do what we want and that we need discipline to restrain ourselves?	It's the hardest thing in the world--to do what we want. And it takes the greatest kind of courage.	I mean, what we really want.
-I started my life with a single absolute: that the world was mine to shape in the image of my highest values	never to be given up to a lesser standard	no matter how long or hard the struggle.
-The hardest thing to explain is the glaringly evident	which everybody has decided not to see.
-The man who does not value himself	cannot value anything or anyone.
-A man's sexual choice is the result and the sum of his fundamental convictions... He will always be attracted to the woman who reflects his deepest vision of himself, the woman whose surrender permits him to experience a sense of self-esteem.	The man who is proudly certain of his own value, will want the highest type of woman he can find, the woman he admires, the strongest, the hardest to conquer--because only the possession of a heroine will give him the sense of an achievement.
-
-# Henry David Thoreau
-I heartily accept the motto	That government is best which governs least.
-Rather than love, than money, than fame, give me truth.	I sat at a table where were rich food and wine in abundance, an obsequious attendance, but sincerity and truth were not	and I went away hungry from the inhospitable board.
-
-# Chris McCandless | The idiot who died in Alaska.
-Circumstance has no value. It is how one relates to a situation that has value.	All true meaning resides in the personal relationship to a phenomenon	what it means to you
-
-# Jon Krakauer
-A challenge in which a successful outcome is assured	isn’t a challenge at all.
-
-
-# Me
-A bad past,	does not excuse a bad future.
-Humility, not guilt.	Not pride, but honesty.
+		Do not let your fire go out, spark by irreplaceable spark in the hopeless swamps of the not-quite, the not-yet, and the not-at-all. Do not let the hero in your soul perish in lonely frustration for the life you deserved and have never been able to reach.	The world you desire can be won. It exists.. it is real.. it is possible.. it's yours.
+		If you don't know, the thing to do is not to get scared	but to learn.
+		Learn to value yourself, which means	fight for your happiness.
+		I could die for you.	But I couldn't, and wouldn't, live for you.
+		Freedom (n.): To ask nothing.	To expect nothing.	To depend on nothing.
+		People think that a liar gains a victory over his victim. What I’ve learned is that a lie is an act of self-abdication, because one surrenders one’s reality to the person to whom one lies, making that person one’s master, condemning oneself from then on to faking the sort of reality that person’s view requires to be faked	The man who lies to the world, is the world’s slave from then on	There are no white lies, there is only the blackest of destruction, and a white lie is the blackest of all.
+		To say "I love you"	one must know first how to say the "I".
+		A creative man is motivated by the desire to achieve	not by the desire to beat others.
+		I swear by my life and my love of it that I will never live for the sake of another man	nor ask another man to live for mine.
+		Why do they always teach us that it's easy and evil to do what we want and that we need discipline to restrain ourselves?	It's the hardest thing in the world--to do what we want. And it takes the greatest kind of courage.	I mean, what we really want.
+		I started my life with a single absolute: that the world was mine to shape in the image of my highest values	never to be given up to a lesser standard	no matter how long or hard the struggle.
+		The hardest thing to explain is the glaringly evident	which everybody has decided not to see.
+		The man who does not value himself	cannot value anything or anyone.
+		A man's sexual choice is the result and the sum of his fundamental convictions... He will always be attracted to the woman who reflects his deepest vision of himself, the woman whose surrender permits him to experience a sense of self-esteem.	The man who is proudly certain of his own value, will want the highest type of woman he can find, the woman he admires, the strongest, the hardest to conquer--because only the possession of a heroine will give him the sense of an achievement.
+	- Henry David Thoreau
+		I heartily accept the motto	That government is best which governs least.
+		Rather than love, than money, than fame, give me truth.	I sat at a table where were rich food and wine in abundance, an obsequious attendance, but sincerity and truth were not	and I went away hungry from the inhospitable board.
+	- Chris McCandless | The idiot who died in Alaska.
+		Circumstance has no value. It is how one relates to a situation that has value.	All true meaning resides in the personal relationship to a phenomenon	what it means to you
+	- Jon Krakauer
+		A challenge in which a successful outcome is assured	isn’t a challenge at all.
+	- Shakespear - Macbeth
+		False face must hide	what the false heart doth know.
+		Things bad begun	make strong themselves by ill.
+	- Me
+		A bad past,	does not excuse a bad future.
+		Humility, not guilt.	Not pride, but honesty.
+		To the statists, the wealthy are as condoms.	To be used, and thrown away.	Such patterns of thought lead only to death.

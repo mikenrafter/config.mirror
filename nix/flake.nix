@@ -53,6 +53,7 @@ inputs = {
 		otherChannels = { # channels w/ flakes only or no legacyPackages
 			nixGL = import nixGL {pkgs=unfree.unstable1;};
 			waymonad = import waymonad { pkgs=(import stable1 {}); };
+			nur = import nur { pkgs=(import unstable1 {}); };
 		};
 		overlays = utils.overlay [
 			xm

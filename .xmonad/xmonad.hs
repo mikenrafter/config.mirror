@@ -2,7 +2,7 @@
 {-# OPTIONS_GHC -Wno-missing-signatures -Wno-orphans #-}
 {-# LANGUAGE FlexibleContexts #-} -- for L.Hidden
 {-# LANGUAGE LambdaCase #-}
-{-# OPTIONS_GHC -Wno-deprecations #-} -- TODO: REMOVE DEPRECATED FNs
+{-# LANGUAGE BlockArguments #-}
 
 {- LANGUAGE ViewPatterns #-} -- ?
 {- LANGUAGE ParallelListComp #-} -- ?
@@ -40,7 +40,7 @@ import XMonad.Actions.SpawnOn
 import XMonad.Actions.UpdatePointer
 --}
 --{- hooks
-import XMonad.Hooks.DynamicLog (dynamicLogWithPP, pad, xmobarPP, xmobarColor, PP(..), shorten, xmobarStrip)
+import XMonad.Hooks.DynamicLog  --(dynamicLogWithPP, pad, xmobarPP, xmobarColor, xmobarBorder, PP(..), shorten, xmobarStrip, filterOutWsPP)
 -- for some fullscreen events, also for xcomposite in obs.
 import XMonad.Hooks.EwmhDesktops
 import XMonad.Hooks.FadeInactive
@@ -99,6 +99,7 @@ import XMonad.Util.Run (runProcessWithInput, safeSpawn, spawnPipe)
 import XMonad.Util.SpawnOnce
 import XMonad.Util.Cursor
 import XMonad.Util.WorkspaceCompare
+import XMonad.Util.Hacks as Hacks
 --}
 --{- urgencyhook
 import XMonad.Hooks.UrgencyHook
@@ -140,7 +141,7 @@ tagWS tag l = [(a ++ tag, b) | (a, b) <- l ]
 chop l = [a | (a, b) <- l]
 mWS name directory startup = ( name, (directory, startup) )
 mWSIndices = M.fromList $ zipWith (,) mworkspaces [1..]
-clickable ws = "<action=xdotool key super+"++show i++">"++ws++"</action>"
+act ws = (xmobarAction ("xdotool key super+"<>show i) "12345" . pad) ws
  where i = fromJust $ M.lookup ws mWSIndices
 --}
 
@@ -393,9 +394,11 @@ mhandleEventHook =
  -- viewed before focusing a float
  --  refocusLastWhen isFloat
  -- let applications fullscreen themselves, only some do reliably
- XMonad.Hooks.EwmhDesktops.fullscreenEventHook
+     XMonad.Hooks.EwmhDesktops.fullscreenEventHook
  -- handle new docks dynamically
  <+> docksEventHook
+ <+> trayerAboveXmobarEventHook
+ <+> Hacks.windowedFullscreenFixEventHook
  -- <+> floatConfReqHook mfcfrhook
  -- <+> putBelow "xmobar" (=?) "trayer"
  {- where
@@ -431,29 +434,28 @@ mlogHook pipe bcs fcs =
 mbarHook pipe fg bg = do
  -- for copied windows, e.g media player
  copies <- wsContainingCopies
- let check x | x `elem` copies = fc (fg!3) (bg!2) $ " + "
-                   | otherwise = fc (fg!1) (bg!3) $ (pad . clickable) x
+ let check x | x `elem` copies = xc (fg!3) (bg!2) $ " + "
+                   | otherwise = xc (fg!1) (bg!3) $ act x
  -- boilerplate + xmobar + scratchpads
- dynamicLogWithPP . namedScratchpadFilterOutWorkspacePP $ xmobarPP
-   { ppOutput = \x -> hPutStrLn pipe x
+ dynamicLogWithPP . filterOutWsPP ["NSP"] $ xmobarPP
+   { ppOutput = hPutStrLn pipe
 
    , ppSep             = " "
    -- mark urgent WS's
-   , ppUrgent          = fc(fg!3) (bg!3) . pad . clickable
-   , ppCurrent         = fc(fg!2) (bg!1) . (\x-> "<box type=VBoth width=2 color=" ++ fg!1 ++ ">" ++ (pad x) ++ "</box>") . clickable
--- , ppCurrent         = {-xmobarBorder-} fc(bg!1) (fg!2) . pad . clickable
+   , ppUrgent          = xc(fg!3) (bg!3) . act
+   , ppCurrent         = xc(fg!2) (bg!1) . xmobarBorder "Bottom" (fg!1) 4 . act
    , ppHidden          = check
-   , ppHiddenNoWindows = fc(bg!4) (bg!2) . pad . \x -> take 2 x
-   , ppTitle           = fc(fg!5) (bg!2) . pad . shorten 40
+   , ppHiddenNoWindows = xc(bg!4) (bg!2) . pad . take 2
+   , ppTitle           = \x -> xc(fg!5) (bg!2) . pad . shorten 40 $ if null x then "?" else x
    , ppTitleSanitize   = xmobarStrip
 
    -- other items
    , ppExtras = [windowCount]
-   , ppOrder  = \(ws:lay:title:extra) -> [take 10 lay, ws] <> extra <> [title] -- use w/ statusBar: [(xmobarRaw . (\w -> if null w then "untitled" else w title]
+   , ppOrder  = \(ws:lay:title:extra) -> [take 10 lay, ws] <> extra <> [title]
    , ppSort = mkWsSort getWsCompare
 
    }
-  where fc = xmobarColor
+  where xc = xmobarColor
 --}
 --{- layoutHook
 mlayoutHook mBG mFG =
@@ -572,12 +574,13 @@ main = do
   --}
   --{- hooks  {
   -- manage docks
-  $ docks
+  $ Hacks.javaHack
   -- apply urgency hook
   $ withUrgencyHook LibNotifyUrgencyHook
   -- apply urgency hook w/ borders
   $ withUrgencyHookC BorderUrgencyHook { urgencyBorderColor = mFG } urgencyConfig { suppressWhen = Never }
  -- $ dynamicProjects mprojects
+  $ docks
   $ ewmh def
    { manageHook      = mmanageHook
    , handleEventHook = mhandleEventHook

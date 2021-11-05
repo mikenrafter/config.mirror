@@ -8,13 +8,16 @@ inputs: with inputs; let
 ifNix = package: lib.mkIf nixos package;
 #}
 # custom packages {
-nvim = import ./programs/nvim.nix { inherit u1; inherit s1; };
+custom = map (x: import x {inherit u1; inherit s1;}) [
+  ./programs/nvim.nix
+  ./programs/quickemu.nix
+];
 #}
 # package groups {
 # libre-kernel {
-kernel = with s1.linuxPackages-libre; [
+kernel = with u1.linuxPackages-libre; [
 
-  wireguard                 # VPN method
+# wireguard                 # VPN method - included in latter kernels
 
 
 # -}
@@ -29,7 +32,7 @@ kernel = with s1.linuxPackages-libre; [
 
 #}
 # core {
-]; core = with s1; [
+]; core = with u1; [
 
   coreutils                 # don't piss GNU+Stallman off!
   libtool                   # more gnu tools
@@ -53,11 +56,12 @@ kernel = with s1.linuxPackages-libre; [
   xsecurelock               # secure lockscreen
   xss-lock                  # lockscreen as screensaver
   nix-bundle                # https://github.com/matthewbauer/nix-bundle
+  manix nixdoc nix-doc      # nix documentation
 
 
 #}
 # etc {
-]; etc = with s1; [
+]; etc = with u1; [
 
 #+ghacks-user.js
 #+yacy.drv
@@ -65,19 +69,23 @@ kernel = with s1.linuxPackages-libre; [
 #+onlyoffice.drv
 #+feral/gamemode.drv
 #Bgolly                     # Game of Life
-  (ifNix firefox)           #-84-0-1 <- pin | FF meh, librewolf tho
+  nur.repos.onny.librewolf-bin  # TODO
+ #(ifNix librewolf)         # TODO
+  firefox                   # FF meh, librewolf tho
   brave                     # backup browser -- somehow works w/ nvidia acceleration despite lack of nixGL
+  browsh                    # TUI browser
   thunderbird               # Mozillas mail client
   libreoffice               # office suite
 #Bgodot                     # game engine
   legendary-gl              # "epic" game yoinking
   pidgin                    # chat client
+  tut                       # TUI mastodon client
   element-desktop           # matrix client
 
 
 #}
 # code {
-]; code = with s1; [
+]; code = with u1; [
 
 # lang cores
 # ghc                       # haskell compiler | INCLUDED IN packages.haskell
@@ -101,7 +109,7 @@ kernel = with s1.linuxPackages-libre; [
 
   arduino                   # arduino programming
   nvimpager                 # why not?
-  nvim                      # my custom nvim
+##nvim                      # my custom nvim
   amp kakoune               # similar to vim
   micro                     # similar to nano
   notepadqq                 # GUI text editor
@@ -109,7 +117,7 @@ kernel = with s1.linuxPackages-libre; [
 
 #}
 # fonts {
-]; fonts = with s1; [
+]; fonts = with u1; [
 
   (nerdfonts.override {
 	fonts = [
@@ -134,10 +142,10 @@ kernel = with s1.linuxPackages-libre; [
 
 #}
 # extras {
-]; extras = with s1; [
+]; extras = with u1; [
 
   sl                        # to fix ls typos, of course
-  bsod                      # wine but better XD
+  bsod pipes                # wine but better XD
   vitetris                  # epic terminal-based tetris game
 #Belectricsheep             # A p2p artwork creating screensaver
   breeze-icons              # icon theme
@@ -150,9 +158,9 @@ kernel = with s1.linuxPackages-libre; [
 
 #}
 # vm {
-]; vm = with s1; [
+]; vm = with u1; [
 
-# dolphinEmu                # wii/gamecube emulator
+  dolphinEmu                # wii/gamecube emulator
   rpcs3                     # ps3 emulator
 #Banbox                     # Android APK runner
   virt-manager              # VM manager
@@ -168,23 +176,36 @@ kernel = with s1.linuxPackages-libre; [
   dnsmasq
   vde2
   netcat
+  edk2
+  OVMF
+# OVMFFull
+  libvirt
+  virtlyst
+# swtpm
+# swtpm-tpm2
 
 
 #}
 # xorg {
-]; xorg = with s1.xorg; [
+]; xorg = with u1.xorg; [
 
-  s1.autorandr              # display manager
-  s1.xdotool                # virtual keypress util
+  u1.autorandr              # display manager
+  u1.xdotool                # virtual keypress util
   libXrandr                 # res change lib
   xrandr                    # change your resolution
+  u1.wmctrl                 # window manager functions
+  xprop                     # x properties
   xwininfo                  # like xprop
   xev                       # input tester
+  u1.greetd.greetd          # greeter!
+  u1.greetd.tuigreet        # greeter!
+  u1.greetd.dlm             # greeter!
+  u1.greetd.gtkgreet        # greeter!
 
 
 #}
 # hacking {
-]; hacking = with s1; [
+]; hacking = with u1; [
 
   keybase kbfs keybase-gui  # less secure, but screw it
   torbrowser                # heck yeah
@@ -197,6 +218,9 @@ kernel = with s1.linuxPackages-libre; [
 ]; flossGames = with s2; [
 
   superTuxKart              # super-tux-kart!
+  _2048-in-terminal
+  _0verkill
+  cuyo
 
 
 #}
@@ -239,7 +263,7 @@ haskell = haskellPackages.ghcWithHoogle (p: with p; [
 ]);
 #}
 # vim {
-vim = with s1.vimPlugins; [
+vim = with u1.vimPlugins; [
   (lib.hiPrio haskell-vim)  # vim.hs
   vim-fish                  # vim.fish
 ];
@@ -249,16 +273,16 @@ vim = with s1.vimPlugins; [
 media = {
 
 # managing {
-managing = with s1; [
+managing = with u1; [
   alsa-firmware             # firmware for soundcards
   pulseaudio                # I really hate typing that, but alsa just doesn't work
   pavucontrol               # pulseaudio manager
   playerctl                 # manage media easier
-  u1.easyeffects            # apply effects to audio in pw
+  easyeffects            # apply effects to audio in pw
 ];
 #}
 # capturing {
-capturing = with s1; [
+capturing = with u1; [
   maim                      # screenshot tool
   scrot                     # super simple screenshot utility
   flameshot                 # screenshot utility
@@ -270,7 +294,7 @@ capturing = with s1; [
 ];
 #}
 # creation {
-creation = with s1; [
+creation = with u1; [
 #Bblender                   # 3d editor ftw
   avidemux                  # a very basic video editor
   olive-editor              # a more complex video editor
@@ -283,7 +307,7 @@ creation = with s1; [
 ];
 #}
 # viewing {
-viewing = with s1; [
+viewing = with u1; [
 #+lbry.drv
   celluloid                 # multimedia player - based on MPV, simple
   vlc                       # multimedia player
@@ -298,14 +322,14 @@ viewing = with s1; [
 utils = {
 
 # terminals {
-terminals = with s1; [
+terminals = with u1; [
   st                        # my terminals
 #Balacritty                 # my terminals
 #Btermite                   # my terminals
 ];
 #}
 # debuggers {
-debuggers = with s1; [
+debuggers = with u1; [
   cgdb gdb pwndbg edb       # general debuggers suite :)
   bench                     # CLI benchmarking tool
   pydb                      # python debugger
@@ -314,7 +338,7 @@ debuggers = with s1; [
 ];
 #}
 # security {
-security = with s1; [
+security = with u1; [
   # open VPN solutions
   openvpn gnome3.networkmanager-openvpn
   # proton vpn solution
@@ -324,22 +348,24 @@ security = with s1; [
   firejail                  # sandbox applications, particularly useful with web browsers
   usbguard                  # anti badusb
   tor torsocks              # online protection
-  macchanger
-# sshguard                  # anti ssh attacks
-# ?ferm
-# ?firehol
-# ?shorewall
+  macchanger                # randomize your mac address
+  vulnix                    # vuln scanner
+  sshguard                  # anti ssh attacks
+  ferm                      # complex firewall management
+  firehol                   # "a firewall for humans"
+  opensnitch
+  opensnitch-ui             # another firewall??
 ];
 #}
 # shells {
-shells = with s1; [
+shells = with u1; [
   any-nix-shell             # connect nix-shell with yours
   zsh                       # Zsh because it's useful I guess...
   bash bashInteractive      # Bash shell for easier scripting
 ];
 #}
 # cli {
-cli = with s1; [
+cli = with u1; [
   hostname                  # the ability to modify your hostname | un-nix?
   bat exa fd                # better coreutils in rust
   lzip gzip bzip2 xz        # zippers
@@ -348,7 +374,8 @@ cli = with s1; [
 #Bdoas                      # BSD.sudo (Linux port)
   git                       # If you don't git git you git nothin' and therefore don't git it
 #~ckb-next                  # manage corsair products
-#?wally-cli                 # flash your epic keyboard
+  wally-cli                 # flash your epic keyboard
+  qmk                       # qmk firmware management
   archivemount              # mount archives (via FUSE)
   flootty                   # collab TTY
   xclip                     # clipboard util
@@ -364,7 +391,7 @@ cli = with s1; [
 ];
 #}
 # gui {
-gui = with s1; [
+gui = with u1; [
   dragon-drop               # drag-n-drop utility
   czkawka                   # file duplicate management tool
   transmission-gtk          # torrent tool! also has cli
@@ -410,6 +437,8 @@ selections = builtins.concatLists [
   packages.python
 # experimental  # other distro's package managers
   ])
+
+  custom
 
   [packages.haskell]
 
@@ -466,15 +495,15 @@ in
 		xsession.enable = true;
 		xsession.numlock.enable = true;
 		# cursor theme
-		xsession.pointerCursor.package          = s1.vanilla-dmz;
+		xsession.pointerCursor.package          = u1.vanilla-dmz;
 		xsession.pointerCursor.defaultCursor    = "Vanilla-DMZ";
 		xsession.pointerCursor.name             = "Vanilla-DMZ";
 		xsession.pointerCursor.size             = 16;
 		# gtk
 		gtk.enable = true;
 		gtk.theme.name = "Equilux"; #"Sweet-mars"; # "Equilux";
-		gtk.theme.package = s1.equilux-theme; #.sweet; #.equilux-theme;
-		gtk.iconTheme.package = s1.gnome3.gnome_themes_standard;
+		gtk.theme.package = u1.equilux-theme; #.sweet; #.equilux-theme;
+		gtk.iconTheme.package = u1.gnome3.gnome_themes_standard;
 		gtk.iconTheme.name = "Adwaita";
 		# qt
 		#qt.enable = true;
@@ -484,6 +513,23 @@ in
 		
 		# }
 		fonts.fontconfig.enable = true;
+		systemd.user.services = {
+			opensnitch = {
+				Unit = {
+					Description = "Opensnitch Application Firewall Daemon";
+					After = ["network.target"]; 
+					PartOf = ["multi-user.target"];
+				};
+				Service = {
+					Type = "simple";
+					PermissionsStartOnly = true;
+					ExecStartPre = "${u1.coreutils}/bin/mkdir -p /etc/opensnitch/rules"; 
+					ExecStart = "${u1.opensnitch}/bin/opensnitchd -rules-path /etc/opensnitch/rules"; 
+					Restart = "always";
+					RestartSec = 30;
+				};
+			};
+		};
 		services = {
 			#udiskie = {
 			#	enable = true;
@@ -498,7 +544,7 @@ in
 			#blueman-applet.enable = true;
 			#screen-locker = {
 			#	enable = true;
-			#	lockCmd = "${s1.xsecurelock}/bin/xsecurelock";
+			#	lockCmd = "${u1.xsecurelock}/bin/xsecurelock";
 			#	inactiveInterval = 1;
 			#};
 		};
