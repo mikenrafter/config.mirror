@@ -3,5 +3,6 @@
 CONSOLE_ENABLE = no
 COMMAND_ENABLE = no
 TAP_DANCE_ENABLE = yes
-COMBO_ENABLE = yes
+# COMBO_ENABLE = yes
 SRC = matrix.c
+LTO_ENABLE = yes

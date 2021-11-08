@@ -64,113 +64,8 @@
 #include "keymap_belgian.h"
 /**/
 
-#define kc_mac_undo lgui(kc_z)
-#define kc_mac_cut lgui(kc_x)
-#define kc_mac_copy lgui(kc_c)
-#define kc_mac_paste lgui(kc_v)
-#define kc_pc_undo lctl(kc_z)
-#define kc_pc_cut lctl(kc_x)
-#define kc_pc_copy lctl(kc_c)
-#define kc_pc_paste lctl(kc_v)
-#define es_less_mac kc_grave
-#define es_grtr_mac lsft(kc_grave)
-#define es_bsls_mac algr(kc_6)
-#define no_pipe_alt kc_grave
-#define no_bsls_alt kc_equal
-#define lsa_t(kc) mt(mod_lsft | mod_lalt, kc)
-#define bp_ndsh_mac algr(kc_8)
 #define moon_led_level LED_LEVEL
 
-#define x16(pre, keycode) pre##_code16(keycode)
-// key down
-#define d(keycode) x16(register, keycode)
-// key up
-#define u(keycode) x16(unregister, keycode)
-// key tap
-#define t(keycode) x16(tap, keycode)
-#define xx(fn) x; x;
-
-#define LEN(x) sizeof x / sizeof x[0]
-#define CASE(x,y) case x: y; break;
-
-#define TAP1(f) CASE(SINGLE_TAP,        f)
-#define TAP2(f) CASE(DOUBLE_TAP,        f)
-#define TTAP(f) CASE(DOUBLE_SINGLE_TAP, f)
-// no, I am not mad at myself for this pun! *shut* *shut*
-#define HOLD(f) CASE(SINGLE_HOLD,       f)
-#define H1LD(f) CASE(DOUBLE_HOLD,       f)
-
-
-#define DANCE_ARGS (qk_tap_dance_state_t *state, void *user_data)
-#define DUNCE(num, enable, disable) \
-	void dance_##num##_finished DANCE_ARGS;  \
-	void dance_##num##_reset    DANCE_ARGS;  \
-	void dance_##num##_finished DANCE_ARGS { \
-		dance_state[num].step = dance_step(state); \
-		switch (dance_state[num].step) { enable } \
-	} \
-	void dance_##num##_reset    DANCE_ARGS { \
-		wait_ms(10); \
-		switch (dance_state[num].step) { disable } \
-		dance_state[num].step = 0; \
-	}
-
-#define DANCE(num, tap, enable, disable) \
-	void on_dance_##num         DANCE_ARGS;  \
-	void on_dance_##num         DANCE_ARGS { \
-		if(state->count == 3) { \
-			t(tap); \
-			t(tap); \
-			t(tap); \
-		} \
-		if(state->count > 3) { \
-			t(tap); \
-		} \
-	} \
-	DUNCE(num, TAP1(d(tap)) enable, TAP1(u(tap)) disable)
-
-#define SIMPLE3(num, one, two, three) \
-DANCE(num, one, \
-	HOLD(d(one)) \
-	TAP2(d(two)) \
-	H1LD(d(three)) \
-	TTAP(t(one); d(one)) \
-	, \
-	HOLD(u(one)) \
-	TAP2(u(two)) \
-	H1LD(u(three)) \
-	TTAP(u(one)) \
-)
-#define SIMPLE2(num, one, two) \
-DANCE(num, one, \
-	HOLD(d(two)) \
-	TAP2(d(one)) \
-	TTAP(t(one); d(one)) \
-	, \
-	HOLD(u(two)) \
-	TAP2(u(one)) \
-	TTAP(u(one)) \
-)
-#define SIMPLE2_ALT(num, one, two) \
-DANCE(num, one, \
-	HOLD(d(two)) \
-	TAP2(d(two)) \
-	H1LD(d(two)) \
-	TTAP(t(one); d(one)) \
-	, \
-	HOLD(u(two)) \
-	TAP2(u(two)) \
-	H1LD(u(two)) \
-	TTAP(u(one)) \
-)
-#define SAFETY(num, key) \
-DUNCE(num, \
-	HOLD(d(key)) \
-	TAP2(d(key)) \
-	, \
-	HOLD(u(key)) \
-	TAP2(u(key)) \
-) \
 
 
 enum custom_keycodes
@@ -210,21 +105,11 @@ enum tap_dance_codes
 	, ESCT
 	, RVOL
 	, PLAY
+	//METAN
 	//DANCE_911
 	, DANCES  // cheap LEN
 	};
 
-#define XX XXXXXXX
-#define    XXX XX
-#define    XXXX XX
-#define    XXXXX XX
-#define    XXXXXX XX
-#define _ _______
-#define   __ _
-#define   ___ _
-#define   ____ _
-#define   _____ _
-#define   ______ _
 #define OS(mod) OSM(MOD_##mod)
 #define MM(mod,key) MT(MOD_##mod, key)
 #define LS LSFT
@@ -248,17 +133,17 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 	*/
 		KC_GRAVE,    KC_1,     KC_2,     KC_3,     KC_4,     KC_5, TD(LOCK),         OS(LGUI),     KC_6,     KC_7,     KC_8,     KC_9,     KC_0,   KC_DEL,
 		HYTAB,       KC_Q,     KC_W,     KC_F,     KC_P,     KC_G, LS(KC_HOME),    LS(KC_END),     KC_J,     KC_L,     KC_U,     KC_Y,KC_SCOLON,KC_BSPACE,
-		LSFT_T(KC_BSPACE),KC_A,KC_R,LALT_T(KC_S),LGUI_T(KC_T),KC_D, KC_HOME,           KC_END,    KC_H,LGUI_T(KC_N),LALT_T(KC_E),KC_I,     KC_O, KC_QUOTE,
+		KC_BSPACE,LCTL_T(KC_A),LSFT_T(KC_R),LALT_T(KC_S),LGUI_T(KC_T),KC_D,KC_HOME,    KC_END,KC_H,LGUI_T(KC_N),LALT_T(KC_E),LSFT_T(KC_I),LCTL_T(KC_O), KC_QUOTE,
 		KC_LCTRL,    KC_Z,    KC_X,      KC_C,     KC_V,     KC_B,                                 KC_K,     KC_M, KC_COMMA,   KC_DOT, KC_SLASH,KC_BSLASH,
 		OS(LS),  KC_PGUP,  KC_PGDOWN,  KC_LALT,  KC_LGUI,                  TD(LVOL),TD(RVOL),       MO(VIM), OS(LCTL),LCTL(KC_PGUP),LCTL(KC_PGDN),TO(US1),
-		                                          LSFT_T(KC_SPACE),TD(ESCT),_______,_______,KC_ENTER,KC_RSHIFT
+		                                                 KC_SPACE ,TD(ESCT),_______,_______,KC_ENTER,KC_RSHIFT
 	),
 	[US1] = L(
 		KC_ESCAPE,  _______, _______, _______, _______, _______, KC_6,  TO(DEF),  _______, _______, _______, _______, _______, KC_DELETE,  
 		KC_TAB,  KC_Q,  KC_W,  KC_E,  KC_R,  KC_T,  KC_Y,  TO(DBL),  KC_Y,  KC_U,  KC_I,  KC_O,  KC_P,  KC_BSPACE,  
 		KC_LSHIFT,  KC_A,  KC_S,  KC_D,  KC_F,  KC_G,  KC_H,  TO(US2),  KC_H,  KC_J,  KC_K,  KC_L,  KC_SCOLON,  KC_RSHIFT,  
 		KC_LCTRL,  KC_Z,  KC_X,  KC_C,  KC_V,  KC_B,  KC_N,  KC_M,  _______, _______, _______, KC_RCTRL,  
-		OSL(4),  KC_LGUI,  KC_ESCAPE,  KC_ESCAPE,  KC_SPACE,  _______,  _______, KC_SPACE,  KC_RSHIFT,  KC_RCTRL,  KC_LALT,  TO(DEF),  
+		OSL(VIM),  KC_LGUI,  KC_ESCAPE,  KC_ESCAPE,  KC_SPACE,  _______,  _______, KC_SPACE,  KC_RSHIFT,  KC_RCTRL,  KC_LALT,  TO(DEF),  
 		KC_SPACE,  KC_SPACE,  XXXXXXX,  XXXXXXX,  KC_ENTER,  KC_SPACE
 	),
 	[VIM] = L(
@@ -381,24 +266,6 @@ uint8_t dance_step(qk_tap_dance_state_t *state) {
 
 }
 
-// thrown away
-// LC(x): tap-x, hold-ctrl+x
-// 4: LC(z)
-// 5: LC(x)
-// 6: LC(c)
-// 7: LC(v)
-//
-// 8-12: LC(*12345)
-// 13-17: LC(*qwfpg)
-// 18-22: LC(*arstd)
-// 23-27: LC(*zxcvb)
-//
-// 28-32: LC(*67890)
-// 33-36: LC(*jluy)
-// 37-41: LC(*hneio)
-// 42-43: LC(*km)
-
-
 // lock
 SAFETY(LOCK, LGUI(KC_L))
 // left volume/media
@@ -411,14 +278,7 @@ SIMPLE3(RVOL, KC_AUDIO_VOL_UP, KC_AUDIO_MUTE, KC_MEDIA_NEXT_TRACK)
 SIMPLE2_ALT(PLAY, KC_MEDIA_PLAY_PAUSE, KC_AUDIO_MUTE)
 // emergency eeprom reset
 //SAFETY(911, EEP_RST)
-
-// yes, punother one
-#define AVDANCE(num, on, finish, reset) \
-	[num] = ACTION_TAP_DANCE_FN_ADVANCED( \
-		on(on_dance_##num), \
-		finish(dance_##num##_finished), \
-		reset(dance_##num##_reset) \
-	)
+//TAP_HOLD(METAN, KC_N, KC_LGUI)
 
 #define NO(x) NULL
 #define YES(x) x
@@ -428,7 +288,8 @@ qk_tap_dance_action_t tap_dance_actions[] =
 	, AVDANCE(ESCT, YES, YES, YES)
 	, AVDANCE(RVOL, YES, YES, YES)
 	, AVDANCE(PLAY, YES, YES, YES)
-//	, AVDANCE(DANCE_911, NO, YES, YES)
+	//AVDANCE(METAN, YES, YES, YES)
+	//AVDANCE(DANCE_911, NO, YES, YES)
 	};
 #undef NO
 #undef YES
@@ -451,16 +312,12 @@ combo_t key_combos[] = {
 
 void return_to_def_layer(void);
 void return_to_def_layer() {
-		t(TO(DEF)); // manage with dynamic default layers, later
+	t(TO(DEF)); // manage with dynamic default layers, later
 }
 
 void process_combo_event(uint16_t combo_index, bool pressed) {
-	switch(combo_index) {
-		case RETURN:
-			if (pressed) {
-				return_to_def_layer();
-			}
-		break;
+	if (pressed) switch(combo_index) {
+		case RETURN: return_to_def_layer(); break;
 	}
 }
 #endif
@@ -501,4 +358,93 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 	return true;
 }
 
+#ifdef TAPPING_TERM_PER_KEY
+uint16_t get_tapping_term(uint16_t keycode, keyrecord_t *record) {
+	switch (keycode) {
+		case LGUI_T(KC_T):
+		case LGUI_T(KC_N):
+		case LALT_T(KC_S):
+		case LALT_T(KC_E):
+			return TAPPING_TERM + 50;
+
+		case LSFT_T(KC_R):
+		case LSFT_T(KC_I):
+			return TAPPING_TERM + 75;
+
+		case LCTL_T(KC_A):
+		case LCTL_T(KC_O):
+			return TAPPING_TERM + 100;
+
+		default: return TAPPING_TERM;
+	}
+}
+#endif
+#ifdef PERMISSIVE_HOLD_PER_KEY
+bool get_permissive_hold(uint16_t keycode, keyrecord_t *record) {
+	switch (keycode) {
+		case(OS(LGUI)):
+		case(OS(LALT)):
+		case(OS(LSFT)):
+		case(OS(LCTL)):
+			return true;
+		default: return false; // Do not select the hold action when another key is tapped.
+	}
+}
+#endif
+#ifdef TAPPING_FORCE_HOLD_PER_KEY
+bool get_tapping_force_hold(uint16_t keycode, keyrecord_t *record) {
+	switch (keycode) {
+		case LGUI_T(KC_T):
+		case LGUI_T(KC_N):
+		case LALT_T(KC_S):
+		case LALT_T(KC_E):
+
+		case LSFT_T(KC_R):
+		case LSFT_T(KC_I):
+
+		case LCTL_T(KC_A):
+		case LCTL_T(KC_O):
+			return true;
+
+		default: return false;
+	}
+}
+#endif
+#ifdef RETRO_TAPPING_PER_KEY
+bool get_retro_tapping(uint16_t keycode, keyrecord_t *record) {
+	switch (keycode) {
+		case LGUI_T(KC_T):
+		case LGUI_T(KC_N):
+		case LALT_T(KC_S):
+		case LALT_T(KC_E):
+
+		case LSFT_T(KC_R):
+		case LSFT_T(KC_I):
+
+		case LCTL_T(KC_A):
+		case LCTL_T(KC_O):
+//			return true;
+
+		default: return false;
+	}
+}
+#endif
+#ifdef IGNORE_MOD_TAP_INTERRUPT_PER_KEY
+bool get_ignore_mod_tap_interrupt(uint16_t keycode, keyrecord_t *record) {
+	switch (keycode) {
+		case LGUI_T(KC_T):
+		case LGUI_T(KC_N):
+		case LALT_T(KC_S):
+		case LALT_T(KC_E):
+
+		case LSFT_T(KC_R):
+		case LSFT_T(KC_I):
+
+		case LCTL_T(KC_A):
+		case LCTL_T(KC_O):
+			return true;
+		default: return false;
+	}
+}
+#endif
 
