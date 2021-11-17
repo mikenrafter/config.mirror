@@ -3,10 +3,11 @@ if test "$argv[1]" = "init"
 	set connection (wg show 2>&1 >/dev/null | string split ' ' | grep ':' | sed 's/://g')
 	if test "$connection" != ""
 		notif-manage button 0 true
+		exit 1
 	else
 		notif-manage button 0 false
+		exit 0
 	end
-	exit
 end
 set list 'false' 'true'
 set -x SHELL /bin/bash

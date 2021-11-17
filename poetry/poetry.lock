@@ -189,20 +189,6 @@ optional = false
 python-versions = ">=3.6"
 
 [[package]]
-name = "notify-send"
-version = "0.0.16"
-description = "Displays a notification suitable for the platform being run on."
-category = "main"
-optional = false
-python-versions = ">=3.8,<4.0"
-
-[package.dependencies]
-pycairo = {version = ">=1.18.1,<2.0.0", markers = "sys_platform == \"linux\""}
-PyGObject = {version = ">=3.34.0,<4.0.0", markers = "sys_platform == \"linux\""}
-pypiwin32 = {version = "223", markers = "sys_platform == \"win32\""}
-pywin32 = {version = "228", markers = "sys_platform == \"win32\""}
-
-[[package]]
 name = "pafy"
 version = "0.5.5"
 description = "Retrieve YouTube content and metadata"
@@ -214,34 +200,12 @@ python-versions = "*"
 youtube-dl-backend = ["youtube-dl"]
 
 [[package]]
-name = "pycairo"
-version = "1.20.1"
-description = "Python interface for cairo"
-category = "main"
-optional = false
-python-versions = ">=3.6, <4"
-
-[[package]]
-name = "pygobject"
-version = "3.42.0"
-description = "Python bindings for GObject Introspection"
-category = "main"
-optional = false
-python-versions = ">=3.6, <4"
-
-[package.dependencies]
-pycairo = ">=1.16,<2.0"
-
-[[package]]
-name = "pypiwin32"
-version = "223"
-description = ""
+name = "pygtk"
+version = "2.24.2"
+description = "Python bindings for GTK"
 category = "main"
 optional = false
 python-versions = "*"
-
-[package.dependencies]
-pywin32 = ">=223"
 
 [[package]]
 name = "pytz"
@@ -258,14 +222,6 @@ description = "Generate and change color-schemes on the fly"
 category = "main"
 optional = false
 python-versions = ">=3.5"
-
-[[package]]
-name = "pywin32"
-version = "228"
-description = "Python for Window Extensions"
-category = "main"
-optional = false
-python-versions = "*"
 
 [[package]]
 name = "requests"
@@ -358,7 +314,7 @@ youtube-dl = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "559738310b5bbeea5bb4e35f6ef403c881d8e8669b1c3e473584c1473693d7fd"
+content-hash = "901c4b4592d75ca49b093d2a1d60e22c19ead8f68f8a1033dd2efa3b23259f8e"
 
 [metadata.files]
 aiohttp = [
@@ -530,33 +486,12 @@ multidict = [
     {file = "multidict-5.2.0-cp39-cp39-win_amd64.whl", hash = "sha256:c9631c642e08b9fff1c6255487e62971d8b8e821808ddd013d8ac058087591ac"},
     {file = "multidict-5.2.0.tar.gz", hash = "sha256:0dd1c93edb444b33ba2274b66f63def8a327d607c6c790772f448a53b6ea59ce"},
 ]
-notify-send = [
-    {file = "notify-send-0.0.16.tar.gz", hash = "sha256:783be39b81a380b65f059e6cce04ffb721d6ca105710f9b1714ccae9e21f58ce"},
-    {file = "notify_send-0.0.16-py3-none-any.whl", hash = "sha256:8fc7b136ff84f7e29cafa67d0a1c1ceb87e5a51c36358d27f05bb5d770ddb0f1"},
-]
 pafy = [
     {file = "pafy-0.5.5-py2.py3-none-any.whl", hash = "sha256:769e35aa6988686d47fa2ab235d15c9952c7873c470f6a6b05cf6bcd93e62515"},
     {file = "pafy-0.5.5.tar.gz", hash = "sha256:364f1d1312c89582d97dc7225cf6858cde27cb11dfd64a9c2bab1a2f32133b1e"},
 ]
-pycairo = [
-    {file = "pycairo-1.20.1-cp310-cp310-win32.whl", hash = "sha256:736ffc618e851601e861a630293e5c910ef016b83b2d035a336f83a367bf56ab"},
-    {file = "pycairo-1.20.1-cp310-cp310-win_amd64.whl", hash = "sha256:261c69850d4b2ec03346c9745bad2a835bb8124e4c6961b8ceac503d744eb3b3"},
-    {file = "pycairo-1.20.1-cp36-cp36m-win32.whl", hash = "sha256:6db823a18e7be1eb2a29c28961f2f01e84d3b449f06be7338d05ac8f90592cd5"},
-    {file = "pycairo-1.20.1-cp36-cp36m-win_amd64.whl", hash = "sha256:5525da2d8de912750dd157752aa96f1f0a42a437c5625e85b14c936b5c6305ae"},
-    {file = "pycairo-1.20.1-cp37-cp37m-win32.whl", hash = "sha256:c8c2bb933974d91c5d19e54b846d964de177e7bf33433bf34ac34c85f9b30e94"},
-    {file = "pycairo-1.20.1-cp37-cp37m-win_amd64.whl", hash = "sha256:9a32e4a3574a104aa876c35d5e71485dfd6986b18d045534c6ec510c44d5d6a7"},
-    {file = "pycairo-1.20.1-cp38-cp38-win32.whl", hash = "sha256:0d7a6754d410d911a46f00396bee4be96500ccd3d178e7e98aef1140e3dd67ae"},
-    {file = "pycairo-1.20.1-cp38-cp38-win_amd64.whl", hash = "sha256:b605151cdd23cedb31855b8666371b6e26b80f02753a52c8b8023a916b1df812"},
-    {file = "pycairo-1.20.1-cp39-cp39-win32.whl", hash = "sha256:e800486b51fffeb11ed867b4f2220d446e2a60a81a73b7c377123e0cbb72f49d"},
-    {file = "pycairo-1.20.1-cp39-cp39-win_amd64.whl", hash = "sha256:f123d3818e30b77b7209d70a6dcfd5b4e34885f9fa539d92dd7ff3e4e2037213"},
-    {file = "pycairo-1.20.1.tar.gz", hash = "sha256:1ee72b035b21a475e1ed648e26541b04e5d7e753d75ca79de8c583b25785531b"},
-]
-pygobject = [
-    {file = "PyGObject-3.42.0.tar.gz", hash = "sha256:b9803991ec0b0b4175e81fee0ad46090fa7af438fe169348a9b18ae53447afcd"},
-]
-pypiwin32 = [
-    {file = "pypiwin32-223-py3-none-any.whl", hash = "sha256:67adf399debc1d5d14dffc1ab5acacb800da569754fafdc576b2a039485aa775"},
-    {file = "pypiwin32-223.tar.gz", hash = "sha256:71be40c1fbd28594214ecaecb58e7aa8b708eabfa0125c8a109ebd51edbd776a"},
+pygtk = [
+    {file = "pygtk-2.24.0.win32-py2.6.exe", hash = "sha256:16336e79f9a7913e5b2d1cf50120896495aac8892be2d352f660b905205c48db"},
 ]
 pytz = [
     {file = "pytz-2021.3-py2.py3-none-any.whl", hash = "sha256:3672058bc3453457b622aab7a1c3bfd5ab0bdae451512f6cf25f64ed37f5b87c"},
@@ -564,20 +499,6 @@ pytz = [
 ]
 pywal = [
     {file = "pywal-3.3.0.tar.gz", hash = "sha256:efeab992c2702c7e07529ac9757425862ea1796a6fc0331148bc45a8675230b7"},
-]
-pywin32 = [
-    {file = "pywin32-228-cp27-cp27m-win32.whl", hash = "sha256:37dc9935f6a383cc744315ae0c2882ba1768d9b06700a70f35dc1ce73cd4ba9c"},
-    {file = "pywin32-228-cp27-cp27m-win_amd64.whl", hash = "sha256:11cb6610efc2f078c9e6d8f5d0f957620c333f4b23466931a247fb945ed35e89"},
-    {file = "pywin32-228-cp35-cp35m-win32.whl", hash = "sha256:1f45db18af5d36195447b2cffacd182fe2d296849ba0aecdab24d3852fbf3f80"},
-    {file = "pywin32-228-cp35-cp35m-win_amd64.whl", hash = "sha256:6e38c44097a834a4707c1b63efa9c2435f5a42afabff634a17f563bc478dfcc8"},
-    {file = "pywin32-228-cp36-cp36m-win32.whl", hash = "sha256:ec16d44b49b5f34e99eb97cf270806fdc560dff6f84d281eb2fcb89a014a56a9"},
-    {file = "pywin32-228-cp36-cp36m-win_amd64.whl", hash = "sha256:a60d795c6590a5b6baeacd16c583d91cce8038f959bd80c53bd9a68f40130f2d"},
-    {file = "pywin32-228-cp37-cp37m-win32.whl", hash = "sha256:af40887b6fc200eafe4d7742c48417529a8702dcc1a60bf89eee152d1d11209f"},
-    {file = "pywin32-228-cp37-cp37m-win_amd64.whl", hash = "sha256:00eaf43dbd05ba6a9b0080c77e161e0b7a601f9a3f660727a952e40140537de7"},
-    {file = "pywin32-228-cp38-cp38-win32.whl", hash = "sha256:fa6ba028909cfc64ce9e24bcf22f588b14871980d9787f1e2002c99af8f1850c"},
-    {file = "pywin32-228-cp38-cp38-win_amd64.whl", hash = "sha256:9b3466083f8271e1a5eb0329f4e0d61925d46b40b195a33413e0905dccb285e8"},
-    {file = "pywin32-228-cp39-cp39-win32.whl", hash = "sha256:ed74b72d8059a6606f64842e7917aeee99159ebd6b8d6261c518d002837be298"},
-    {file = "pywin32-228-cp39-cp39-win_amd64.whl", hash = "sha256:8319bafdcd90b7202c50d6014efdfe4fde9311b3ff15fd6f893a45c0868de203"},
 ]
 requests = [
     {file = "requests-2.26.0-py2.py3-none-any.whl", hash = "sha256:6c1246513ecd5ecd4528a0906f910e8f0f9c6b8ec72030dc9fd154dc1a6efd24"},

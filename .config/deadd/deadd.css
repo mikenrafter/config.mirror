@@ -93,8 +93,8 @@ label.critical {
 
 .notificationInCenter:first-child *, .notification:first-child * {
   animation-name: spin;
-  animation-duration: 5s;
-  animation-timing-function: ease;
+  animation-duration: 4.5s;
+  animation-timing-function: ease-in-out;
   animation-iteration-count: infinite;
 }
 

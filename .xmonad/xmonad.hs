@@ -112,7 +112,7 @@ import XMonad.Util.Run
 mstartupHook :: [String] -> [String] -> X ()
 --}
 mstartupHook bcs fcs = do
- setDefaultCursor xC_left_ptr
+-- setDefaultCursor xC_left_ptr
  setWMName mwm
  mapM_
   ( \x -> spawnOnce $ x <> " &" )

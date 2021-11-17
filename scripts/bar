@@ -1,0 +1,17 @@
+#!/bin/bash
+# allow passing in mhome, from xmonad
+if [ "$1" == "" ]; then
+	home=$HOME
+else
+	home=$1
+fi
+
+if [ -f "/bin/xmobar" ]; then
+	/bin/xmobar ${@:2}
+	exit
+elif [ -f "$HOME/.nix-profile/bin/xmobar" ]; then
+	$HOME/.nix-profile/bin/xmobar ${@:2}
+else
+	notify-send "bar missing!" -i 'dialog-error'
+fi
+

@@ -77,7 +77,8 @@ meditor f = mconsole' $ meditor' <> " " <> f
 --}
 --{- environment programs
 -- the cabal,stack/nix installs of xmobar don't work (on arch anyway)
-mbar = "/bin/xmobar " <> mhome <> "/.xmonad/xmobar.conf"
+mbar = "bar " <> mhome <> " " <> mhome <> "/.xmonad/xmobar.conf"
+--mbar = mhome <> "/.nix-profile/bin/xmobar " <> mhome <> "/.xmonad/xmobar.conf"
 mtray mBG = "stalonetray " <> joins " " args
 -- mtray = "trayer " <> joins " " args
  --{- args
@@ -136,7 +137,7 @@ mbright num op = concat ["brightnessctl set ", show num, "%", op]
 --}
 
 mnotify' = "notify-send"
-mnotify'' = ["-i", "info"]
+mnotify'' = ["-i", "emblem-system"]
 
 mlocker = "slock"
 mtimeout = 5  -- in minutes

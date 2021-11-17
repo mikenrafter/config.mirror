@@ -502,7 +502,7 @@ in
 		xsession.numlock.enable = true;
 		# cursor theme
 		xsession.pointerCursor.package          = u1.vanilla-dmz;
-		xsession.pointerCursor.defaultCursor    = "Vanilla-DMZ";
+		xsession.pointerCursor.defaultCursor    = "left_ptr";
 		xsession.pointerCursor.name             = "Vanilla-DMZ";
 		xsession.pointerCursor.size             = 16;
 		# gtk

@@ -1,3 +1,4 @@
+#!/bin/bash
 # allow passing in mhome, from xmonad
 if [ "$1" == "" ]; then
 	home=$HOME
@@ -64,7 +65,7 @@ flameshot &
 # linear {
 # quick-exit things
 # connect to vpn on startup
-pkexec vpn `cat $home/.wg-default`
+vpnButton init && vpn `cat $home/.wg-default`
 # background
 #nitrogen 
 # see scripts/wm
