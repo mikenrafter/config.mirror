@@ -255,7 +255,8 @@ mmanageHook =
  -- <+> liftX up
  --{- composeOne
  <+> composeOne
-  [ doCenterFloat >?| [ isDialog, currentWs ~~? mfloat ]
+  [ act (doLower <+> doIgnore) (>?|) [className, title] ["xmonad_conky"] []
+  , doCenterFloat >?| [ isDialog, currentWs ~~? mfloat ]
   , act doCenterFloat (>?|) [className, title]
     [ "picture"
     , "connection"

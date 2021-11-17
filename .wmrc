@@ -5,23 +5,20 @@ else
 	home=$1
 fi
 
+# compatibility
+export SHELL=/bin/bash
+
 ### ### ### ###
 # dis == stay on restart
 # uni == kill any other instances before running
 ### ### ### ###
 
 
-### ### ### ###
-#
-# DIS
-#
+# DIS {
 # map keybindings correctly
 dis xmodmap $home/.Xmodmap
-
-### ### ### ###
-#
-# DIS UNI
-#
+# }
+# DIS UNI {
 # improve playerctl pause-play intelligence
 dis uni playerctld
 # 10% nice halt, 7% forceful halt -- prefer killing web processes -- avoid
@@ -29,22 +26,26 @@ dis uni playerctld
 dis uni earlyoom -m 10,7 -s 20 -n --prefer "Web Content|java" --avoid "alacritty|(ba|fi)sh|getty|xmonad|vim"
 # start easyeffects in the background by default
 dis uni easyeffects --gapplication-service
-
-### ### ### ###
-#
-# UNI
-#
+# }
+# UNI {
 # touchpad gestures
 uni touchegg &
 # compositor
 uni picom &
 # clipboard manager
 uni clipit &
-
-### ### ### ###
-#
-# & only
-#
+# conky mmmh
+uni conky -c ~/.config/conky/nord.conkyrc &
+# notification center
+uni notif-center init &
+# polkit
+uni /usr/lib/xfce-polkit/xfce-polkit & # TODO: create nix derivation for
+# make appimages work
+uni appimagelauncherd &
+# manage thumb-drives nicely
+uni usermount &
+# }
+# & only {
 # dies on restart
 # keep awake button
 caffeine &
@@ -59,11 +60,8 @@ prime-offload & \
 	optimus-manager-qt &
 # screenshot tool daemon
 flameshot &
-
-### ### ### ###
-#
-# linear
-#
+# }
+# linear {
 # quick-exit things
 # connect to vpn on startup
 pkexec vpn `cat $home/.wg-default`
@@ -71,3 +69,4 @@ pkexec vpn `cat $home/.wg-default`
 #nitrogen 
 # see scripts/wm
 #nitrogen --random --set-zoom-fill
+# }

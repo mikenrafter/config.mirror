@@ -146,6 +146,8 @@ mtoClip = "xclip -selection clipboard"
 mscreenshotFull = "maim | "      <> mtoClip <> " -t image/png"
 mscreenshotBox  = "flameshot gui"
 mscreenshotBox' = "maim -sku | " <> mtoClip <> " -t image/png"
+
+mnotifTray = "notif-center" -- ~/scripts/notif-center
 --}
 --{- favorite programs
 mapps =
@@ -184,10 +186,7 @@ mconfigs =
 --{- session startup
 -- run once
 msession =
- [ "/usr/lib/xfce-polkit/xfce-polkit" -- TODO: create nix derivation for
- , mhome <> "/.nix-profile/lib/xfce4/notifyd/xfce4-notifyd"
- , "appimagelauncherd"
- , "usermount"
+ [ -- moved to .wmrc
  ]  -- mtray && mbar
 
 -- run on every restart as well

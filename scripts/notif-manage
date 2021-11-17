@@ -1,0 +1,19 @@
+#!/bin/env fish
+
+set action ""
+
+if      test "$argv[1]" = "button"
+	set action int:id:$argv[2] boolean:state:$argv[3] type:string:buttons
+else if test "$argv[1]" = "pause"
+	set action string:type:pausePopups
+else if test "$argv[1]" = "unpause"
+	set action string:type:unpausePopups
+else if test "$argv[1]" = "clear"
+	set action string:type:clearInCenter
+else if test "$argv[1]" = "css"
+	set action string:type:reloadStyle
+else
+	exit 1
+end
+
+notify-send.py a --hint boolean:deadd-notification-center:true $action

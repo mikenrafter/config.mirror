@@ -1,0 +1,16 @@
+#!/bin/env python
+import subprocess
+
+volume=int(
+	str(subprocess.check_output(['amixer', 'sget', 'Master']))
+	.split('\\n')[-2]
+	.split(' ')[-2]
+	[1:-2])
+
+#print(int(
+#	(24 - 6*2) * (volume / 100) + 6
+#	))
+# inverse variant
+print(24 - int(
+	(24 - 6*2) * (volume / 100) + 6
+	))

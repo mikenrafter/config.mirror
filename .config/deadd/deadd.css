@@ -1,0 +1,193 @@
+@define-color bg  #222; /* background */
+@define-color em  #333; /* emphasis */
+@define-color mid #99a; /* middle/indeterminate */
+@define-color fg  #dde; /* foreground */
+@define-color nil #e99; /* invalid/nil */
+@define-color nul #f77; /* nil, but higher emphasis */
+
+* {
+	transition: all 1s;
+}
+
+
+
+/* Notification center */
+
+.blurredBG, #main_window, .blurredBG.low, .blurredBG.normal {
+	border-radius: 20px 0px 0px 20px;
+    background: @bg;
+}
+
+.noti-center.time {
+    font-size: 32px;
+}
+
+/* Notifications */
+
+.title {
+    font-weight: bold;
+    font-size: 16px;
+}
+
+.appname {
+    font-size: 12px;
+}
+
+.time {
+    font-size: 12px;
+}
+
+.blurredBG.notification {
+    background:  @bg;
+    border-radius: 10px;
+}
+
+.blurredBG.notification.critical, .notificationInCenter.critical {
+    background: @em;
+}
+
+.notificationInCenter {
+    border-radius: 10px;
+}
+
+/* merge notifications of like-type into single blob */
+.notificationInCenter:not(.critical):not(:first-child) + .notificationInCenter:not(.critical),
+.notificationInCenter.critical:not(:first-child) + .notificationInCenter.critical {
+	margin-top: -30px;
+	border-radius: 0px 0px 10px 10px;
+	padding-top: 10px;
+}
+
+/* make first-child items look proper */
+.notificationInCenter:first-child {
+	margin-bottom: 10px;
+}
+
+/* Labels */
+
+label {
+    color: @fg;
+}
+
+label.notification {
+    color: @fg;
+}
+
+label.critical {
+    color: @nul;
+}
+.notificationInCenter label.critical {
+    color: @nul;
+}
+
+* {
+	font-family: monospace;
+}
+
+
+/* Buttons */
+
+@keyframes spin {
+  to { -gtk-icon-transform: rotate(1turn); }
+}
+
+.notificationInCenter:first-child *, .notification:first-child * {
+  animation-name: spin;
+  animation-duration: 5s;
+  animation-timing-function: ease;
+  animation-iteration-count: infinite;
+}
+
+.notificationInCenter button {
+	margin-top: -5px;
+	transition: color 1s;
+}
+
+.notificationInCenter button *, .notificationInCenter button {
+	transition: all 1s;
+}
+
+.notificationInCenter button:hover * {
+	transition: all 0.5s;
+	color: @nil;
+}
+
+button {
+    background: transparent;
+    color: @em;
+    border-radius: 10px;
+    border-width: 0px;
+    background-position: 0px 0px;
+    text-shadow: none;
+	transition: all 1s;
+}
+
+button:hover {
+/*    border-radius: 3px;*/
+    background: rgba(0, 20, 20, 0.2);
+/*    border-width: 0px;*/
+    border-top: transparent;
+    border-color: #f00;
+    color: #fee;
+	transition: all 0.5s;
+}
+
+
+/* Custom Buttons */
+
+.userbutton {
+    background: @bg;
+}
+
+.userbuttonlabel {
+    color: @fg;
+    font-size: 12px;
+}
+
+.userbutton:hover {
+    background: @bg;
+}
+
+.userbuttonlabel:hover {
+    color: @fg;
+}
+
+
+button.buttonState1 {
+    background: @fg;
+}
+
+.userbuttonlabel.buttonState1 {
+    color: @bg;
+}
+
+button.buttonState1:hover {
+    background: @em;
+}
+
+.userbuttonlabel.buttonState1:hover {
+    color: @fg;
+}
+
+
+button.buttonState2 {
+    background: @mid;
+}
+
+.userbuttonlabel.buttonState2 {
+    color: @bg;
+}
+
+button.buttonState2:hover {
+    background: @em;
+}
+
+.userbuttonlabel.buttonState2:hover {
+    color: @fg;
+}
+
+/* Images */
+
+image.deadd-noti-center.notification.image {
+    margin-left: 20px;
+}

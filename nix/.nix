@@ -57,6 +57,7 @@ kernel = with u1.linuxPackages-libre; [
   xss-lock                  # lockscreen as screensaver
   nix-bundle                # https://github.com/matthewbauer/nix-bundle
   manix nixdoc nix-doc      # nix documentation
+#HDD freefall                 # anti HDD death
 
 
 #}
@@ -309,9 +310,8 @@ creation = with u1; [
 # viewing {
 viewing = with u1; [
 #+lbry.drv
-  celluloid                 # multimedia player - based on MPV, simple
-  vlc                       # multimedia player
-  minitube youtube-dl       # view youtube videos
+  celluloid mpv vlc         # multimedia players
+  minitube yt-dlp           # view youtube videos
 #Bnewsflash                 # RSS reader
   gpodder                   # podcast client
 ];
@@ -342,7 +342,7 @@ security = with u1; [
   # open VPN solutions
   openvpn gnome3.networkmanager-openvpn
   # proton vpn solution
-  protonvpn-cli protonvpn-gui
+  protonvpn-cli #protonvpn-gui
   # wireguard vpn stuff
   boringtun wg-bond wireguard-tools
   firejail                  # sandbox applications, particularly useful with web browsers
@@ -366,6 +366,10 @@ shells = with u1; [
 #}
 # cli {
 cli = with u1; [
+  cointop                   # crypto tracker
+  bottom htop               # system monitors
+  ftop                      # file-top
+
   hostname                  # the ability to modify your hostname | un-nix?
   bat exa fd                # better coreutils in rust
   lzip gzip bzip2 xz        # zippers
@@ -380,7 +384,6 @@ cli = with u1; [
   flootty                   # collab TTY
   xclip                     # clipboard util
   rsync                     # powerful file copy/share
-  bottom htop               # system monitors
   ffsend                    # file share for use with FF
   fzf                       # fuzzy finder tool
   snapper snapper-gui       # btrfs snapshot management utility
@@ -404,7 +407,8 @@ gui = with u1; [
   remmina                   # remote connection client
   cinnamon.warpinator       # LAN file sharer
   xfce.thunar gvfs          # file manager + trash support
-  xfce.xfce4-notifyd        # notification system
+  conky                     # snazzy
+  deadd-notification-center # notification system
   caffeine-ng               # stop screen-locking
   blueman                   # bluetooth tray
 # (lib.hiPrio blueman)      # bluetooth tray
@@ -418,6 +422,8 @@ gui = with u1; [
   tilem                     # TI# calculator emulator (needs ROM file)
   usermount                 # automatically mount drives as they appear
   gnome.dconf-editor        # dconf editor, duh
+  drawing                   # basic drawing tool - like G-drawings
+  drawio                    # flowcharts!!!!
 ];
 #}
 

@@ -295,34 +295,6 @@ qk_tap_dance_action_t tap_dance_actions[] =
 #undef YES
 
 
-#ifdef COMBO_ENABLE
-enum combo_events {
-	RETURN,
-	COMBOS // cheap LEN
-};
-
-uint16_t COMBO_LEN = COMBOS; // cheap LEN
-
-const uint16_t PROGMEM return_combo[] = {KC_RSHIFT, KC_SPACE, COMBO_END};
-
-combo_t key_combos[] = {
-	[RETURN] = COMBO_ACTION(return_combo)
-};
-/* COMBO_ACTION(x) is same as COMBO(x, XXXXXXX) */
-
-void return_to_def_layer(void);
-void return_to_def_layer() {
-	t(TO(DEF)); // manage with dynamic default layers, later
-}
-
-void process_combo_event(uint16_t combo_index, bool pressed) {
-	if (pressed) switch(combo_index) {
-		case RETURN: return_to_def_layer(); break;
-	}
-}
-#endif
-
-
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
 	switch (keycode) {
 		case rgb_sld:

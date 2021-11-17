@@ -1,2 +1,2 @@
 #!/bin/env bash
-pgrep $1 || $@
+pgrep $1 || pidof $1 || $@

@@ -1,0 +1,17 @@
+#!/bin/env fish
+if test "$argv[1]" = "init"
+	set connection (wg show 2>&1 >/dev/null | string split ' ' | grep ':' | sed 's/://g')
+	if test "$connection" != ""
+		notif-manage button 0 true
+	else
+		notif-manage button 0 false
+	end
+	exit
+end
+set list 'false' 'true'
+set -x SHELL /bin/bash
+pkexec vpnToggle $USER
+set code $status
+# 1 or 2
+notif-manage button 0 $list[$code]
+echo $list[$code]

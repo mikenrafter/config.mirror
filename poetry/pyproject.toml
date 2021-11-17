@@ -13,6 +13,7 @@ ytfs = "^0.99a5"
 "fs.youtube" = "^0.3.1"
 pywal = "^3.3.0"
 bs4 = "^0.0.1"
+pip = "^21.3.1"
 
 [tool.poetry.dev-dependencies]
 

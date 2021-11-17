@@ -203,6 +203,9 @@ mkeys bgs fgs =
 --{- multi-keyboard layout management
  , ("M-M1-<Space>", spawn "bash ~/.xmonad/kbd.sh")
 --}
+--{- notifications
+ , ("M-.", spawn mnotifTray)
+--}
 --}
 {- sublayouts
  sublayouts options, tabbed sublayouts causes screen artifacts in my attempts.
