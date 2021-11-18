@@ -1,1 +1,2 @@
-/usr/bin/gxmessage
+#!/bin/env bash
+gxmessage $@

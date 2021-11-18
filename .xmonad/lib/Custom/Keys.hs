@@ -201,7 +201,7 @@ mkeys bgs fgs =
  , ("S-<Print>", spawn mscreenshotBox )
 --}
 --{- multi-keyboard layout management
- , ("M-M1-<Space>", spawn "bash ~/.xmonad/kbd.sh")
+ , ("M-M1-<Space>", spawn "kbd")
 --}
 --{- notifications
  , ("M-.", spawn mnotifTray)
