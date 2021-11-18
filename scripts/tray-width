@@ -1,0 +1,7 @@
+#!/bin/env bash
+
+width=$(xprop -name stalonetray | grep 'program specified minimum size' | cut -d ' ' -f 5)
+spaces=$(( (width + 8) / 8 ))
+
+for i in $(seq 0 $spaces); do echo -n ' '; done
+

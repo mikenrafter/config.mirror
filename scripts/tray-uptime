@@ -1,0 +1,2 @@
+#!/bin/env bash
+/usr/bin/uptime -p | sed 's/up \|ears*\|eeks*\|ays*\|ours*\|inutes*\|econds*\| //g' | sed 's/,/ /g'

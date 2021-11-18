@@ -1,0 +1,29 @@
+#!/bin/env fish
+
+# due to flipping, this sets zen-mode to on by default
+test -f /tmp/zen-mode || echo 0 >/tmp/zen-mode
+set value (cat /tmp/zen-mode)
+
+# flip . flip -> same result
+if test "$argv[1]" = "init"
+	if test "$value" = "1"
+		set value "0"
+		notify-send 0
+	else
+		set value "1"
+		notify-send 1
+	end
+end
+
+# flip -> (on -> off) || (off -> on)
+if test "$value" = "1"
+	notif-manage button 3 false
+	notif-manage unpause
+	echo 0 > /tmp/zen-mode
+else
+	notif-manage button 3 true
+	notif-manage pause
+	echo 1 > /tmp/zen-mode
+end
+echo $value
+
