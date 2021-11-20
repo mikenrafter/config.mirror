@@ -1,5 +1,6 @@
 {- language CPP -}
 module Custom.Keys where
+import XMonad.Actions.WindowMenu
 --{- imports
 --{- globals
 import Custom.Grid
@@ -135,6 +136,7 @@ mkeys bgs fgs =
  -- , ("M-C-a", rotAllUp)                -- Rotate all up
  -- , ("M-C-r", rotAllDown)              -- Rotate all down
  
+ , ("M-'",   windowMenu)
  , ("M-z",   withFocused hideWindow)
  , ("M-S-z", popNewestHiddenWindow)
 -- ("M-z",   withFocused minimizeWindow)

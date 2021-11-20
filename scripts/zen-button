@@ -8,10 +8,10 @@ set value (cat /tmp/zen-mode)
 if test "$argv[1]" = "init"
 	if test "$value" = "1"
 		set value "0"
-		notify-send 0
+		notify-send "zen-mode enabled" -i 'applications-system'
 	else
 		set value "1"
-		notify-send 1
+		notify-send "zen-mode disabled" -i 'applications-system'
 	end
 end
 

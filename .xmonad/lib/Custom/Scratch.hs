@@ -8,7 +8,7 @@ import XMonad
 import XMonad.Util.NamedScratchpad
 import qualified XMonad.StackSet as W
 --}
-import XMonad.Hooks.ManageHelpers
+import XMonad.Hooks.ManageHelpers hiding ((~?))
 --}
 --{- keybinds and scratches
 {- human-readable keybinds

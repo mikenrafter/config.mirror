@@ -9,6 +9,7 @@
 {- LANGUAGE NoMonomorphismRestriction #-} -- ?
 {- LANGUAGE NamedFieldPuns #-} -- ?
 
+import XMonad.Util.WindowProperties
 -- import XMonad.Hooks.FadeWindows (isFloating) -- for later
 -- my xmonad config, see ../.vimrc for navigation
 --{- imports
@@ -45,7 +46,7 @@ import XMonad.Hooks.DynamicLog  --(dynamicLogWithPP, pad, xmobarPP, xmobarColor,
 import XMonad.Hooks.EwmhDesktops
 import XMonad.Hooks.FadeInactive
 import XMonad.Hooks.ManageDocks -- (avoidStruts, docksEventHook, checkDock, manageDocks, ToggleStruts(..))
-import XMonad.Hooks.ManageHelpers
+import XMonad.Hooks.ManageHelpers hiding ((~?))
 import XMonad.Hooks.SetWMName
 import XMonad.Hooks.WorkspaceHistory
 import XMonad.Hooks.RefocusLast
@@ -260,9 +261,9 @@ mmanageHook =
   , act doCenterFloat (>?|) [className, title]
     [ "picture"
     , "connection"
-    , "volume", "pulseaudio", "alsa", "jack"
- -- , "firefox", "libreWolf", "tor Browser", "brave", "chrom", "qute"
+    , "volume", "pulseaudio", "alsa", "jack", "pipewire", "easyeffects"
     ] []
+  , (className ~? "libreWolf" <||> className ~? "firefox") --> shiftToSame (fmap Just className) -- (fmap Just ( (isNotOn "NSP") -?> className ))
   , doFullFloat >?| [ isFullscreen, currentWs ~~? mfull ]
   , act doFullFloat (>?|) [className, title] ["steam"] []
   ] --}
@@ -283,6 +284,8 @@ mmanageHook =
     , "file", "open", "inspect"
     , "flameshot", "xzoom"
     ] ["man"]
+--  , className =? "Alacritty" -?> doCenterFloat
+--, (className =? "Alacritty") --> shiftToSame' (fmap Just className)
   , act (s 1) (>>|) [className] ["obs"] []
   , act (s 2) (>>|) [className] ["geanie"] []
   , act (s 3) (>>|) [className] ["qute", "librewolf", "brave", "chrom", "tor-", "torb"] []
@@ -301,6 +304,8 @@ mmanageHook =
  <+> manageSpawn
  --{- where
  where
+  isNotOn t = ask >>= \w -> pure (maybe True (const False) (W.findTag w t))
+  browsers = [ "firefox", "libreWolf", "tor Browser", "brave", "chrom", "qute" ]
   never = ( stringProperty "_" =? "_" )
   s n = doShift $ mregular!n
   s' n = doShift $ mfloats!n
@@ -308,7 +313,7 @@ mmanageHook =
   act fn compare values n0 n1 =
    fn `compare`
    concat
-   [  [never]
+   [  []
    <> [x ~? y  | y <- n0]
    <> [x ~~? y | y <- n1]
       | x <- values ]
@@ -371,6 +376,14 @@ mmanageHook =
   doLower = ask >>= \w -> liftX $ withDisplay $ \dpy -> io (lowerWindow dpy w) *> mempty
 --}
 --}
+--{- activateHook
+-- focus element, let all others die
+mActivateHook :: ManageHook
+mActivateHook = composeOne
+  [ className =? "Element" <||> className =? "element" -?> doFocus
+  , pure True -?> doAskUrgent
+  ]
+--}
 --{- handleEventHook
 {- fconf
 floatConfReqHook :: MaybeManageHook -> Event -> X All
@@ -394,11 +407,7 @@ mhandleEventHook =
  -- on closing of focused float, if new focus is tiled, refocus last tiled
  -- viewed before focusing a float
  --  refocusLastWhen isFloat
- -- let applications fullscreen themselves, only some do reliably
-     XMonad.Hooks.EwmhDesktops.fullscreenEventHook
- -- handle new docks dynamically
- <+> docksEventHook
- <+> trayerAboveXmobarEventHook
+     trayerAboveXmobarEventHook
  <+> Hacks.windowedFullscreenFixEventHook
  -- <+> floatConfReqHook mfcfrhook
  -- <+> putBelow "xmobar" (=?) "trayer"
@@ -575,14 +584,17 @@ main = do
   --}
   --{- hooks  {
   -- manage docks
-  $ Hacks.javaHack
+  . Hacks.javaHack
   -- apply urgency hook
-  $ withUrgencyHook LibNotifyUrgencyHook
+  . withUrgencyHook LibNotifyUrgencyHook
   -- apply urgency hook w/ borders
   $ withUrgencyHookC BorderUrgencyHook { urgencyBorderColor = mFG } urgencyConfig { suppressWhen = Never }
  -- $ dynamicProjects mprojects
-  $ docks
-  $ ewmh def
+  . setEwmhActivateHook doAskUrgent
+  . ewmhFullscreen
+  . docks
+  . ewmh
+  $ def
    { manageHook      = mmanageHook
    , handleEventHook = mhandleEventHook
    , logHook         = mlogHook pipe    bcs fcs
