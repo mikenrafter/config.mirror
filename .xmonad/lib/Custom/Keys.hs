@@ -1,6 +1,5 @@
 {- language CPP -}
 module Custom.Keys where
-import XMonad.Actions.WindowMenu
 --{- imports
 --{- globals
 import Custom.Grid
@@ -63,7 +62,7 @@ import Data.Maybe (isJust, fromMaybe)
 --{- keys
 --{- type definitions
 moverrides :: [(String, X ())]
-mkeys :: [String] -> [String] -> [(String, X ())]
+mkeys :: [String] -> [String] -> [String] -> [(String, X ())]
 --}
 --{- overrides
 moverrides =
@@ -91,7 +90,7 @@ moverrides =
  , ("M-,",          off)
  , ("M-.",          off)
  ]
---  <> [ dyn k  off | k <- ['1'..'9'] ]
+  <> [ dyn k  off | k <- ['1'..'9'] ]
 --  <> [ dyn' k off | k <- ['1'..'9'] ]
  <> [ dyn  k  off | k <- "wer" ]
  <> [ dyn' k off | k <- "wer" ]
@@ -109,7 +108,7 @@ moverrides =
   --}
 --}
 --{- my keys
-mkeys bgs fgs =
+mkeys ws bgs fgs =
  -- Instead of clumsy log hook version of updatePointer, activate after every
  -- hotkey. This way it doesn't activate upon notifications!
  map (\(k, a) -> (k, a *> up)) ([
@@ -136,7 +135,6 @@ mkeys bgs fgs =
  -- , ("M-C-a", rotAllUp)                -- Rotate all up
  -- , ("M-C-r", rotAllDown)              -- Rotate all down
  
- , ("M-'",   windowMenu)
  , ("M-z",   withFocused hideWindow)
  , ("M-S-z", popNewestHiddenWindow)
 -- ("M-z",   withFocused minimizeWindow)
@@ -164,7 +162,7 @@ mkeys bgs fgs =
  , ("M-C-S-M1-4", addWorkspace "test")
  , ("M-C-S-M1-5", selectWorkspace  $ promptConf bgs fgs)
  , ("M-C-S-M1-6", addHiddenWorkspace "wow")
- , ("M-C-S-M1-s", renameWorkspaceByName "ay")
+-- , ("M-C-S-M1-s", renameWorkspaceByName "ay")
  -- , ("M-M1-C-S-<Return>", activateProject currentProject)
 --}
 --{-  multimedia
@@ -232,11 +230,12 @@ mkeys bgs fgs =
  <> twoK "M" "p" [(k, allNamedScratchpadAction mscratch k ) | k     <- mscratch'   ]  -- scratchpads
  --}
  --{- prompts
- <> twoK "M" "s" [(k, S.promptSearch (promptConf' bgs fgs) f )     | (k,f) <- msearches   ]  -- search prompts
- <>              [("M-" <> k, f (promptConf' bgs fgs))            | (k,f) <- mprompts    ]  -- other prompts
+ <> twoK "M" "s" [(k, S.promptSearch (promptConf' bgs fgs) f ) | (k,f) <- msearches   ]  -- search prompts
+ <>              [("M-" <> k, f (promptConf' bgs fgs))         | (k,f) <- mprompts    ]  -- other prompts
  --}
  --{- gridselects
- <> twoK "M" "\\" mgrids
+ <> [ ("M-'", mgrids), ("M-\\", custom spawn mapps) ]
+-- <> twoK "M" "\\" mgrids
  --}
  --{- navigation
  --{- window movement
@@ -256,11 +255,23 @@ mkeys bgs fgs =
   , nextWS                                                        -- next
   , safeMove Next                                                 -- next active
   ]
+
+ <> [ ( concat ["M-", m, show k], windows $ f i )
+  | (i, k) <- zip (XMonad.workspaces $ def {workspaces=ws}) [1..9]
+  , (f, m) <- [(W.view, ""), (W.shift, "S-")]
+  ]
+
  -- TODO, explain this gazelle
  <> [ ( concat ["M-C-", show k] , mapM_ (flip withNthWorkspace i) [W.shift, W.view] )
   | (k, i) <- zip [0..9] $ scon [0..9] ]
  <> [ ( concat ["M-C-S-", show k] , foldl (<+>) wreverse (take 10 $ repeat $ withNthWorkspace W.shift i) <+> withNthWorkspace W.view i)
   | (k, i) <- zip [0..9] $ scon [0..9] ]
+ --}
+ --{- monitor movement
+ <> [ ( concat ["M-M1-", m, [k]], screenWorkspace sc >>= flip whenJust (windows . f) )
+  | (k, sc) <- zip "rst" [2,1,0]
+  , (f, m) <- [(W.view, ""), (W.shift, "S-"), (W.greedyView, "C-S-")]
+  ]
  --}
  --}
  --{- floatKeys

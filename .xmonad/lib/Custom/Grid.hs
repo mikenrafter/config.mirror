@@ -1,3 +1,4 @@
+{-# LANGUAGE BlockArguments #-}
 module Custom.Grid where
 --{- imports
 --{- globals
@@ -9,6 +10,7 @@ import System.Random (randomRIO, randomR)
 --}
 --{- actions
 import XMonad.Actions.GridSelect
+import XMonad.Actions.WindowMenu
 --}
 --{- data
 import Data.Bool
@@ -30,18 +32,16 @@ gsconfig =
   }
 --}
 --{- grid mappings
-mgrids =
- [ ("<Backspace>", bringSelected gsconfig)  -- bring selected window
- , ("]", custom spawn mconfigs)             -- my configs
- , ("\\", custom spawn mapps)               -- my apps
- , ("<Return>", goToSelected gsconfig)      -- goto selected window
+mgrids' =
+ [ ("W.bring", bringSelected gsconfig)  -- bring selected window
+ , ("W.goto",  goToSelected gsconfig)   -- goto selected window
+ , ("W.Conf",  windowMenu)              -- window management menu
+ , ("X.Conf",  custom spawn mconfigs)   -- my configs
+ , ("X.Progs", custom spawn mapps)      -- my apps
  ]
--- mallGrids =
---  [ "=", nest (pure ()) (
---  \x -> head $ lFilter mgrids x
---  ) mgrids
---  ]
---}
+mgrids =
+ flip custom grids \x->snd $ mgrids'!!x
+ where grids = zip (map fst mgrids') [0..]
 --{- utility functions
 nest prev next items = gridselect gsconfig items >>= maybe prev next
 custom = nest $ pure ()
@@ -55,8 +55,9 @@ colors _ active = do
 --}
 --{- type definitions
 gsconfig :: GSConfig a
-mgrids :: [(String, X ())]
-custom :: (String -> X ()) -> [(String, String)] -> X ()
+custom :: (a -> X ()) -> [(String, a)] -> X ()
+--custom :: (String -> X ()) -> [(String, a)] -> X ()
+--nest :: X () -> (String -> X ()) -> [(String, X ())] -> [Char]
 --rand :: (MonadIO m) => [a] -> m a
 --rand :: liftIO
 --rand :: [String] -> IO String

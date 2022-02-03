@@ -64,7 +64,7 @@ Vim
 	fold configuration
 		...
 	- yet to implement
-	Fold navigation technique
+	fold navigation technique
 		"| ..unique-case-insensitive-identifiers" <- make folds navigatable via
 			a keybind that looks at that from under the cursor, if no fold with that identifier, place innermost identifier in search queue (/)
 		mark last location, with the mark 'o
@@ -82,8 +82,8 @@ Nvidia GPUs
 		__GLX_VENDOR_LIBRARY_NAME=nvidia
 
 Servers
-	Containerization
-		Podman
+	containerization
+		podman
 			compatible, but superior in every way, with/to Docker
 
 Random things
@@ -99,7 +99,7 @@ Random things
 		$ sudo modprobe v4l2loopback devices=4 video_nr=10,11,12,13 card_label="V0","V1","V2","V3" exclusive_caps=1,1,1,1 debug=1
 
 Nix
-	Flakes / multi-dependency management
+	flakes / multi-dependency management
 		- credit to: @ilikecan:matrix.org
 		If you are using flakes, you can just specify the different channel as a separate input like:
 			inputs = {
@@ -145,5 +145,10 @@ Nix
 				};
 			}
 		To use package `A` from nixos-21.05 and package `B` from nixos-unstable.
+	multiple version management
+		https://lazamar.co.uk/nix-versions/
+		https://github.com/lazamar/nix-package-versions
 
-
+XMonad
+	trayer integration
+		https://github.com/jaor/xmobar/issues/239#issuecomment-233206552

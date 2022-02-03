@@ -14,6 +14,9 @@ ytfs = "^0.99a5"
 pywal = "^3.3.0"
 bs4 = "^0.0.1"
 pip = "^21.3.1"
+pyfribidi = "^0.12.0"
+selenium = "^4.1.0"
+tqdm = "^4.62.3"
 
 [tool.poetry.dev-dependencies]
 

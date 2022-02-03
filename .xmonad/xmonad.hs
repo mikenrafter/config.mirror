@@ -9,6 +9,7 @@
 {- LANGUAGE NoMonomorphismRestriction #-} -- ?
 {- LANGUAGE NamedFieldPuns #-} -- ?
 
+import XMonad.Hooks.DynamicProperty
 import XMonad.Util.WindowProperties
 -- import XMonad.Hooks.FadeWindows (isFloating) -- for later
 -- my xmonad config, see ../.vimrc for navigation
@@ -257,13 +258,16 @@ mmanageHook =
  --{- composeOne
  <+> composeOne
   [ act (doLower <+> doIgnore) (>?|) [className, title] ["xmonad_conky"] []
+  , act (doCenterFloat) (>?|) [className, title] ["junction"] []
   , doCenterFloat >?| [ isDialog, currentWs ~~? mfloat ]
   , act doCenterFloat (>?|) [className, title]
     [ "picture"
     , "connection"
     , "volume", "pulseaudio", "alsa", "jack", "pipewire", "easyeffects"
+--  , "junction"
     ] []
   , (className ~? "libreWolf" <||> className ~? "firefox") --> shiftToSame (fmap Just className) -- (fmap Just ( (isNotOn "NSP") -?> className ))
+  , act (s'' 2) (>?|) [className, title] ["crash report"] []
   , doFullFloat >?| [ isFullscreen, currentWs ~~? mfull ]
   , act doFullFloat (>?|) [className, title] ["steam"] []
   ] --}
@@ -298,7 +302,7 @@ mmanageHook =
   , act (s' 3) (>>|) [className] ["xephyr", "virt"] []
 
   , act (s'' 1) (>>|) [className] ["steam", "lutris"] []
---  , act (doF ignore)  (>?|) [className, title] ["sharing indicator"] []
+  , act (s 1 <+> doLower <+> doIgnore)  (>>|) [className, title] ["sharing indicator"] []
   ]) --}
  -- hook for spawnOn calls
  <+> manageSpawn
@@ -407,7 +411,8 @@ mhandleEventHook =
  -- on closing of focused float, if new focus is tiled, refocus last tiled
  -- viewed before focusing a float
  --  refocusLastWhen isFloat
-     trayerAboveXmobarEventHook
+     (dynamicPropertyChange "WM_NAME" ( title =? "Junction" --> doCenterFloat ))
+ <+> trayerAboveXmobarEventHook
  <+> Hacks.windowedFullscreenFixEventHook
  -- <+> floatConfReqHook mfcfrhook
  -- <+> putBelow "xmobar" (=?) "trayer"
@@ -562,10 +567,10 @@ main = do
  let getColors = tryReadFile . (mhome <>)
  let stringify colors = foldr1 (\a b -> a <> "\n" <> b) colors
 
- wmbc <- getColors "/.cache/wal/wmbc"
+ wmbc <- getColors "/.cache/wal/wmbc-DISABLED"
      <|> getColors "/.wmbc"
      <|> (pure $ stringify bg)
- wmfc <- getColors "/.cache/wal/wmfc"
+ wmfc <- getColors "/.cache/wal/wmfc-DISABLED"
      <|> getColors "/.wmfc"
      <|> (pure $ stringify fg)
  let fcs = map hex6 $ grabColors '\n' ' ' wmfc
@@ -576,7 +581,7 @@ main = do
  let
   mFG = fc
   mBG = bc
-  mk = mkeys bcs fcs
+  mk = mkeys mworkspaces bcs fcs
   keys = ("M-h", checkKeymap (ewmh def `additionalKeysP` mk) mk) : mk
   in
  --}

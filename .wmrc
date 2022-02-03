@@ -25,8 +25,9 @@ dis uni playerctld
 # 10% nice halt, 7% forceful halt -- prefer killing web processes -- avoid
 # common important programs
 dis uni earlyoom -m 10,7 -s 20 -n --prefer "Web Content|java" --avoid "alacritty|(ba|fi)sh|getty|xmonad|vim"
-# start easyeffects in the background by default
-dis uni easyeffects --gapplication-service
+# start easyeffects in the background by default -- give it higher priority,
+# otherwise it's quality degrades under strain.
+dis uni nice -n -15 easyeffects --gapplication-service
 # }
 # UNI {
 # touchpad gestures
