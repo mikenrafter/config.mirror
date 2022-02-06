@@ -65,7 +65,7 @@ import XMonad.Util.WindowProperties (getProp32)
 import qualified XMonad.Util.ExtensibleConf as XC
 import qualified XMonad.Util.ExtensibleState as XS
 
-import Custom.Fullscreen (addFS, delFS)
+import qualified Custom.Fullscreen as FS
 
 -- $usage
 -- You can use this module with the following in your @~\/.xmonad\/xmonad.hs@:
@@ -410,10 +410,10 @@ fullscreenEventHook (ClientMessageEvent _ _ _ dpy win typ (action:dats)) = do
   when (managed && typ == wmstate && fi fullsc `elem` dats) $ do
     when (action == add || (action == toggle && not isFull)) $ do
       chWstate (fi fullsc:)
-      addFS win
+      FS.on win
     when (action == remove || (action == toggle && isFull)) $ do
       chWstate $ delete (fi fullsc)
-      delFS win
+      FS.off win
 
   return $ All True
 

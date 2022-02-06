@@ -21,7 +21,7 @@ import Custom.Keys
 import Custom.Prompts
 import Custom.Scratch
 import Custom.Vars
-import Custom.Fullscreen
+import qualified Custom.Fullscreen as FS
 --}
 --{- standards
 import XMonad
@@ -119,7 +119,7 @@ mstartupHook :: [String] -> [String] -> String -> String -> X ()
 --}
 mstartupHook bcs fcs mBG mFG = do
 -- setDefaultCursor xC_left_ptr
- setFSTheme $ mtabConfig mBG mFG
+ FS.setTheme $ mtabConfig mBG mFG
  setWMName mwm
  mapM_
   ( \x -> spawnOnce $ x <> " &" )
@@ -274,8 +274,10 @@ mmanageHook =
     ] []
   , groupBy className $ browsers <> ["steam", "dolphin"]
   , act (s'' 2) (>?|) [className, title] ["crash report"] []
-  , doFullFloat >?| [ isFullscreen ]
-  , act doFullFloat (>?|) [className, title] ["steam"] []
+  , isFullscreen -?> FS.start
+  , act FS.start (>?|) [className, title] [ "steam" ] []
+--  , doFullFloat >?| [ isFullscreen ]
+--  , act doFullFloat (>?|) [className, title] ["steam"] []
   ] --}
  -- manage scratchpads, done after WS shifting, before, stack
  -- rearrangement, and before composeOne - monoids read backward
@@ -329,8 +331,9 @@ mmanageHook =
   s n = doShift $ mregular!n
   s' n = doShift $ mfloats!n
   s'' n = doShift $ mfulls!n
-  act fn compare values n0 n1 =
-   fn `compare`
+  act fn compare values n0 n1 = compare fn $ collage values n0 n1
+  act' fn compare conditions = fn `compare` conditions
+  collage values n0 n1 =
    concat
    [  []
    <> [x ~? y  | y <- n0]
@@ -342,6 +345,8 @@ mmanageHook =
   (>>&) a b = and' b --> a
   (>?|) a b = or'  b -?> a
   (>?&) a b = and' b -?> a
+  simply a b = a
+--  anyOfIs fns compare list = 
   -- see above, https://github.com/TheMC47/dotfiles/blob/master/.xmonad/src/Config.hs
   --{- ignore
   -- n: new, u: up, upstack, c: current, ds: downstack
@@ -460,7 +465,7 @@ mlogHook pipe bcs fcs =
  -- pass pipe in, for status bar
  <+> mbarHook pipe fcs bcs
  -- handle mag-fullscreen events
- <+> fsHook
+ <+> FS.logHook
 --}
 --{- barHook
 mbarHook pipe fg bg = do

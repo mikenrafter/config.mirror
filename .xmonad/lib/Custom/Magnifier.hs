@@ -61,6 +61,8 @@ import XMonad.StackSet
 import qualified XMonad.StackSet as S
 import XMonad.Actions.TagWindows (hasTag)
 import XMonad.Hooks.ManageDocks
+import qualified XMonad.Util.ExtensibleState as XS
+import Custom.Fullscreen (withTag)
 
 -- $usage
 -- You can use this module with the following in your @~\/.xmonad\/xmonad.hs@:
@@ -202,9 +204,10 @@ data MagnifyThis
 -- | Only apply magnifier to windows with the tag "FS"
 onlyFullscreen :: NewLayout Window -> NewLayout Window
 onlyFullscreen mainmod r s wrs =
- hasTag "FS" (S.focus s) >>= \case
-  True  -> mainmod r s wrs
-  False -> return (wrs, Nothing)
+ withTag \tg ->
+  hasTag tg (S.focus s) >>= \case
+   True  -> mainmod r s wrs
+   False -> return (wrs, Nothing)
 
 -- | A modifier that handles tag-based fullscreening for you (tag "FS")
 fullscreen :: l a -> ModifiedLayout Magnifier l a

@@ -8,7 +8,7 @@ import Custom.Grid
 import Custom.Prompts
 import Custom.Scratch
 import Custom.Vars
-import Custom.Fullscreen
+import qualified Custom.Fullscreen as FS
 --}
 --{- standards
 import XMonad
@@ -147,14 +147,13 @@ mkeys ws bgs fgs =
 --{- layouts
  , ("M-S-<Tab>", sendMessage FirstLayout)
  , ("M-<Tab>",   sendMessage NextLayout)
- , ("M-C-<D>",   withTaggedGlobal "FS" delFS <+> sinkAll)         -- sink all windows
- , ("M-S-<D>",   withTaggedGlobal "FS" delFS <+> sinkAll)         -- sink all windows
- , ("M-<D>",     withFocused $ \w -> delFS w >> (windows . W.sink) w )                          -- sink current window
+ , ("M-S-<D>",   FS.withTag  \tg -> withTaggedGlobal tg FS.off <+> sinkAll)         -- sink all windows
+ , ("M-<D>",     withFocused \w -> FS.off w >> (windows . W.sink) w )                          -- sink current window
 
--- ("M-C-S-<U>", withAll' addFS) -- fullscreen all windows
--- ("M-C-<U>",   withAll' addFS) -- fullscreen all windows
--- ("M-S-<U>", withTiled' addFS) -- fullscreen all tiled windows
- , ("M-<U>", withFocused  fs  ) -- fullscreen current window
+-- ("M-C-S-<U>", withAll' FS.on) -- fullscreen all windows
+-- ("M-C-<U>",   withAll' FS.on) -- fullscreen all windows
+-- ("M-S-<U>", withTiled' FS.on) -- fullscreen all tiled windows
+ , ("M-<U>", withFocused  FS.toggle  ) -- fullscreen current window
 --}
 --{- workspaces
 --  NOTE - dynamic keys, dynamically added based on values in Vars.hs
@@ -303,7 +302,6 @@ mkeys ws bgs fgs =
   wreverse = windows $ W.modify' $
    -- completely reverse stack (kinda)
    \(W.Stack f u d) -> W.Stack (last d) [] (reverse (init d) <> u <> [f])
-  fs = toggleFullscreen
 
 --{- disaster town
   -- complex functions to replace *.focusUp/down
