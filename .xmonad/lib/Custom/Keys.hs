@@ -1,4 +1,6 @@
 {- language CPP -}
+{-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE BlockArguments #-}
 module Custom.Keys where
 --{- imports
 --{- globals
@@ -6,6 +8,7 @@ import Custom.Grid
 import Custom.Prompts
 import Custom.Scratch
 import Custom.Vars
+import Custom.Fullscreen
 --}
 --{- standards
 import XMonad
@@ -13,6 +16,7 @@ import System.Exit (exitSuccess)
 import qualified XMonad.Util.PureX as P
 import qualified XMonad.Util.Stack as U
 import qualified XMonad.StackSet as W
+import qualified XMonad.Util.ExtensibleState as XS
 --}
 --{- actions
 import XMonad.Actions.UpdatePointer
@@ -31,6 +35,7 @@ import XMonad.Actions.WithAll
 -- import XMonad.Actions.Sink (sink)
 import qualified XMonad.Actions.Search as S
 import XMonad.Actions.Minimize
+import XMonad.Actions.TagWindows
 import XMonad.Layout.Hidden
 --}
 --{- layouts
@@ -42,6 +47,7 @@ import qualified XMonad.Layout.MultiToggle as MT (Toggle(..))
 import XMonad.Layout.BoringWindows as B
 import XMonad.Layout.SubLayouts
 import XMonad.Layout.WindowNavigation
+import XMonad.Layout.Spacing
 --}
 --{- prompt
 import XMonad.Prompt
@@ -53,7 +59,7 @@ import XMonad.Util.NamedScratchpad
 import XMonad.Util.SpawnOnce
 --}
 --{- misc
-import XMonad.Hooks.ManageDocks (ToggleStruts(..))
+import XMonad.Hooks.ManageDocks (ToggleStruts(..), SetStruts(..))
 import Data.List (isInfixOf)
 import qualified Data.Map as M
 import Data.Maybe (isJust, fromMaybe)
@@ -90,9 +96,9 @@ moverrides =
  , ("M-,",          off)
  , ("M-.",          off)
  ]
-  <> [ dyn k  off | k <- ['1'..'9'] ]
---  <> [ dyn' k off | k <- ['1'..'9'] ]
- <> [ dyn  k  off | k <- "wer" ]
+ <> [ dyn  k off | k <- ['1'..'9'] ]
+ <> [ dyn' k off | k <- ['1'..'9'] ]
+ <> [ dyn  k off | k <- "wer" ]
  <> [ dyn' k off | k <- "wer" ]
  ]
  --{- where
@@ -112,7 +118,7 @@ mkeys ws bgs fgs =
  -- Instead of clumsy log hook version of updatePointer, activate after every
  -- hotkey. This way it doesn't activate upon notifications!
  map (\(k, a) -> (k, a *> up)) ([
---{-  session management
+--{- session management
    ("M-q", mnotify "xmonad" "restarting"  <+> spawn "xmonad --restart")
  , ("M-C-q", io exitSuccess)
  , ("M-S-q", io exitSuccess)
@@ -120,7 +126,7 @@ mkeys ws bgs fgs =
  -- couldn't figure out how TF to pipe mBG in here, so...
  , ("M-0", mapM_ (\x -> unspawn x <+> spawn ("sleep 1;" <> x)) $ mtray (bg!1) : mrestart)  -- relaunch startup things
 --}
---{-  general
+--{- general
  , ("M-<Return>",      spawn $ mterminal <> " -e " <> mshell)
  , ("M-S-<Return>",    spawn $ mterminal <> " -e " <> mshell)
 
@@ -130,29 +136,27 @@ mkeys ws bgs fgs =
  , ("M-`",             windows copyToAll)
  , ("M-<Escape>",      killAllOtherCopies)
 --}
---{-  window navigation
+--{- window navigation
 --  NOTE - dynamic keys, dynamically added based on values in Vars.hs
  -- , ("M-C-a", rotAllUp)                -- Rotate all up
  -- , ("M-C-r", rotAllDown)              -- Rotate all down
  
  , ("M-z",   withFocused hideWindow)
  , ("M-S-z", popNewestHiddenWindow)
--- ("M-z",   withFocused minimizeWindow)
--- ("M-S-z", withLastMinimized maximizeWindowAndFocus)
 --}
---{-  layouts
+--{- layouts
  , ("M-S-<Tab>", sendMessage FirstLayout)
  , ("M-<Tab>",   sendMessage NextLayout)
- , ("M-C-<D>",   sinkAll)                        -- sink all windows
- , ("M-S-<D>",   sinkAll)                        -- sink all windows
- , ("M-<D>",     withFocused $ windows . W.sink) -- sink current window
+ , ("M-C-<D>",   withTaggedGlobal "FS" delFS <+> sinkAll)         -- sink all windows
+ , ("M-S-<D>",   withTaggedGlobal "FS" delFS <+> sinkAll)         -- sink all windows
+ , ("M-<D>",     withFocused $ \w -> delFS w >> (windows . W.sink) w )                          -- sink current window
 
- , ("M-C-S-<U>", withAll'            fullFloat <+> windows W.shiftMaster) -- fullscreen all windows
- , ("M-C-<U>",   withAll'            fullFloat <+> windows W.shiftMaster) -- fullscreen all windows
- , ("M-S-<U>", withTiled'            fullFloat <+> windows W.shiftMaster) -- fullscreen all tiled windows
- , ("M-<U>", withFocused $ windows . fullFloat)                          -- fullscreen current window
+-- ("M-C-S-<U>", withAll' addFS) -- fullscreen all windows
+-- ("M-C-<U>",   withAll' addFS) -- fullscreen all windows
+-- ("M-S-<U>", withTiled' addFS) -- fullscreen all tiled windows
+ , ("M-<U>", withFocused  fs  ) -- fullscreen current window
 --}
---{-  workspaces
+--{- workspaces
 --  NOTE - dynamic keys, dynamically added based on values in Vars.hs
  , ("M-<Space>" , toggleWS' ["NSP"])
  , ("M-C-S-M1-<Space>", appendWorkspace "oioi")
@@ -165,7 +169,7 @@ mkeys ws bgs fgs =
 -- , ("M-C-S-M1-s", renameWorkspaceByName "ay")
  -- , ("M-M1-C-S-<Return>", activateProject currentProject)
 --}
---{-  multimedia
+--{- multimedia
 --{- play/pause/seek
  , ("<XF86AudioPrev>" , spawn "playerctl previous")
  , ("<XF86AudioPlay>" , spawn "playerctl play-pause")
@@ -223,6 +227,13 @@ mkeys ws bgs fgs =
  , ("M-f <L>", withFocused $ \w -> W.float w $ W.RationalRect 0.1 0.1 0.5 1.0)
  , ("M-f <L>", windows $ \w -> W.float w $ W.RationalRect 0.1 0.1 0.5 1.0)
 --}
+ --{- gridselects
+ , ("M-i", mgrids)
+ , ("M-o", custom spawn mapps)
+ --}
+ --{- fullscreen
+-- , ("M-<U>", withFocused fs)
+ --}
  ]
 --{- dynamic keybinds
 -- like DT's dynamic keys using list comprehension, but "M-a a" & "M-a M-a" are accepted
@@ -232,10 +243,6 @@ mkeys ws bgs fgs =
  --{- prompts
  <> twoK "M" "s" [(k, S.promptSearch (promptConf' bgs fgs) f ) | (k,f) <- msearches   ]  -- search prompts
  <>              [("M-" <> k, f (promptConf' bgs fgs))         | (k,f) <- mprompts    ]  -- other prompts
- --}
- --{- gridselects
- <> [ ("M-'", mgrids), ("M-\\", custom spawn mapps) ]
--- <> twoK "M" "\\" mgrids
  --}
  --{- navigation
  --{- window movement
@@ -296,6 +303,8 @@ mkeys ws bgs fgs =
   wreverse = windows $ W.modify' $
    -- completely reverse stack (kinda)
    \(W.Stack f u d) -> W.Stack (last d) [] (reverse (init d) <> u <> [f])
+  fs = toggleFullscreen
+
 --{- disaster town
   -- complex functions to replace *.focusUp/down
   -- adds support for tab layout to B.focusUp

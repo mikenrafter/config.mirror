@@ -11,6 +11,7 @@
 
 import XMonad.Hooks.DynamicProperty
 import XMonad.Util.WindowProperties
+import qualified XMonad.Util.ExtensibleState as XS
 -- import XMonad.Hooks.FadeWindows (isFloating) -- for later
 -- my xmonad config, see ../.vimrc for navigation
 --{- imports
@@ -20,6 +21,7 @@ import Custom.Keys
 import Custom.Prompts
 import Custom.Scratch
 import Custom.Vars
+import Custom.Fullscreen
 --}
 --{- standards
 import XMonad
@@ -40,11 +42,12 @@ import Data.Maybe (fromJust)
 --{- actions
 import XMonad.Actions.SpawnOn
 import XMonad.Actions.UpdatePointer
+import XMonad.Actions.TagWindows
 --}
 --{- hooks
 import XMonad.Hooks.DynamicLog  --(dynamicLogWithPP, pad, xmobarPP, xmobarColor, xmobarBorder, PP(..), shorten, xmobarStrip, filterOutWsPP)
 -- for some fullscreen events, also for xcomposite in obs.
-import XMonad.Hooks.EwmhDesktops
+import Custom.EwmhDesktops
 import XMonad.Hooks.FadeInactive
 import XMonad.Hooks.ManageDocks -- (avoidStruts, docksEventHook, checkDock, manageDocks, ToggleStruts(..))
 import XMonad.Hooks.ManageHelpers hiding ((~?))
@@ -66,7 +69,8 @@ import XMonad.Layout.LayoutBuilder
 --}
 --{- effects
 --{- testing
-import XMonad.Layout.Magnifier -- of use
+import Custom.Magnifier
+--import XMonad.Layout.Magnifier -- of use
 import XMonad.Layout.CenteredMaster -- of use
 import qualified XMonad.Layout.HintedTile as HT
 --}
@@ -111,10 +115,11 @@ import XMonad.Util.Run
 --}
 --{- autostart
 --{- type definitions
-mstartupHook :: [String] -> [String] -> X ()
+mstartupHook :: [String] -> [String] -> String -> String -> X ()
 --}
-mstartupHook bcs fcs = do
+mstartupHook bcs fcs mBG mFG = do
 -- setDefaultCursor xC_left_ptr
+ setFSTheme $ mtabConfig mBG mFG
  setWMName mwm
  mapM_
   ( \x -> spawnOnce $ x <> " &" )
@@ -258,21 +263,22 @@ mmanageHook =
  --{- composeOne
  <+> composeOne
   [ act (doLower <+> doIgnore) (>?|) [className, title] ["xmonad_conky"] []
-  , act (doCenterFloat) (>?|) [className, title] ["junction"] []
+--  , act (doCenterFloat) (>?|) [className, title] ["junction", "re.sonny.Junction"] []
   , doCenterFloat >?| [ isDialog, currentWs ~~? mfloat ]
   , act doCenterFloat (>?|) [className, title]
     [ "picture"
     , "connection"
     , "volume", "pulseaudio", "alsa", "jack", "pipewire", "easyeffects"
---  , "junction"
+--    , "junction"
+--    , "re.sonny.Junction"
     ] []
-  , (className ~? "libreWolf" <||> className ~? "firefox") --> shiftToSame (fmap Just className) -- (fmap Just ( (isNotOn "NSP") -?> className ))
+  , groupBy className $ browsers <> ["steam", "dolphin"]
   , act (s'' 2) (>?|) [className, title] ["crash report"] []
-  , doFullFloat >?| [ isFullscreen, currentWs ~~? mfull ]
+  , doFullFloat >?| [ isFullscreen ]
   , act doFullFloat (>?|) [className, title] ["steam"] []
   ] --}
  -- manage scratchpads, done after WS shifting, before, stack
- -- rearrangement, and before composeOne, monoids read backward
+ -- rearrangement, and before composeOne - monoids read backward
  <+> namedScratchpadManageHook mscratch
  -- supposed to reunite child windows from an application with the parent,
  -- isn't very reliable
@@ -291,12 +297,12 @@ mmanageHook =
 --  , className =? "Alacritty" -?> doCenterFloat
 --, (className =? "Alacritty") --> shiftToSame' (fmap Just className)
   , act (s 1) (>>|) [className] ["obs"] []
-  , act (s 2) (>>|) [className] ["geanie"] []
-  , act (s 3) (>>|) [className] ["qute", "librewolf", "brave", "chrom", "tor-", "torb"] []
+--  , act (s 2) (>>|) [className] [] []
+  , act (s 3) (>>|) [className] browsers' []
   , act (s 4) (>>|) [className] ["krita", "gimp", "design"] []
-  , act (s 5) (>>|) [className] ["discord", "thunderbird", "messeng" , "convers", "brave-browser"] ["irc", "chat"]
+  , act (s 5) (>>|) [className, title] ["thunderbird", "messeng" , "convers"] ["irc", "chat", "discord", "brave", "element"]
 
-  , act (s' 1) (>>|) [className] ["tor-browser"] []
+--  , act (s' 1) (>>|) [className] [] []
   , act (s' 2) (>>|) [className, title] [] ["multiMC"]
 --  , act (s' 2) (>>|) [className, title] ["music", "video"] ["mpv"{-, "vlc"-}]
   , act (s' 3) (>>|) [className] ["xephyr", "virt"] []
@@ -309,8 +315,17 @@ mmanageHook =
  --{- where
  where
   isNotOn t = ask >>= \w -> pure (maybe True (const False) (W.findTag w t))
-  browsers = [ "firefox", "libreWolf", "tor Browser", "brave", "chrom", "qute" ]
-  never = ( stringProperty "_" =? "_" )
+  groupBy fn names =
+   (or' $ fmap (\x -> fn ~? x) names)
+   --> shiftToSame (fmap Just fn)
+   -- (fmap Just ( (isNotOn "NSP") -?> className ))
+  browsers' =
+   [ "firefox", "libreWolf"
+   , "tor Browser", "tor-", "torbrowser"
+   , "qute"
+   ]
+  browsers = browsers' <> [ "brave", "chrom" ]
+  never = stringProperty "_" =? "_"
   s n = doShift $ mregular!n
   s' n = doShift $ mfloats!n
   s'' n = doShift $ mfulls!n
@@ -384,7 +399,7 @@ mmanageHook =
 -- focus element, let all others die
 mActivateHook :: ManageHook
 mActivateHook = composeOne
-  [ className =? "Element" <||> className =? "element" -?> doFocus
+  [ className ~~? "Element" -?> doFocus
   , pure True -?> doAskUrgent
   ]
 --}
@@ -411,7 +426,7 @@ mhandleEventHook =
  -- on closing of focused float, if new focus is tiled, refocus last tiled
  -- viewed before focusing a float
  --  refocusLastWhen isFloat
-     (dynamicPropertyChange "WM_NAME" ( title =? "Junction" --> doCenterFloat ))
+     (dynamicPropertyChange "WM_NAME" ( className =? "re.sonny.Junction" --> doCenterFloat ))
  <+> trayerAboveXmobarEventHook
  <+> Hacks.windowedFullscreenFixEventHook
  -- <+> floatConfReqHook mfcfrhook
@@ -444,6 +459,8 @@ mlogHook pipe bcs fcs =
  <+> workspaceHistoryHook
  -- pass pipe in, for status bar
  <+> mbarHook pipe fcs bcs
+ -- handle mag-fullscreen events
+ <+> fsHook
 --}
 --{- barHook
 mbarHook pipe fg bg = do
@@ -500,14 +517,17 @@ mlayoutHook mBG mFG =
      mouseResize
 --}
 --}
+
 --{- layout
 --{- type definitions
 mshowWNameTheme :: [Char] -> [Char] -> SWNConfig
 --}
 --{- global settings
 -- i --> inner x*, inner y*, outer x*, outer y*
-mspacing i = spacingRaw True (Border (i) (i) (i*2) (i*2)) True (Border i i i i) True
-nospace = spacingRaw False bnull False bnull False where bnull = Border 0 0 0 0
+mspacing i = smartSpacingWithEdge i
+nospace    = spacing 0
+--mspacing i = spacingRaw True (Border (i) (i) (i*2) (i*2)) True (Border i i i i) True
+--nospace = spacingRaw False bnull False bnull False where bnull = Border 0 0 0 0
 lay name count space layout =
 -- windowArrange $
    renamed [Replace name]
@@ -515,6 +535,7 @@ lay name count space layout =
  $ limitWindows (if count > 0 then count else 100)
 -- minimize
  $ hiddenWindows
+ $ fullscreen
  $ layout
 --}
 --{- selected layouts
@@ -532,19 +553,7 @@ spiral =       lay "spi" 8  2 $ LS.spiral (3/5)
 spiral' =      lay "+sp" 8  2 $ magnifier $ LS.spiral (3/5)
 tall1 =        lay "tl1" 10 2 $ Tall 1 (3/100) (1/2)
 tall2 =        lay "tl2" 20 3 $ Tall 2 (3/100) (1/2)
-tabs mBG mFG = lay "tab" 50 0 $ tabbed shrinkText mtabConfig
- where --{-
-  mtabConfig =
-   def
-   { fontName            = "xft:Mononoki Nerd Font:regular:pixelsize=16"
-   , activeColor         = mFG
-   , activeBorderColor   = mBG
-   , activeTextColor     = mBG
-
-   , inactiveColor       = mBG
-   , inactiveBorderColor = mBG
-   , inactiveTextColor   = mFG
-   } --}
+tabs mBG mFG = lay "tab" 50 0 $ tabbed shrinkText $ mtabConfig mFG mBG
 --}
 --{- showWorkspaceTheme
 mshowWNameTheme mBG mFG =
@@ -603,7 +612,7 @@ main = do
    { manageHook      = mmanageHook
    , handleEventHook = mhandleEventHook
    , logHook         = mlogHook pipe    bcs fcs
-   , startupHook     = mstartupHook     bcs fcs
+   , startupHook     = mstartupHook     bcs fcs mBG mFG
    , layoutHook      = mlayoutHook      mBG mFG
    --}
    --{- settings

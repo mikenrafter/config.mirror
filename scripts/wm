@@ -1,4 +1,4 @@
 
-# xsetroot -cursor_name Vanilla-DMZ &
+xsetroot -cursor_name Vanilla-DMZ &
 wal --saturate 1 --iterative  -i ~/wall-disabled/DTwallpapers -b 222222
 xmonad

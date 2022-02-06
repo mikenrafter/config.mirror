@@ -15,6 +15,7 @@ import qualified Data.Map as M
 --{- util
 import XMonad.Util.Run (safeSpawn)
 --}
+import XMonad.Layout.Decoration
 --}
 --{- type aliases
 type AXXX a = a -> X () -> X () -> X ()
@@ -54,6 +55,21 @@ borderW :: Dimension
 --{- font
 mfont = "xft:Mononoki Nerd Font:bold:size=10"
 --}
+
+mtabConfig mFG mBG =
+ def
+ { fontName            = "xft:Mononoki Nerd Font:regular:pixelsize=16"
+ , activeColor         = mFG
+ , activeBorderColor   = mBG
+ , activeTextColor     = mBG
+
+ , inactiveColor       = mBG
+ , inactiveBorderColor = mBG
+ , inactiveTextColor   = mFG
+ }
+
+
+
 --{- wm name
 mwm = "V0ID|BRING3R"
 --}
