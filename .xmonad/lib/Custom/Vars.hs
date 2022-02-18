@@ -16,6 +16,11 @@ import qualified Data.Map as M
 import XMonad.Util.Run (safeSpawn)
 --}
 import XMonad.Layout.Decoration
+import System.Directory
+import XMonad.Prelude
+import Control.Monad
+import XMonad
+import XMonad.Hooks.ManageHelpers
 --}
 --{- type aliases
 type AXXX a = a -> X () -> X () -> X ()
@@ -55,21 +60,6 @@ borderW :: Dimension
 --{- font
 mfont = "xft:Mononoki Nerd Font:bold:size=10"
 --}
-
-mtabConfig mFG mBG =
- def
- { fontName            = "xft:Mononoki Nerd Font:regular:pixelsize=16"
- , activeColor         = mFG
- , activeBorderColor   = mBG
- , activeTextColor     = mBG
-
- , inactiveColor       = mBG
- , inactiveBorderColor = mBG
- , inactiveTextColor   = mFG
- }
-
-
-
 --{- wm name
 mwm = "V0ID|BRING3R"
 --}
@@ -169,20 +159,20 @@ mnotifTray = "notif-center" -- ~/scripts/notif-center
 --{- favorite programs
 mapps =
  [ (caps mterminal, mterminal)
--- , (caps mterminal', mterminal')
+-- (caps mterminal', mterminal')
  , (caps mbrowser, mbrowser)
  , (caps meditor', meditor "")
  , (caps mfiles,   mfiles)
  , ("Firefox",     "firefox") -- temporary, while you make the transition
- , ("Gravit",      "brave --app=https://designer.gravit.io") -- sandboxed variant, no noticable difference
- , ("Discord",     "brave --app=https://discord.com/channels/@me") -- sandboxed variant, no noticable difference
+ , ("Gravit",      "brave --app=https://designer.gravit.io") -- sandboxed
+ , ("Discord",     "brave --app=https://discord.com/channels/@me") -- sandboxed
  , ("0 Element",   "element 0")
  , ("1 Element",   "element 1")
- , ("2 Element",   "element 2")
+-- ("2 Element",   "element 2")
  , ("ThBird",      "thunderbird")
  , ("Gimp",        "gimp")
  , ("OBS",         "obs")
- , ("wiicube",     "dolphin-emu")
+ , ("wiiCube",     "Emu") -- script
  , ("ps3",         "rpcs3")
  , ("Steam",       "Steam") -- script
  , ("Engrampa",    "engrampa")
@@ -263,11 +253,14 @@ joins :: [a] -> [[a]] -> [a]
 withTiled' :: (Window -> WindowSet -> WindowSet) -> X ()
 windowCount :: X (Maybe String)
 (!) :: [a] -> Int -> a
-(~~?), (~?) :: Eq a => Query [a] -> [a] -> Query Bool
+(~~?), (~?){-, (~/?)-} :: Eq a => Query [a] -> [a] -> Query Bool
 valid :: String
 unspawn :: String -> X ()
 mconsole :: String -> String -> String
 mnotify :: String -> String -> X ()
+nonMembers,members  :: [Window] -> M.Map Window W.RationalRect -> [Window]
+isn't,is            ::  Window  -> M.Map Window W.RationalRect -> Bool
+aren't,are          :: [Window] -> M.Map Window W.RationalRect -> Bool
 --}
 --{- colors
 -- requires a non-empty list
@@ -304,6 +297,9 @@ cons arr = tail arr <> [head arr]
 scon arr = last arr : init arr -- init is inverse tail
 lFilter :: [(String,X ())] -> String -> [X ()]
 lFilter pairs str = [ b | (a,b) <- pairs, a == str]
+
+-- blends [(monoid functor arguments,),] into multiple monoids
+blend f l = foldr1 (<+>) $ map (uncurry f) l
 --}
 --{- strings
 caps str = (toUpper $ head str) : tail str
@@ -316,14 +312,50 @@ withTiled' f =
   let all' = filter (not . flip M.member (W.floating ws)) . W.integrate' . W.stack . W.workspace . W.current $ ws
   in foldr f ws all'
 windowCount = gets $ Just . show . length . W.integrate' . W.stack . W.workspace . W.current . windowset
+groupBy fn = shiftToSame $ fmap Just fn
+--}
+--{- IO
+tryReadFile :: FilePath -> IO String
+tryReadFile f = do
+ guard =<< doesFileExist f
+ readFile f
+--}
+
+--{- if item in stack, filter amongst stacks
+nonMembers  items set = filter (not . flip M.member set) items
+members     items set = filter (      flip M.member set) items
+isn't       i     s   = []/=nonMembers [i] s
+is          i     s   = []/=members    [i] s
+aren't      i     s   = []==members     i  s
+are         i     s   = i ==members     i  s
 --}
 --{- operators
 -- user-friendly length fn
 l ! n = l!!(n-1)
 -- query operator for pythonic 'in'
+-- q ~/? x = (not $ isInfixOf x <$> q)
 q ~~? x = isInfixOf x <$> q
 -- same as above, ignore first char for capitalization ruling
 q ~? x = q ~~? (tail x)
+
+-- query management functions, each explained in xmonad.hs
+or', and' :: [Query Bool] -> Query Bool
+or'  = foldr1 (<||>)
+and' = foldr1 (<&&>)
+
+infixl 5 ?&
+infixl 5 ?|
+(?|) a b = or' a -?> b
+(?&) a b = and'  a -?> b
+
+infixl 5 >|
+infixl 5 >&
+(>|) a b = or' a --> b
+(>&) a b = and'  a --> b
+
+infixl 7 <<
+(<<) a b = a <> b
+
 --}
 --{- shell
 -- valid chars
@@ -333,18 +365,6 @@ findProcess p = "pgrep -i -d ' ' " <> reverse (takeWhile (`elem` valid) $ revers
 
 -- based on: https://gist.github.com/altercation/fdd2dff789b4aa9287476bf33ba6167c#file-xmonad-hs-L229
 unspawn p = spawn $ "kill `" <> findProcess p <> "` &"
---}
-{- https://github.com/pjones/xmonadrc/blob/master/src/XMonad/Local/Action.hs
-focusFollowsTiledOnly :: Event -> X All
-focusFollowsTiledOnly e@CrossingEvent {ev_window = w, ev_event_type = t}
-  | isNormalEnter = whenX bothTiled (focus w) <+> mempty
-  where
-    isNormalEnter = t == enterNotify && ev_mode e == notifyNormal
-    bothTiled = notFloating w <&&> currentIsTiled
-    currentIsTiled = currentWindow <+>= maybe (return True) notFloating
-    currentWindow = gets $ W.peek . windowset
-    notFloating w' = gets $ not . M.member w' . W.floating . windowset
-focusFollowsTiledOnly _ = mempty
 --}
 --{- console
 -- turn shell and terminal settings into functions
@@ -356,10 +376,10 @@ mconsole' exec =
 --{- notify
 -- turn notification settings into function
 mnotify s c = do
- spawn $ joins " "               -- join with spaces
-  [mnotify',                     -- command
-  (joins " " mnotify''),         -- arguments
-  (wraps "\"" s), (wraps "\"" c) -- encased notification content
+ spawn $ joins " "           -- join with spaces
+  [mnotify',                 -- command
+  joins " " mnotify'',       -- arguments
+  wraps "\"" s, wraps "\"" c -- encased notification content
   ]
 --}
 --}

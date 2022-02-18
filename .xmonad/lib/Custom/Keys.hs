@@ -355,12 +355,11 @@ mmouses (XConfig {XMonad.modMask = modMask}) = M.fromList
 -- TODO start building XMonad with a C Preprocessor, linked to Stack (not cabal,
 -- since using nix)
 -- #define XXX = X () -> X () -> X ()
-ifWS',    ifLay'  :: AXXX String
-ifWS ,    ifLay   :: String -> (WindowSet -> WindowSet) -> X ()
-ifFloat', ifTile' :: XXX
-ifFloat , ifTile  :: (WindowSet -> WindowSet) -> X ()
-nott,     iff     :: [Window] -> M.Map Window W.RationalRect -> [Window]
-nNSP, usednNSP    :: WSType
+ifWS',    ifLay'    :: AXXX String
+ifWS ,    ifLay     :: String -> (WindowSet -> WindowSet) -> X ()
+ifFloat', ifTile'   :: XXX
+ifFloat , ifTile    :: (WindowSet -> WindowSet) -> X ()
+nNSP, usednNSP      :: WSType
 safeShift', safeShift, safeMove :: Direction1D -> X ()
 modifs :: [String] -> [String]   -> [[String]]
 mapKs  :: String   -> [[String]] -> [X ()] -> [(String, X ())]
@@ -373,12 +372,6 @@ ifWS  s fn     = ifWS' s (windows fn) $ pure ()
 --{- if layout.name
 ifLay' s fn bk = withWindowSet $ \ws -> if s `isInfixOf` (description . W.layout . W.workspace . W.current) ws then fn else bk
 ifLay  s fn    = ifLay' s (windows fn) $ pure ()
---}
---{- if item in stack, filter amongst stacks
--- inn :: Maybe Window -> WindowSet -> Bool
--- inn  item  set = case item of Just i -> M.member i set; _ -> False
-nott  items set = filter (not . flip M.member set) items
-iff   items set = filter (      flip M.member set) items
 --}
 --{- if floating
 ifFloat' fn bk = withWindowSet $ \ws -> case W.peek ws of Just w | M.member w $ W.floating ws -> fn; _ -> bk
@@ -434,9 +427,9 @@ organize = windows $ \ws ->
  in flip W.modify' ws $
  \(W.Stack f u d) -> W.Stack f
  -- self explanatory
-    (u `nott` floating)
- $  (reverse u) `iff` floating
- <> d `iff` floating
- <> d `nott` floating
+    (u `isn't` floating)
+ $  (reverse u) `is` floating
+ <> d `is` floating
+ <> d `isn't` floating
 --}
 --}

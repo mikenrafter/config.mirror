@@ -24,16 +24,19 @@ dis xmodmap $home/.Xmodmap
 dis uni playerctld
 # 10% nice halt, 7% forceful halt -- prefer killing web processes -- avoid
 # common important programs
-dis uni earlyoom -m 10,7 -s 20 -n --prefer "Web Content|java" --avoid "alacritty|(ba|fi)sh|getty|xmonad|vim"
+dis nice -n -15 uni earlyoom -m 10,7 -s 20 -n --prefer "Web Content|java" --avoid "alacritty|(ba|fi)sh|getty|xmonad|vim"
 # start easyeffects in the background by default -- give it higher priority,
 # otherwise it's quality degrades under strain.
-dis uni nice -n -15 easyeffects --gapplication-service
+dis nice -n -15 uni easyeffects --gapplication-service
+# pipewire media session, service files are annoying! -- higher priority, but
+# not as high as easyeffects, it's not doing much in realtime
+dis nice -n -16 uni wireplumber
 # }
 # UNI {
 # touchpad gestures
 uni touchegg &
 # compositor
-uni picom &
+uni picom --no-fading-openclose --use-ewmh-active-win --unredir-if-possible -o 0.0 --fade-exclude focused  --fade-exclude !focused &
 # clipboard manager
 uni clipit &
 # conky mmmh

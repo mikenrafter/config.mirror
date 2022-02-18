@@ -9,10 +9,7 @@
 {- LANGUAGE NoMonomorphismRestriction #-} -- ?
 {- LANGUAGE NamedFieldPuns #-} -- ?
 
-import XMonad.Hooks.DynamicProperty
-import XMonad.Util.WindowProperties
-import qualified XMonad.Util.ExtensibleState as XS
--- import XMonad.Hooks.FadeWindows (isFloating) -- for later
+import XMonad.Hooks.FadeWindows
 -- my xmonad config, see ../.vimrc for navigation
 --{- imports
 --{- global
@@ -20,7 +17,7 @@ import Custom.Grid
 import Custom.Keys
 import Custom.Prompts
 import Custom.Scratch
-import Custom.Vars
+import Custom.Vars as V
 import qualified Custom.Fullscreen as FS
 --}
 --{- standards
@@ -30,6 +27,7 @@ import qualified XMonad.StackSet as W
 import System.IO (hPutStrLn, Handle)
 import System.Directory
 import Control.Monad
+import XMonad.Config.Prime (Query(..))
 --}
 --{- data
 import Control.Monad
@@ -55,6 +53,8 @@ import XMonad.Hooks.SetWMName
 import XMonad.Hooks.WorkspaceHistory
 import XMonad.Hooks.RefocusLast
 import XMonad.Hooks.Place
+import XMonad.Hooks.WindowSwallowing
+import XMonad.Hooks.DynamicProperty
 --}
 --{- layouts
 --{- variants
@@ -99,6 +99,7 @@ import XMonad.Layout.WindowNavigation
 --}
 --}
 --{- utils
+import qualified XMonad.Util.ExtensibleState as XS
 import XMonad.Util.EZConfig (additionalKeysP, removeKeysP, checkKeymap)
 import XMonad.Util.NamedScratchpad
 import XMonad.Util.Run (runProcessWithInput, safeSpawn, spawnPipe)
@@ -106,6 +107,7 @@ import XMonad.Util.SpawnOnce
 import XMonad.Util.Cursor
 import XMonad.Util.WorkspaceCompare
 import XMonad.Util.Hacks as Hacks
+import XMonad.Util.WindowProperties
 --}
 --{- urgencyhook
 import XMonad.Hooks.UrgencyHook
@@ -247,219 +249,211 @@ tail "abc" -> "bc"
  | =?       | low              | high      |
 
 usage:
-act :: X () -> Functor -> [managehook-thing] -> [[Char]] -> [[Char]] -> ManageHook
-act action joining_operator [identifier] [tailed] [exact], eg:
- act (shift 1) (>>|) [className] ["abc"] ["123"] = (never, className ~? "abc" <||> className ~~? "123") --> shift 1
- act (shift 1) (>>&) [className, title] ["urmom"] [] = (never, className ~? "urmom" <&&> title ~? "title") --> shift 1
- act (shift 1) (>>|) [className, title] [] [] = (never) --> shift 1
+ identifier :: Query String
+ condition  :: Query Bool
+ action     :: (maybe)manageHook
+ 
+ conditions >| action    -- if any condition  is  satisfied
+ conditions >& action    -- if all conditions are satisfied
+ c ?| a {- and -} c ?& a -- ^ MaybeManageHook variants ^
+ 
+ collage [identifiers] [strings]            -- returns [identifier ~? string]s
+ [otherConditions] << collage ... >| action -- standard + collage
+ collage ... << [otherConditions] >| action -- also works as expected
 --}
 mmanageHook =
  let up = updatePointer (0.5, 0.5) (1, 1)
  in
  -- manage floating, and fullscreen
- -- change the stack as new windows arrive
- doF avoids
- -- <+> liftX up
- --{- composeOne
- <+> composeOne
-  [ act (doLower <+> doIgnore) (>?|) [className, title] ["xmonad_conky"] []
---  , act (doCenterFloat) (>?|) [className, title] ["junction", "re.sonny.Junction"] []
-  , doCenterFloat >?| [ isDialog, currentWs ~~? mfloat ]
-  , act doCenterFloat (>?|) [className, title]
-    [ "picture"
-    , "connection"
-    , "volume", "pulseaudio", "alsa", "jack", "pipewire", "easyeffects"
---    , "junction"
---    , "re.sonny.Junction"
-    ] []
-  , groupBy className $ browsers <> ["steam", "dolphin"]
-  , act (s'' 2) (>?|) [className, title] ["crash report"] []
-  , isFullscreen -?> FS.start
-  , act FS.start (>?|) [className, title] [ "steam" ] []
---  , doFullFloat >?| [ isFullscreen ]
---  , act doFullFloat (>?|) [className, title] ["steam"] []
-  ] --}
+ retainFS
  -- manage scratchpads, done after WS shifting, before, stack
  -- rearrangement, and before composeOne - monoids read backward
  <+> namedScratchpadManageHook mscratch
  -- supposed to reunite child windows from an application with the parent,
  -- isn't very reliable
  <+> transience'
- -- Default WS for programs
- --{- composeAll
+ <+> composeOne [collage [c] (browsers<>gaming<>art) >| V.groupBy c]
+ --{- basic
+ <+> composeOne
+  [ collage [c,t] ["xmonad_conky"]        ?| doLower <+> doIgnore
+  , [ isDialog, currentWs ~~? mfloat ]    <<
+    collage [c,t] (popup <> floaters)     ?| doCenterFloat
+  , collage [c,t] annoyances              ?| s'' 2
+  , [ isFullscreen, currentWs ~~? mfull ] <<
+    collage [c,t] gaming                  ?| FS.start
+  ] --}
+ --{- workspaces
  <+> composeAll( reverse
-  -- don't overtake the master window, helps keep focus
 --[ checkDock --> doLower
-  [ act doCenterFloat (>>|) [className, title]
-    [ "pop-up", "overlay", "toolkit", "tool"
-    , "dialog", "message", "notif", "zenity"
-    , "file", "open", "inspect"
-    , "flameshot", "xzoom"
-    ] ["man"]
---  , className =? "Alacritty" -?> doCenterFloat
---, (className =? "Alacritty") --> shiftToSame' (fmap Just className)
-  , act (s 1) (>>|) [className] ["obs"] []
---  , act (s 2) (>>|) [className] [] []
-  , act (s 3) (>>|) [className] browsers' []
-  , act (s 4) (>>|) [className] ["krita", "gimp", "design"] []
-  , act (s 5) (>>|) [className, title] ["thunderbird", "messeng" , "convers"] ["irc", "chat", "discord", "brave", "element"]
+  [
+    collage [c  ] ["obs"]   >| s 1
+--, collage [c  ] []        >| s 2
+  , collage [c  ] browsers' >| s 3
+  , collage [c  ] art       >| s 4
+  , collage [c,t] chat      >| s 5
 
---  , act (s' 1) (>>|) [className] [] []
-  , act (s' 2) (>>|) [className, title] [] ["multiMC"]
---  , act (s' 2) (>>|) [className, title] ["music", "video"] ["mpv"{-, "vlc"-}]
-  , act (s' 3) (>>|) [className] ["xephyr", "virt"] []
+--, collage [c,t] []    >| s' 1
+--, collage [c,t] media >| s' 2
+  , collage [c  ] virt  >| s' 3
 
-  , act (s'' 1) (>>|) [className] ["steam", "lutris"] []
-  , act (s 1 <+> doLower <+> doIgnore)  (>>|) [className, title] ["sharing indicator"] []
+  , collage [c  ] gaming >| s'' 1
+--, collage [c,t] []     >| s'' 2
+--, collage [c,t] []     >| s'' 3
   ]) --}
  -- hook for spawnOn calls
  <+> manageSpawn
  --{- where
  where
-  isNotOn t = ask >>= \w -> pure (maybe True (const False) (W.findTag w t))
-  groupBy fn names =
-   (or' $ fmap (\x -> fn ~? x) names)
-   --> shiftToSame (fmap Just fn)
-   -- (fmap Just ( (isNotOn "NSP") -?> className ))
+  --{- groups
   browsers' =
    [ "firefox", "libreWolf"
    , "tor Browser", "tor-", "torbrowser"
    , "qute"
    ]
   browsers = browsers' <> [ "brave", "chrom" ]
-  never = stringProperty "_" =? "_"
+  gaming =
+   [ "steam", "lutris", "heroic"
+   , "dolphin-emu"
+   , "multiMC"
+   ]
+  media =
+   [ "music", "video"
+   , "mpv", "vlc"
+   ]
+  virt =
+   [ " xephyr", "weston"
+   , " virt"
+   ]
+  art =
+   [ "krita", "gimp"
+   , "design"
+   ]
+  chat =
+   [ "thunderbird", "discord", "brave", "element"
+   , "messeng", "convers", "irc", "chat"
+   ]
+  popup = map (' ':)
+   [ "pop-up", "overlay", "toolkit", "tool"
+   , "dialog", "message", "notif", "zenity"
+   , "file", "open", "inspect"
+   , "flameshot", "xzoom"
+   , "man"
+   ]
+  floaters = map (' ':)
+    [ "picture"
+    , "connection"
+    , "volume", "pulseaudio", "alsa", "jack", "pipewire", "easyeffects"
+    , "junction", "re.sonny.Junction"
+    ]
+  annoyances = map (' ':)
+    [ "crash report"
+    , "Sharing Indicator"
+    ]
+  --}
+
+  -- Use with group ? Doesn't work at the moment...
+  isNotOn t = ask >>= \w -> pure (maybe True (const False) (W.findTag w t))
+
+  c = className
+  t = title
+--  never = return False
   s n = doShift $ mregular!n
   s' n = doShift $ mfloats!n
   s'' n = doShift $ mfulls!n
-  act fn compare values n0 n1 = compare fn $ collage values n0 n1
-  act' fn compare conditions = fn `compare` conditions
-  collage values n0 n1 =
-   concat
-   [  []
-   <> [x ~? y  | y <- n0]
-   <> [x ~~? y | y <- n1]
-      | x <- values ]
-  or' a = foldr1 (<||>) a
-  and' a = foldr1 (<&&>) a
-  (>>|) a b = or'  b --> a
-  (>>&) a b = and' b --> a
-  (>?|) a b = or'  b -?> a
-  (>?&) a b = and' b -?> a
-  simply a b = a
+  collage f v = [x ~? y | y <- v, x <- f]
 --  anyOfIs fns compare list = 
   -- see above, https://github.com/TheMC47/dotfiles/blob/master/.xmonad/src/Config.hs
+  retainFS =
+   composeOne
+   [ FS.query    -?> doF ignore
+   , return True -?> doF avoid
+   ]
   --{- ignore
-  -- n: new, u: up, upstack, c: current, ds: downstack
-  ignore = \ws ->
-   let s = flip W.Stack
-   in flip W.modify' ws $ \c -> case c of
-   -- if none above
-   W.Stack n [] (c : ds) -> s [] c ds
-   -- if none below
-   W.Stack n (u : us) [] -> s us u []
-   -- otherwise, default behaviour
-   _ -> c
+  -- n: new, u: up, upstack, c: current, d: downstack
+  ignore ws = flip W.modify' ws
+   -- move the new windows downward
+   \( W.Stack n u (c : d) ) -> W.Stack c u $ n:d
   --}
-  --{- avoids
-  -- n: new, u: up, c: current, ds: downstack
-  avoids = \ws ->
+  --{- avoid
+  avoid ws =
    let floating = W.floating ws; s = flip W.Stack
    -- ^ s: [top..above] focus [below..bottom]
-   in flip W.modify' ws $ \c -> case c of
-   --{- if master
-   W.Stack n [] (c : ds) ->
-    -- new: tiled -> avoid (commented)
-    -- new: tiled -> focus
-    if [n] `iff` floating == []
---  ultra aviodance mode
---  then s [] c $ ds <> [n]
-    then s [] n $ c:ds
-    -- else -> focus
-    else s [] n $ c:ds
-   --}
-   --{- if not master, and at least one other window
-   W.Stack n u (c : ds) ->
-    -- current: float, new: tile -> avoid
-    if [n] `iff`  floating == []
-    && [c] `nott` floating == []
-    then s u c $ n:ds
-    -- new & current: float -> focus
-    else
-     if [n] `nott` floating == []
-     && [c] `nott` floating == []
-     then s u n $ c:ds
+   in flip W.modify' ws \case
+   -- n: new, u: up, c: current, d: downstack
+    --{- master
+    W.Stack n [] (c : d) ->
+     -- new: tiled -> focus
+     if n `isn't`   floating then s [] n $ c:d
+     -- else -> focus
+     else s [] n $ c:d
+    --}
+    --{- other
+    W.Stack n u (c : d) ->
+     -- current: float, new: tile -> avoid
+     if n `isn't`   floating
+     && c `is`      floating then s u c $ n:d
+     else
+     -- new & current: float -> focus
+     if [n,c] `are` floating then s u n $ c:d
      -- else -> above
-     else s (c:u) n ds
-   --}
-   -- when empty, default behaviour
-   _ -> c
+     else s (c:u) n d
+    --}
+    -- empty -> focus
+    W.Stack n u d -> W.Stack n u d
   --}
 
-  -- pulled from latest manageHelpers, it hasn't been pushed to the nix version
-  doLower :: ManageHook
-  doLower = ask >>= \w -> liftX $ withDisplay $ \dpy -> io (lowerWindow dpy w) *> mempty
 --}
 --}
 --{- activateHook
 -- focus element, let all others die
 mActivateHook :: ManageHook
 mActivateHook = composeOne
-  [ className ~~? "Element" -?> doFocus
+  [ className ~? "Element" -?> doFocus
   , pure True -?> doAskUrgent
   ]
 --}
 --{- handleEventHook
-{- fconf
-floatConfReqHook :: MaybeManageHook -> Event -> X All
-floatConfReqHook mh ConfigureRequestEvent{ev_window = w} = do
-   runQuery ((<$>) join $ (-?>) isFloat mh) w >>= \case
-        Nothing -> mempty
-        Just e -> windows (appEndo $ Endo (\_ -> e)) >> pure (All False)
-floatConfReqHook _ _ = mempty
-
-
-mfcfrhook :: MaybeManageHook
-mfcfrhook = composeAll
-    [ appName =? "alarm-clock-applet" -?> doFloat -- prevent alarm-clock-applet from moving its floats to remebered location
-    , className =? "Steam" -?> doFloat -- prevent Steam from moving its floats to primary screen
-    , className =? "Discord" -?> doFloat
-    ]
---}
-
-
 mhandleEventHook =
- -- on closing of focused float, if new focus is tiled, refocus last tiled
- -- viewed before focusing a float
- --  refocusLastWhen isFloat
-     (dynamicPropertyChange "WM_NAME" ( className =? "re.sonny.Junction" --> doCenterFloat ))
+ -- when a focused, fullscreen window is closed, refocus last window
+--     fadeWindowsEventHook
+     refocusLastWhen
+     (    FS.query
+     <||> fmap not isFloating
+     <||> return True
+     )
+ <+> blend dynamicPropertyChange propertyHooks
  <+> trayerAboveXmobarEventHook
  <+> Hacks.windowedFullscreenFixEventHook
- -- <+> floatConfReqHook mfcfrhook
- -- <+> putBelow "xmobar" (=?) "trayer"
- {- where
- where
-  putBelow :: String -> (Query String -> a1 -> Query Bool) -> String -> Event -> X All
-  putBelow below compare above ConfigureEvent{ev_window = w, ev_above = a} | a == none = do
-   -- when trayer is lowered to the bottom of stack, put all xmobars that
-   -- are above it below
-   whenX (runQuery (className `compare` above) w) $ do
-    withDisplay $ \dpy -> do
-     rootw <- asks theRoot
-     (_, _, ws) <- io $ queryTree dpy rootw
-     let aboveWs = dropWhile (w /=) ws
-     belowWs <- filterM (runQuery (appName `compare` below)) aboveWs
-     mapM_ (io . lowerWindow dpy) belowWs
-   mempty
-  putBelow _ _ _ _ = mempty
+ <+> uncurry swallowEventHook swallowHook
 --}
+--{- swallowHook
+swallowHook = (className =? mterminal <&&> fmap not ( title ~~? "S:"), return True)
+--}
+--{- propertyHooks
+propertyHooks =
+ [ ("WM_CLASS", composeOne
+   [ className ~? "re.sonny.Junction" -?> doCenterFloat
+   --className ~? "element" -?> doCenterFloat
+   ])
+ ]
 
 --}
+--{- fadeHook
+mfadeHook = composeAll
+ [    opaque
+ ,    isUnfocused
+ <&&> isFloating  --> transparency 0.05
+ ,    FS.query    --> opaque
+--    opaque
+ ]
+--}
+
 --{- logHook
 mlogHook pipe bcs fcs =
  -- counterpart to handleEventHook for refocusLast
  refocusLastLogHook
  -- change opacity of unfocused windows, 1 is opaque, 0 transparent
- <+> fadeInactiveLogHook 0.98
+-- <+> fadeWindowsLogHook mfadeHook
  -- for changing to/from the last focused workspace
  <+> workspaceHistoryHook
  -- pass pipe in, for status bar
@@ -494,6 +488,37 @@ mbarHook pipe fg bg = do
    }
   where xc = xmobarColor
 --}
+--}
+
+--{- layout
+--{- type definitions
+mshowWNameTheme :: [Char] -> [Char] -> SWNConfig
+--}
+--{- global settings
+-- theming for tabs
+mtabConfig mFG mBG =
+ def
+ { fontName            = "xft:Mononoki Nerd Font:regular:pixelsize=16"
+ , activeColor         = mFG
+ , activeBorderColor   = mBG
+ , activeTextColor     = mBG
+
+ , inactiveColor       = mBG
+ , inactiveBorderColor = mBG
+ , inactiveTextColor   = mFG
+ }
+-- i --> inner x*, inner y*, outer x*, outer y*
+mspacing i = smartSpacingWithEdge i
+nospace    = spacing 0
+lay name count space layout =
+-- windowArrange $
+   renamed [Replace name]
+ $ (if space > 0 then mspacing space else nospace)
+ $ limitWindows (if count > 0 then count else 100)
+ $ hiddenWindows
+ $ fullscreen
+ $ layout
+--}
 --{- layoutHook
 mlayoutHook mBG mFG =
    mods
@@ -511,37 +536,12 @@ mlayoutHook mBG mFG =
   -- modifications for all
   mods =
      smartBorders .
-     -- withUrgencyHookC BorderUrgencyHook { urgencyBorderColor = mFG } urgencyConfig { suppressWhen = Never } .
      showWName' (mshowWNameTheme mBG mFG) .
      avoidStruts .
---   minimize .
-     boringAuto .
-     -- boringWindows .
+   --boringAuto . boringWindows .
      -- keep floating grouped above last focused tiled
      trackFloating .
      mouseResize
---}
---}
-
---{- layout
---{- type definitions
-mshowWNameTheme :: [Char] -> [Char] -> SWNConfig
---}
---{- global settings
--- i --> inner x*, inner y*, outer x*, outer y*
-mspacing i = smartSpacingWithEdge i
-nospace    = spacing 0
---mspacing i = spacingRaw True (Border (i) (i) (i*2) (i*2)) True (Border i i i i) True
---nospace = spacingRaw False bnull False bnull False where bnull = Border 0 0 0 0
-lay name count space layout =
--- windowArrange $
-   renamed [Replace name]
- $ (if space > 0 then mspacing space else nospace)
- $ limitWindows (if count > 0 then count else 100)
--- minimize
- $ hiddenWindows
- $ fullscreen
- $ layout
 --}
 --{- selected layouts
 --             lay name  # ' ' $ layout
@@ -583,12 +583,12 @@ main = do
 
  wmbc <- getColors "/.cache/wal/wmbc-DISABLED"
      <|> getColors "/.wmbc"
-     <|> (pure $ stringify bg)
+     <|> pure (stringify bg)
  wmfc <- getColors "/.cache/wal/wmfc-DISABLED"
      <|> getColors "/.wmfc"
-     <|> (pure $ stringify fg)
+     <|> pure (stringify fg)
  let fcs = map hex6 $ grabColors '\n' ' ' wmfc
- let bcs = map hex6 $ grabColors '\n' ' ' wmbc
+     bcs = map hex6 $ grabColors '\n' ' ' wmbc
  fc   <- rand $ prioritize fcs
  bc   <- rand $ prioritize bcs
 
@@ -635,24 +635,17 @@ main = do
    } --}
    --{- apply keys
    -- remove defaults listed in overrides
-   `removeKeysP` [ a | (a,b) <- moverrides]
+   `removeKeysP` (map fst moverrides)
    -- add overrides
    `additionalKeysP` moverrides
    -- remove conflicts with your config
-   `removeKeysP` [ a | (a,b) <- keys]
+   `removeKeysP` (map fst moverrides)
    -- apply your config
    `additionalKeysP` keys
   --}
 
-tryReadFile :: FilePath -> IO String
-tryReadFile f = do
- guard =<< doesFileExist f
- readFile f
-
 {- TODOs
-look into: X.L.Hidden instead of minimize
 IfMax instead of layoutBuilder
-StateFull instead of janky floating done now
 X.L.Stoppable -- save CPU with bg processes! Use with caution.
 --}
 {- references

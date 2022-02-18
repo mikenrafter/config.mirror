@@ -9,7 +9,8 @@ module Custom.Fullscreen
  , off, on, toggle
  , withTag, withTheme
  , setTag, setTheme
- , Conf
+ , enabled, query
+ , Conf(..)
  ) where
 
 import XMonad hiding (logHook, refresh, spawn)
@@ -23,12 +24,12 @@ import XMonad.Layout.Decoration
 --{- fs hook
 logHook :: X ()
 logHook = do
- FSState b    <- XS.get
+ State (p, b) <- XS.get -- prev ws, and FS state
  Conf  (tg,t) <- XS.get -- tag and theme
- withFocused \w ->
+ withWorkspace \i -> withFocused \w ->
   hasTag tg w >>= \isTagged ->
-   if b /= isTagged then
-    XS.put ( FSState isTagged ) >>
+   if b /= isTagged || p /= i then
+    XS.put ( State (i, isTagged) ) >>
     case isTagged of
      True  -> borderState False w <+> setTheme (invisible t) <+> relax <+> space False
      False -> borderState True  w <+> setTheme t             <+> strut <+> space True
@@ -40,11 +41,13 @@ logHook = do
    $ flip map [setScreenSpacingEnabled, setWindowSpacingEnabled] \x -> x bool
   invisible t = t{decoHeight=0,decoWidth=0}
   setTheme t = broadcastMessage $ SetTheme t
+  withWorkspace f = withWindowSet $ \w -> f $ show $ W.currentTag w
+  focus'WS f = withWindowSet $ \w -> whenJust (W.peek w) $ f withWorkspace
 --}
 
 -- easy read/write functions
-withTag   :: (String -> X ()) -> X ()
-withTheme :: (Theme  -> X ()) -> X ()
+withTag   :: (String -> X a) -> X a
+withTheme :: (Theme  -> X a) -> X a
 setTag    ::  String -> X ()
 setTheme  ::  Theme  -> X ()
 
@@ -53,13 +56,20 @@ withTag   f = XS.get >>= \(Conf (tg,_)) -> f tg
 setTheme  t = withTag    \tg -> XS.put $ Conf (tg, t)
 setTag   tg = withTheme  \t  -> XS.put $ Conf (tg, t)
 
+enabled :: Window -> X Bool
+enabled _ = XS.get >>= \(State (_,b)) -> return b
+
+query :: Query Bool
+query = ask >>= liftX . enabled
+
+
 
 -- quality of life functions
 off, on :: Window -> X ()
 
-refresh = withTag \tg -> withTaggedGlobalP tg W.sink >> logHook
-off w   = withTag \tg -> delTag tg w >> refresh
-on w    = withTag \tg -> addTag tg w >> refresh
+refresh  = withTag \tg -> withTaggedGlobalP tg W.sink >> logHook
+off w    = withTag \tg -> delTag tg w >> refresh
+on w     = withTag \tg -> addTag tg w >> refresh
 toggle w = withTag \tg ->
  hasTag tg w >>= \case
   True  -> off w
@@ -75,15 +85,15 @@ data Conf = Conf (String, Theme)
 instance ExtensionClass Conf where
  initialValue = Conf ("FS", def Theme)
 
-data FSState = FSState Bool
-instance ExtensionClass FSState where
- initialValue = FSState False
+data State = State (String, Bool)
+instance ExtensionClass State where
+ initialValue = State ("", False)
 
 -- Extended variant of X.A.NoBorders
 borderState :: Bool -> Window -> X ()
 borderState bool w = do
     bw <- asks (borderWidth . config)
-    withDisplay $ \d -> io $ do
+    withDisplay \d -> io do
         cw <- wa_border_width <$> getWindowAttributes d w
         if bool
             then setWindowBorderWidth d w bw

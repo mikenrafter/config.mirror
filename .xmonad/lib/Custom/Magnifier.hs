@@ -59,10 +59,10 @@ import XMonad.Prelude (bool, fi)
 import XMonad.Layout.LayoutModifier
 import XMonad.StackSet
 import qualified XMonad.StackSet as S
+
 import XMonad.Actions.TagWindows (hasTag)
-import XMonad.Hooks.ManageDocks
 import qualified XMonad.Util.ExtensibleState as XS
-import Custom.Fullscreen (withTag)
+import qualified Custom.Fullscreen as FS
 
 -- $usage
 -- You can use this module with the following in your @~\/.xmonad\/xmonad.hs@:
@@ -198,18 +198,18 @@ data Toggle = On | Off deriving (Read, Show)
 data MagnifyThis
     = AllWins    !Natural  -- ^ Every window
     | NoMaster   !Natural  -- ^ Only stack windows
-    | FullScreen !Natural  -- ^ Every window with the "FS" tag
+    | FullScreen !Natural  -- ^ Every window with the fullscreen tag
     deriving (Read, Show)
 
--- | Only apply magnifier to windows with the tag "FS"
+-- | Only apply magnifier to windows with the fullscreen tag
 onlyFullscreen :: NewLayout Window -> NewLayout Window
-onlyFullscreen mainmod r s wrs =
- withTag \tg ->
-  hasTag tg (S.focus s) >>= \case
-   True  -> mainmod r s wrs
-   False -> return (wrs, Nothing)
+onlyFullscreen mainmod r s wrs = do
+ FS.Conf (tg,_) <- XS.get
+ hasTag tg (S.focus s) >>= \case
+  True  -> mainmod r s wrs
+  False -> return (wrs, Nothing)
 
--- | A modifier that handles tag-based fullscreening for you (tag "FS")
+-- | A modifier that handles tag-based fullscreening for you
 fullscreen :: l a -> ModifiedLayout Magnifier l a
 fullscreen = magnify 100 (FullScreen 1) True
 
