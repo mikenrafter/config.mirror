@@ -370,9 +370,10 @@ mmanageHook =
    ]
   --{- ignore
   -- n: new, u: up, upstack, c: current, d: downstack
-  ignore ws = flip W.modify' ws
+  ignore ws = flip W.modify' ws \case
    -- move the new windows downward
-   \( W.Stack n u (c : d) ) -> W.Stack c u $ n:d
+   W.Stack n u (c:d) -> W.Stack c u $ n:d
+   W.Stack n u d     -> W.Stack n u   d
   --}
   --{- avoid
   avoid ws =
@@ -581,6 +582,9 @@ main = do
  let getColors = tryReadFile . (mhome <>)
  let stringify colors = foldr1 (\a b -> a <> "\n" <> b) colors
 
+ faves' <- getColors "/.faves" <|> pure ("")
+ let faves = mapps <> (map (breakOn '\t') $ grabColors '\n' '#' faves')
+
  wmbc <- getColors "/.cache/wal/wmbc-DISABLED"
      <|> getColors "/.wmbc"
      <|> pure (stringify bg)
@@ -595,10 +599,10 @@ main = do
  let
   mFG = fc
   mBG = bc
-  mk = mkeys mworkspaces bcs fcs
+ --}
+  mk = mkeys mworkspaces bcs fcs faves
   keys = ("M-h", checkKeymap (ewmh def `additionalKeysP` mk) mk) : mk
   in
- --}
   xmonad
   --}
   --{- hooks  {

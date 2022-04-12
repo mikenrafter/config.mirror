@@ -163,21 +163,6 @@ mapps =
  , (caps mbrowser, mbrowser)
  , (caps meditor', meditor "")
  , (caps mfiles,   mfiles)
- , ("Firefox",     "firefox") -- temporary, while you make the transition
- , ("Gravit",      "brave --app=https://designer.gravit.io") -- sandboxed
- , ("Discord",     "brave --app=https://discord.com/channels/@me") -- sandboxed
- , ("0 Element",   "element 0")
- , ("1 Element",   "element 1")
--- ("2 Element",   "element 2")
- , ("ThBird",      "thunderbird")
- , ("Gimp",        "gimp")
- , ("OBS",         "obs")
- , ("wiiCube",     "Emu") -- script
- , ("ps3",         "rpcs3")
- , ("Steam",       "Steam") -- script
- , ("Engrampa",    "engrampa")
- , ("Blender",     "blender")
- , ("MultiMC",     "Multimc")
  ]
 --}
 --{- my configs
@@ -300,6 +285,15 @@ lFilter pairs str = [ b | (a,b) <- pairs, a == str]
 
 -- blends [(monoid functor arguments,),] into multiple monoids
 blend f l = foldr1 (<+>) $ map (uncurry f) l
+
+
+breakOn :: Char -> String -> (String, String)
+breakOn c s
+    | [c,'\\'] `isPrefixOf` s2 = (s1 ++ [c] ++ s1', s2')
+    | otherwise = (s1, s2)
+      where (s1, s2 ) = break (== c) s
+            (s1',s2') = breakOn c $ tail s2
+
 --}
 --{- strings
 caps str = (toUpper $ head str) : tail str

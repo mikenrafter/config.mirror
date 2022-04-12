@@ -1,5 +1,1 @@
-set nix_path $HOME/.config/fish/functions/nix_path.fish
-[ -f "$nix_path" ] && . $nix_path
-
-set -p PATH $HOME/appimages $HOME/scripts
-
+/nix/store/7sy9ld6liqka2dcvdh4q01y2nkp959wb-home-manager-files/.path.fish

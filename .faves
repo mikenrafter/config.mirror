@@ -1,0 +1,21 @@
+VPN	vpn-button
+Firefox	firefox # temporary, while you make the transition
+Engrampa	engrampa
+
+Discord	brave --app=https://discord.com/channels/@me # sandboxed
+0 Element	element 0
+1 Element	element 1
+2 Element	element 2
+ThBird	thunderbird
+
+Krita	krita
+Blender	blender
+Gimp	gimp
+Gravit	brave --app=https://designer.gravit.io # sandboxed
+OBS	obs
+
+wiiCube	Emu # script
+ps3	rpcs3
+Steam	Steam # script
+PolyMC	Multimc
+Krunker	krunker

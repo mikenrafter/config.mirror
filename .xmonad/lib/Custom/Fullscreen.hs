@@ -26,15 +26,25 @@ logHook :: X ()
 logHook = do
  State (p, b) <- XS.get -- prev ws, and FS state
  Conf  (tg,t) <- XS.get -- tag and theme
- withWorkspace \i -> withFocused \w ->
-  hasTag tg w >>= \isTagged ->
-   if b /= isTagged || p /= i then
-    XS.put ( State (i, isTagged) ) >>
-    case isTagged of
-     True  -> borderState False w <+> setTheme (invisible t) <+> relax <+> space False
-     False -> borderState True  w <+> setTheme t             <+> strut <+> space True
-   else pure ()
+ withWorkspace \i -> withF \ws ->
+  case ws of
+  -- if a window is present on the workspace
+  Just w ->
+   hasTag tg w >>= \isTagged ->
+    -- if out of sync with ext.state
+    if b /= isTagged || p /= i then
+     -- update ext.state
+     XS.put ( State (i, isTagged) ) >>
+     -- apply updates
+     case isTagged of
+      True  -> borderState False w <+> setTheme (invisible t) <+> relax <+> space False
+      False -> borderState True  w <+> setTheme t             <+> strut <+> space True
+    -- otherwise do nothing
+    else pure ()
+  -- if no window
+  otherwise -> XS.put ( State (i, False) )
  where
+  withF f = withWindowSet \w -> f $ W.peek w
   relax = broadcastMessage $ SetStruts [] [minBound .. maxBound]
   strut = broadcastMessage $ SetStruts    [minBound .. maxBound] []
   space bool = foldr1 (<+>)

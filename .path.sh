@@ -1,4 +1,1 @@
-nix_path=$HOME/.nix-profile/etc/profile.d/nix.sh
-[ -f "$nix_path" ] && . $nix_path
-
-PATH=$HOME/appimages:$HOME/scripts:$PATH
+/nix/store/7sy9ld6liqka2dcvdh4q01y2nkp959wb-home-manager-files/.path.sh

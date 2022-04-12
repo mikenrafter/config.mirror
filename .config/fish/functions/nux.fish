@@ -5,10 +5,14 @@ function nux
 		set -e NIX
 		set -e NUX
 	else
+		# copy path to local var
 		set -l path $PATH
+		# clear global path
 		set PATH
+		# loop through paths
 		for p in $path
-			echo $p | grep \\.nix-profile >$n && set -l nix 1
+			# remove exceptions, and check if nix profile is present in the path
+			echo $p | grep -v $NUX_EXCEPTION | grep \\.nix-profile >$n && set -l nix 1
 			if test -n "$nix"
 				set -gxa NIX $p
 			else

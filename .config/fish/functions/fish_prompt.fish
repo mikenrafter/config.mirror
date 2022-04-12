@@ -2,6 +2,7 @@
 # author: notMike
 
 function fish_prompt --description 'Write out the prompt'
+	set -g PATH (string collect $PATH | sort -u)
 	set -l n /dev/null
 	set last_pipestatus $pipestatus
 	set -x __fish_last_status $status

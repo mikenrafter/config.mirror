@@ -68,7 +68,7 @@ import Data.Maybe (isJust, fromMaybe)
 --{- keys
 --{- type definitions
 moverrides :: [(String, X ())]
-mkeys :: [String] -> [String] -> [String] -> [(String, X ())]
+mkeys :: [String] -> [String] -> [String] -> [(String, String)] -> [(String, X ())]
 --}
 --{- overrides
 moverrides =
@@ -114,7 +114,7 @@ moverrides =
   --}
 --}
 --{- my keys
-mkeys ws bgs fgs =
+mkeys ws bgs fgs faves =
  -- Instead of clumsy log hook version of updatePointer, activate after every
  -- hotkey. This way it doesn't activate upon notifications!
  map (\(k, a) -> (k, a *> up)) ([
@@ -227,8 +227,8 @@ mkeys ws bgs fgs =
  , ("M-f <L>", windows $ \w -> W.float w $ W.RationalRect 0.1 0.1 0.5 1.0)
 --}
  --{- gridselects
- , ("M-i", mgrids)
- , ("M-o", custom spawn mapps)
+ , ("M-i", mgrids ) --fgs bgs)
+ , ("M-o", (custom {- fgs bgs -}) spawn faves)
  --}
  --{- fullscreen
 -- , ("M-<U>", withFocused fs)
