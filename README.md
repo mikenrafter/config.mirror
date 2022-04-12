@@ -10,12 +10,14 @@ See my [nix](.nix) config for most everything I've setup
 See my [conkyrc](.conkyrc) config for the basic keybinds on my variant of
 XMonad. (scroll down, down, down)
 
-## What is x?
+## What is `x`?
 
-1. [~/quotes](quotes) is a list of quotes I've either made, or collected.
-2. [~/man](man) is my personal manpages.
-3. [~/.wmfc](.wmfc), [~/.wmbc](.wmbc), [~/.wmrc](.wmrc), [~/.faves](.faves) are
+1. [~/quotes](quotes) is a list of quotes I've made, and collected.
+2. [~/.config/fish/functions/random_quote.fish](~/.config/fish/functions/random_quote.fish)
+   parses and chooses a random quote from my quotes file.
+3. [~/man](man) are my personal manpages.
+4. [~/.wmfc](.wmfc), [~/.wmbc](.wmbc), [~/.wmrc](.wmrc), [~/.faves](.faves) are
    all things used in configuration for my wm... Open them, and they'll make
    sense.
-4. [~/wg-default](.wg-default) is the wireguard configuration is
-   toggled by the VPN button inside deadd-notification-center
+5. [~/wg-default](.wg-default) is the wireguard configuration is
+   toggled by the VPN button inside deadd-notification-center.

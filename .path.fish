@@ -1,1 +1,1 @@
-/nix/store/7sy9ld6liqka2dcvdh4q01y2nkp959wb-home-manager-files/.path.fish
+/nix/store/3wclyrq3jzs21kjz1k4rsrsnv0xapn32-home-manager-files/.path.fish
