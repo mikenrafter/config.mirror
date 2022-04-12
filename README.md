@@ -1,14 +1,15 @@
-# Mikenrafter (v0id)'s dotfiles
+# Mikenrafter (aka `v0id`)'s dotfiles
 
 This' a git bare repo.
 
 At some point I'll go through and explain everything in depth, but for now,
 RTFC...  
 
-See my [nix](.nix) config for most everything I've setup
+See my [nix](https://gitlab.com/mikenrafter/my-nix-config) config for most
+everything I've set up.
 
-See my [conkyrc](.conkyrc) config for the basic keybinds on my variant of
-XMonad. (scroll down, down, down)
+See my [conkyrc](.config/conky/nord.conkyrc) config for the basic keybinds on
+my variant of XMonad. (scroll down, down, down)
 
 ## What is `x`?
 
