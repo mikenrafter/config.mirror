@@ -76,11 +76,8 @@ custom = flip menu $ pure ()
 
 colorizer :: Colors -> a -> Bool -> X (String, String)
 colorizer colors _ active = do
- --fg <- liftIO $ aFG colors
- --bg <- liftIO $ aBG colors
- let
-     fg = (fst $ fst $ colors) $ 0
-     bg = (fst $ snd $ colors) $ 0
+ fg <- liftIO $ aFG colors
+ bg <- liftIO $ aBG colors
  return if active
   then (fg, bg)
   else (bg, fg)
