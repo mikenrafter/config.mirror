@@ -1,7 +1,9 @@
+{-# LANGUAGE BlockArguments, TupleSections #-}
 module Custom.Prompts where
 --{- imports
 --{- globals
 import Custom.Vars
+import Utility.Map
 --}
 --{- standards
 import XMonad
@@ -27,9 +29,9 @@ import XMonad.Prompt.Shell
  import XMonad.Util.Run (runProcessWithInput, safeSpawn, spawnPipe)  -- for custom prompts
 --}
 --}
---{- prompt config
-promptConf bgs fgs =
- def
+--{- config
+config' = config { autoComplete = Nothing }
+config  = def
   { font                = mfont
   , bgColor             = bgs !! 0
   , fgColor             = fgs !! 0
@@ -51,62 +53,72 @@ promptConf bgs fgs =
   , alwaysHighlight     = True
   , maxComplRows        = Just 10 -- Nothing
   }
-promptConf' bgs fgs = (promptConf bgs fgs) { autoComplete = Nothing }
 --}
---{- keybinds
--- A list of all of the standard Xmonad prompts and a key press assigned to them.
--- These are used in conjunction with keybinding I set later in the config.
-mprompts =
- [ ("m", manPrompt)
- , ("/", runOrRaisePrompt)
- , ("S-/", shellPrompt)
- ]
---}
---{- XPROMPT KEYMAP (emacs-like key bindings for xprompts)
+--{- keymap
+--TODO: EZConfig
 promptKeys =
  M.fromList $
+--ap (first (controlMask .))   -- control + <key>
  map (first $ (,) controlMask)   -- control + <key>
- [ (xK_v,          pasteString)
- , (xK_Right,      moveWord Next)
- , (xK_Left,       moveWord Prev)
+ [ (xK_v        ,  pasteString)
+ , (xK_Right    ,  moveWord Next)
+ , (xK_Left     ,  moveWord Prev)
  , (xK_BackSpace,  killWord Prev)
- , (xK_Delete,     killWord Next)
+ , (xK_Delete   ,  killWord Next)
  ]
  <>
  map (first $ (,) 0) -- <key>
- [ (xK_Return,    setSuccess True >> setDone True)
- , (xK_KP_Enter,  setSuccess True >> setDone True)
+ [ (xK_Return   , setSuccess True >> setDone True)
+ , (xK_KP_Enter , setSuccess True >> setDone True)
  , (xK_BackSpace, deleteString Prev)
- , (xK_Delete,    deleteString Next)
- , (xK_Left,      moveCursor Prev)
- , (xK_Right,     moveCursor Next)
- , (xK_Home,      startOfLine)
- , (xK_End,       endOfLine)
- , (xK_Down,      moveHistory W.focusUp')
- , (xK_Up,        moveHistory W.focusDown')
- , (xK_Escape,    quit)
+ , (xK_Delete   , deleteString Next)
+ , (xK_Left     , moveCursor Prev)
+ , (xK_Right    , moveCursor Next)
+ , (xK_Home     , startOfLine)
+ , (xK_End      , endOfLine)
+ , (xK_Down     , moveHistory W.focusUp')
+ , (xK_Up       , moveHistory W.focusDown')
+ , (xK_Escape   , quit)
  ] -- `additionalKeysP` [("M-a", setSuccess True >> setDone True)]
 
 --}
---{- prompts
+-- prompts
+pair = zipWith $ flip (,) . snd
+--{- misc
+miscMap = bound $ pair misc'
+ [ ["m"  ]
+ , ["/"  ]
+ , ["S-/"]
+ ]
+--TODO: homegrow these to say man/insist/run instead of runOrRaise/etc
+misc@misc' =
+ [ ("man"   ,        manPrompt)
+ , ("insist", runOrRaisePrompt)
+ , ("run"   ,      shellPrompt)
+ ]
+--}
 --{- search engines
-news   = S.searchEngine "news"   "duckduckgo.com/?ia=news&iar=news&q="
-urban  = S.searchEngine "slang"  "urbandictionary.com/define.php?term="
-hoogle = S.searchEngine "hoogle" "hoogle.haskell.org/?hoogle="
-arch   = S.searchEngine "arch"   "wiki.archlinux.org/index.php?search="
+engineMap = bound $ pair engines'
+ [ ["<Space>", "1"]
+ , ["y"      , "2"]
+ , ["a"      , "3"]
+ , ["h"      , "4"]
+ , ["n"      , "5"]
+ , ["u"      , "6"]
+ ]
+engines' =
+ [ ("ddg"   , "ddg.gg/?q="                          )
+ , ("yt"    , "youtube.com/results?search_query="   )
+ , ("arch"  , "wiki.archlinux.org/index.php?search=")
+ , ("hoogle", "hoogle.haskell.org/?hoogle="         )
+ , ("news"  , "ddg.gg/?ia=news&iar=news&q="         )
+ , ("slang" , "urbandictionary.com/define.php?term=")
+ ]
+engines = for engines' \(t,u) -> (t, S.promptSearch $ S.searchEngine t u)
+--}
 
-msearches
- =  [(x, S.duckduckgo) | x <- ["<Space>", "1"] ]
- <> [(x, S.youtube)    | x <- ["y",       "2"] ]
- <> [(x, arch)         | x <- ["a",       "3"] ]
- <> [(x, hoogle)       | x <- ["h",       "4"] ]
- <> [(x, news)         | x <- ["n",       "5"] ]
- <> [(x, urban)        | x <- ["u",       "6"] ]
---}
---}
---{- type definitions
-mprompts :: [(String, XPConfig -> X ())]
---}
+promptMap = concat [engineMap,miscMap]
+prompts   = concat [engines  ,misc   ]
 
 {- references
 --}

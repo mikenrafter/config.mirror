@@ -1,25 +1,30 @@
+{-# LANGUAGE LambdaCase, BlockArguments, TupleSections #-}
 module Custom.Vars where
 --{- imports
 --{- standards
-import XMonad
+--port qualified XMonad.Core
+import XMonad hiding (terminal)
+import XMonad.Prelude hiding (for)
 import qualified XMonad.StackSet as W
 import System.IO.Unsafe (unsafePerformIO)
 import System.Environment (getEnv)
+import System.Random (randomRIO)
 --}
 --{- data
 import Data.List
+import Data.List.Split (wordsBy)
 import Data.Char
-import Data.Traversable
+import Data.Traversable hiding (for)
 import qualified Data.Map as M
+import Data.Bifunctor (first, second)
 --}
 --{- util
-import XMonad.Util.Run (safeSpawn)
+import XMonad.Util.Run (safeSpawn, spawnPipe)
+import GHC.IO.Handle (Handle)
 --}
 import XMonad.Layout.Decoration
 import System.Directory
-import XMonad.Prelude
 import Control.Monad
-import XMonad
 import XMonad.Hooks.ManageHelpers
 --}
 --{- type aliases
@@ -28,69 +33,94 @@ type XXXA a =      X () -> X () -> X () -> a
 type XXX    =      X () -> X () -> X ()
 --}
 --{- keys
---{- type definitions
-super, alt :: KeyMask
-mwinKeys, mwsKeys, mfsKeys :: [[String]]
---}
-super = mod4Mask
-alt = mod1Mask
+super = mod4Mask :: KeyMask
+alt   = mod1Mask :: KeyMask
 
 -- keys for switching windows
 -- left, right
-mwinKeys = [["a","n"],["r","e"]]
+mwinKeys =
+ -- down
+ [ ["a","n"]
+ -- up
+ , ["r","e"]]
 -- keys for switching workspaces
 -- left, right
-mwsKeys = [["<L>","<KP_Page_Up>","<Page_Up>"],["<R>","<KP_Page_Down>","<Page_Down>"]]
+mwsKeys =
+ -- down
+ [ ["<L>","<KP_Page_Up>",    "<Page_Up>"]
+ -- up
+ , ["<R>","<KP_Page_Down>","<Page_Down>"]]
 -- keys for managing fullscreen
 -- fullscreen, windowed
-mfsKeys = [["<U>"],["<D>"]]
+mfsKeys =
+ -- down
+ [ ["<U>"]
+ -- up
+ , ["<D>"]]
 --}
 --{- customization
---{- type definitions
-mfont, mhome,
- mbrowser, mfiles, mterminal, mshell, meditor',
- mnotify', mlocker, mtoClip,
- mscreenshotFull, mscreenshotBox :: String
-meditor :: String -> String
-mnotify'', msession, mrestart, bg, fg, bg', fg' :: [String]
-mtimeout :: Int
-mapps, mconfigs :: [(String, String)]
-borderW :: Dimension
+open :: String -> String -> X ()
+open c = spawn . with c
+start = spawn :: String -> X ()
+-- specify monad instance for constraint
+--spawn :: String -> X ()
+--spawn = XMonad.Core.spawn
+with' = (<>)
+with  = with' . (<>" ")
+plus s f = f<>" "<>s
+simply = flip . const
+--{- settings
+font    = "xft:Mononoki Nerd Font:bold:size=10"
+name    = "V0ID|BRING3R"
+home    = unsafePerformIO $ getEnv "HOME"
+maxStep = 5
+minStep = 2
+timeout = 5 -- in minutes
+border  = 2 :: Dimension
 --}
---{- font
-mfont = "xft:Mononoki Nerd Font:bold:size=10"
---}
---{- wm name
-mwm = "V0ID|BRING3R"
---}
---{- home directory
--- automatic
-mhome = unsafePerformIO $ getEnv "HOME"
--- manual
--- mhome = "/home/example"
---}
---{- programs
-mbrowser = "librewolf"
+--{- actions & apps
+browse  = open browser
+view    = open files
+prompt  = open term . with shell
+edit    = open term . with editor
+-- simply strings
+browse''= browser
+view''  = files
+prompt''= with term shell
+edit''  = with term editor
 
-mfiles = "thunar" -- pcmanfm
+-- versions that accept names
+browse' = simply browse
+view'   = simply view
+prompt' = scratch shell
+edit'   = scratch editor
 
-mterminal = "alacritty"
-mshell = "fish"  -- "bash"
 
--- gridselect...
-meditor' = "nvim"  -- assumeS CLI in scratch.hs
-meditor f = mconsole' $ meditor' <> " " <> f
+term    = with terminal "--command"
+named   = with terminal . with "--title" . wraps "\""
+scratch c n = named n `with` "--command" `with` c
+
+
+browser  = "librewolf"
+files    = "thunar"
+terminal = "alacritty"
+shell    = "fish"
+editor   = "nvim"
+
+browserc  = caps browser
+filesc    = caps files
+terminalc = terminal
+shellc    = terminal
+editorc   = terminal
 --}
---{- environment programs
--- the cabal,stack/nix installs of xmobar don't work (on arch anyway)
-mbar = "bar " <> mhome <> " " <> mhome <> "/.xmonad/xmobar.conf"
---mbar = mhome <> "/.nix-profile/bin/xmobar " <> mhome <> "/.xmonad/xmobar.conf"
-mtray mBG = "stalonetray " <> joins " " args
--- mtray = "trayer " <> joins " " args
- --{- args
- where
- args =
-  [ "-bg '" <> mBG <> "'"
+--{- util
+panel :: X Handle
+panel  = spawnPipe "bar"
+notifs = start  "notif-center"
+tray   = open "stalonetray" . joins " " . args where
+ --{- tray args
+ args x =
+  [ "-bg '" <> x <> "'"
   , "--slot-size 24"
   , "--icon-size 8"
 --, "--no-shrink"
@@ -112,68 +142,73 @@ mtray mBG = "stalonetray " <> joins " " args
 --, "--transparent false" -- transparency doesn't work well
 --, "--alpha 0"
 --, "--tint 0x22222200"
-  ] --}
-
---{- volume
--- the amount to go up/down in volume based on regular, or shifted keystrokes
-mvoln  = 5
-mvoln' = 2
---{- command that changes the volume, takes two arguments:
--- - num is the number that is applied
--- - op is operation, usually +/-
---}
-mvol num op = concat ["amixer set Master ", show num, "%", op]
--- similar to above, but static, merely toggles the mute state
---{- programmer ramble
--- I would simplify these strings using some more programmatic magic, but
--- this is the part of the config that's meant to be plug & play, so that's
--- beyond the scope of this code section
---}
-mmute = "amixer set Master toggle"
---}
---{- brightness
--- the amount to go up/down in brightness based on regular, or shifted keystrokes
-mbrightn  = 5
-mbrightn' = 2
---{- command that changes the brightness, takes two arguments:
--- - num is the number that is applied
--- - op is operation, usually +/-
---}
-mbright num op = concat ["brightnessctl set ", show num, "%", op]
---}
-
-mnotify' = "notify-send"
-mnotify'' = ["-i", "emblem-system"]
-
-mlocker = "slock"
-mtimeout = 5  -- in minutes
-
-mtoClip = "xclip -selection clipboard"
-
-mscreenshotFull = "maim | "      <> mtoClip <> " -t image/png"
-mscreenshotBox  = "flameshot gui"
-mscreenshotBox' = "maim -sku | " <> mtoClip <> " -t image/png"
-
-mnotifTray = "notif-center" -- ~/scripts/notif-center
---}
---{- favorite programs
-mapps =
- [ (caps mterminal, mterminal)
--- (caps mterminal', mterminal')
- , (caps mbrowser, mbrowser)
- , (caps meditor', meditor "")
- , (caps mfiles,   mfiles)
- ]
---}
---{- my configs
-mconfigs =
- [(a, meditor b) | (a, b) <-
-  [ ("Bashrc", mhome <> "/.bashrc")
-  , ("Xmonad", mhome <> "/.xmonad/xmonad.hs")
-  , ("Xmobar", mhome <> "/.xmonad/xmobar.conf")
-  , ("Fishrc", mhome <> "/.config/fish/config.fish")
   ]
- ]
+ --}
+--}
+--{- actions
+-- e.g. notify $ message "Compilation failed" errormessage
+message title = with (show title) . show
+notify   = open "notify-send -i emblem-system"
+-- system state
+louder   = tweak vol "+"
+quieter  = tweak vol "-"
+louder'  = tweak vol "+ unmute"
+quieter' = tweak vol "- unmute"
+toggleV  = open  vol "toggle"
+brighter = tweak bri "+"
+dimmer   = tweak bri "-"
+
+lock     = start "slock"
+
+-- screenshot
+full     = open  "maim |" $ clip <> img
+screen   = start "flameshot gui"
+box      = open  "maim -sku |" $ clip <> img
+vol  = "amixer set Master"
+bri  = "brightnessctl set"
+tweak :: String -> String -> Int -> X ()
+tweak cmd d n = open cmd $ show n <> "%" <> d
+clip = "xclip -selection clipboard"
+img = " -t image/png"
+--}
+--{- configs
+configs = map (second edit)
+  [ ("Bashrc", "~/.bashrc")
+  , ("Xmonad", "~/.xmonad/xmonad.hs")
+  , ("Xmobar", "~/.xmonad/xmobar.conf")
+  , ("Fishrc", "~/.config/fish/config.fish")
+  ]
+--}
+--{- apps
+apps = map (first caps)
+  [ (terminal, prompt)
+  , (browser , browse)
+  , (editor  , edit  )
+  , (files   , view  )
+  ]
+--}
+--{- colors
+foregrounds = map hex6
+  [ "#59c"  -- blue    old: "#8bf"
+  , "#c95"  -- orange     : "#fb8"
+  , "#c55"  -- red        : "#f88"
+  , "#5c9"  -- green      : "#8fb"
+  , "#95c"  -- purple     : "#b8f"
+  ]
+backgrounds = map hex6
+  [ "#222"
+  , "#334"
+  , "#445"
+  , "#556"
+  ]
+-- how much you prefer the top items
+gravity = (3,2) -- (*,/)
+
+fc = ofList foregrounds
+bc = ofList backgrounds
+
+fc' = prioritize foregrounds
+bc' = prioritize backgrounds
 --}
 --{- session startup
 -- run once
@@ -181,57 +216,18 @@ msession =
  [ -- moved to .wmrc
  ]  -- mtray && mbar
 
+script = open . with "dash"
 -- run on every restart as well
 mrestart =
- [ "dash " <> mhome <> "/.wmrc " <> mhome
+ [ script "~/.wmrc"
 -- , "udiskie --appindicator"
  --, "parcellite"
  ]
---}
---{- colors
--- make prioritized color lists
-fg' = prioritize fg  -- apply favorite levels
-bg' = prioritize bg  -- apply favorite levels
-
--- minimum of 4 colors each
-bg =
- map hex6
- [ "#222"
- , "#334"
- , "#445"
- , "#556"
- ]
-
--- access via fg!n
-fg =
- map hex6
- [ "#59c"  -- blue    old: "#8bf"
- , "#c95"  -- orange     : "#fb8"
- , "#c55"  -- red        : "#f88"
- , "#5c9"  -- green      : "#8fb"
- , "#95c"  -- purple     : "#b8f"
- ]
----}
---{- borders
-borderW = 2
---}
---{- workspace settings
--- characters to be appended to workspace names to apply rulesets
--- regular workspaces
-mreg = ""
--- fullscreen workspaces
-mfull = "+"
--- floating workspaces
-mfloat = "~"
 --}
 --}
 --{- utility functions
 --{- type definitions
 -- types that use ambiguous letters are intentionally generalized
-prioritize :: [[a]] -> [[a]]
-hex6, caps, findProcess, mconsole' :: String -> String
-grabColors :: Char -> Char -> String -> [String]
-wordsWhen :: (Char -> Bool) -> (String -> String) -> String -> [String]
 cons, scon :: [a] -> [a]
 wraps :: [a] -> [a] -> [a]
 joins :: [a] -> [[a]] -> [a]
@@ -239,43 +235,69 @@ withTiled' :: (Window -> WindowSet -> WindowSet) -> X ()
 windowCount :: X (Maybe String)
 (!) :: [a] -> Int -> a
 (~~?), (~?){-, (~/?)-} :: Eq a => Query [a] -> [a] -> Query Bool
-valid :: String
 unspawn :: String -> X ()
-mconsole :: String -> String -> String
-mnotify :: String -> String -> X ()
-nonMembers,members  :: [Window] -> M.Map Window W.RationalRect -> [Window]
-isn't,is            ::  Window  -> M.Map Window W.RationalRect -> Bool
-aren't,are          :: [Window] -> M.Map Window W.RationalRect -> Bool
+type WindowBoxes = M.Map Window W.RationalRect
+nonMembers,members  :: [Window] -> WindowBoxes -> [Window]
+isn't,is            ::  Window  -> WindowBoxes -> Bool
+aren't,are          :: [Window] -> WindowBoxes -> Bool
 --}
 --{- colors
--- requires a non-empty list
--- factorial $ length - idx <- explanation of how prioritize works
-prioritize l =
- -- this factorially effects those that're favorited, int
- let favoriteOffset = 2 in
- concat $
-  -- zipwith - run b with each of a
-  -- replicate - 2 "a" -> "aa"
-  zipWith replicate
-   -- get factorial of index, but cap at 30, factorial is of unreasonable time
-   (map (\x -> min 30 $ sum [0..x*favoriteOffset])
-   -- get each index, in reverse order
-   [length l, length l-1 .. 1])
-   l
-hex6 h =
- let h' = tail h in
- head h : (take 6 $ concat (
-  -- if string is longer than 4 characters, then double e.g #123 -> #112233
-  -- exclude first character, ofc
-  map (\x -> flip replicate x $ if (length h') > 4 then 1 else 2) h'
-  ))
-grabColors sep comment = wordsWhen (== sep) $ takeWhile (/= comment)
--- split-on function grabbed from stackOverflow
-wordsWhen pred fn str =
- case dropWhile pred str of
-  "" -> []
-  str' -> fn w : wordsWhen pred fn tr
-   where (w, tr) = break pred str'
+
+type Box    = Int -> String
+type FG     = (Box,Int)
+type BG     = (Box,Int)
+type Colors = (FG, BG) -- see aFG & aBG for specific format
+
+-- the@settings are declared in main::IO()
+-- the :: (  Settings -> a) -> a
+-- the =  ($ Settings ... )
+
+-- usage: aXG shades/colors
+aBG  = uncurry fmap . second rand . fst -- ((fg,fl),_) -> Random
+aFG  = uncurry fmap . second rand . snd -- (_,(bg,bl)) -> Random
+-- usage: the back/fore
+back = fst . tints
+fore = snd . tints
+-- usage: the bg/fg 0/1/2/..
+bg   = fst . fst . colors
+fg   = fst . snd . colors
+bg'  = fst . fst . shades
+fg'  = fst . snd . shades
+-- usage: the (colored decoratedLayout)
+colored f = uncurry f . tints
+-- usage: color the decoratedLayout
+color the = the . colored
+
+
+readColors x = (prioritize colors,ofList colors,colors) where colors = map hex6 $ grabs ' ' '-' x
+ofList ls = (,len) $ (ls!!) . (mod len) where len = length ls
+
+prioritize = prioritize' gravity
+prioritize' :: (Int,Int) -> [String] -> (Box,Int)
+prioritize' (s,w) l = (,total) $ (l!!) . locate . (mod total) where
+  -- group them into  ↑↑↑↑↑↑↑↑ standard color format
+  total = head factors
+  -- get the index for a given choice
+  locate n = fromMaybe (len-1) $ findIndex (n>=) factors
+  -- generate priority sequence
+  factors = reverse $ factor 0 len
+  factor x limit | x < limit = x*(x+s) `div` w : factor (x+1) limit
+                 | otherwise = []
+  len = length l
+  --{- old
+  -- approximation of:
+  -- 10 -> 66 (=6.6), 11 -> 78 (~7.1), 12 -> 91 (~7.6) ... this pattern continues
+  -- factor increases by approx ½ (offset = 3), 
+  -- idx = flip2 foldl [(0,1)] [2..length l] \s x -> (x-1,fst (head s)+x):s
+  --}
+
+-- when seq < 4 chars, double e.g #123 -> #112233
+hex6 :: String -> String
+hex6 (c:cs) = take 6 $ '#' : duplicate cs where
+ len = if 4 > length cs then 1 else 2
+ duplicate (x:xs) = replicate len x <> duplicate xs
+ duplicate [    ] = []
+hex6 [    ] = []
 --}
 --{- lists,arrays,strings
 cons arr = tail arr <> [head arr]
@@ -284,35 +306,70 @@ lFilter :: [(String,X ())] -> String -> [X ()]
 lFilter pairs str = [ b | (a,b) <- pairs, a == str]
 
 -- blends [(monoid functor arguments,),] into multiple monoids
-blend f l = foldr1 (<+>) $ map (uncurry f) l
+blend f = foldr1 fmap . map (uncurry f)
 
 
 breakOn :: Char -> String -> (String, String)
 breakOn c s
-    | [c,'\\'] `isPrefixOf` s2 = (s1 ++ [c] ++ s1', s2')
+    | [c,'\\'] `isPrefixOf` s2 = (s1 <> [c] <> s1', s2')
     | otherwise = (s1, s2)
       where (s1, s2 ) = break (== c) s
             (s1',s2') = breakOn c $ tail s2
 
+tail' (x:xs) = xs
+tail' [    ] = []
+
+-- NOTE: parsec?
+grabSep :: Char -> String -> [String]
+grabLine :: Char -> String -> [String]
+grabs :: Char -> Char -> String -> [String]
+
+grabSep sep = map (prune $ child valid) . wordsBy (==sep)
+grabLine comment = map (takeWhile (/= comment)) . wordsBy (=='\n')
+grabs sep comment = concat . map (grabSep sep) . grabLine comment
+--grabS comment nx = (\(x,xs) -> (dropWhile seps x) : grabS comment (tail' xs)) $ break seps nx
+
+for = flip map
+prune :: (Char -> Bool) -> String -> String
+prune p = takeWhile p . dropWhile (not . p)
+trim = prune $ child " \t"
+
+tuple (a:b:[]) = (a,b)
+tuple [      ] = error "invalid tupling"
+{-wordsWhen pred fn str =
+ case dropWhile pred str of
+  "" -> []
+  str' -> fn w : wordsWhen pred fn tr
+   where (w, tr) = break pred str'
+--}
 --}
 --{- strings
-caps str = (toUpper $ head str) : tail str
-joins a b = concat $ head b : [ a <> x | x <- tail b ]
+caps (x:xs) = toUpper x : xs
+--joins a (b:bs) = concat $ b : map (a<>) bs
+joins = intercalate
 wraps a b = a <> b <> a
 --}
 --{- xmonad
 withTiled' f =
- windows $ \ws ->
-  let all' = filter (not . flip M.member (W.floating ws)) . W.integrate' . W.stack . W.workspace . W.current $ ws
-  in foldr f ws all'
+  windows \ws -> foldr f ws
+  $ filter (not . flip M.member (W.floating ws)) . W.integrate' . W.stack . W.workspace . W.current $ ws
 windowCount = gets $ Just . show . length . W.integrate' . W.stack . W.workspace . W.current . windowset
 groupBy fn = shiftToSame $ fmap Just fn
 --}
 --{- IO
-tryReadFile :: FilePath -> IO String
+tryReadFile :: FilePath -> IO (Maybe String)
 tryReadFile f = do
  guard =<< doesFileExist f
- readFile f
+ (return . Just) =<< readFile f
+
+getFile = tryReadFile . with' "~/"
+
+parseIn :: String -> [String] -> IO (IO String -> IO String)
+parseIn backup files =
+ foldl1 (<|>) (for files getFile) <|> pure Nothing
+ >>= return . \case
+  Just x  -> (<+> return x)
+  Nothing -> const $ return backup
 --}
 
 --{- if item in stack, filter amongst stacks
@@ -325,12 +382,12 @@ are         i     s   = i ==members     i  s
 --}
 --{- operators
 -- user-friendly length fn
-l ! n = l!!(n-1)
+(!) l n = l!!(n-1)
 -- query operator for pythonic 'in'
 -- q ~/? x = (not $ isInfixOf x <$> q)
-q ~~? x = isInfixOf x <$> q
+(~~?) q x = isInfixOf x <$> q
 -- same as above, ignore first char for capitalization ruling
-q ~? x = q ~~? (tail x)
+(~?) q x = q ~~? (tail x)
 
 -- query management functions, each explained in xmonad.hs
 or', and' :: [Query Bool] -> Query Bool
@@ -339,12 +396,12 @@ and' = foldr1 (<&&>)
 
 infixl 5 ?&
 infixl 5 ?|
-(?|) a b = or' a -?> b
+(?|) a b = or'   a -?> b
 (?&) a b = and'  a -?> b
 
 infixl 5 >|
 infixl 5 >&
-(>|) a b = or' a --> b
+(>|) a b = or'   a --> b
 (>&) a b = and'  a --> b
 
 infixl 7 <<
@@ -355,34 +412,33 @@ infixl 7 <<
 -- valid chars
 valid = ['!' .. 'z'] \\ "!$&;*/<=>"
 
-findProcess p = "pgrep -i -d ' ' " <> reverse (takeWhile (`elem` valid) $ reverse (takeWhile (/= ' ') p))
+--ndProcess p = "pgrep -i -d ' ' " <> reverse (takeWhile (`elem` valid) $ reverse (takeWhile (/= ' ') p))
+findProcess = with "pgrep -i -d ' '" . takeWhile (`elem` valid)
 
 -- based on: https://gist.github.com/altercation/fdd2dff789b4aa9287476bf33ba6167c#file-xmonad-hs-L229
-unspawn p = spawn $ "kill `" <> findProcess p <> "` &"
---}
---{- console
--- turn shell and terminal settings into functions
-mconsole name exec =
- concat [mterminal, " -t ", name, " -e ", exec, ""]
-mconsole' exec =
- concat [mterminal, " -e ", exec, ""]
---}
---{- notify
--- turn notification settings into function
-mnotify s c = do
- spawn $ joins " "           -- join with spaces
-  [mnotify',                 -- command
-  joins " " mnotify'',       -- arguments
-  wraps "\"" s, wraps "\"" c -- encased notification content
-  ]
+unspawn = open "kill" . wraps "`" . findProcess
 --}
 --}
 
+data Settings = Settings
+  { faves      :: [(String,X ())]
+  , workspaces :: [String]
+  -- primary bg/fg
+  , tints      :: (String,String)
+  , colors     :: Colors
+  , colors'    :: ([String],[String])
+  -- prioritized colors:
+  , shades     :: Colors
+  }
+
+-- deprecated by tuple output
+--ioCount l = (length l + fst gravity + 1) / snd gravity
+--ndOf l = prioritize l <+> rand (prioCount l)
+
+rand :: Int -> X Int
+rand = liftIO . randomRIO . (0,)
+child = flip elem
+
 {- references
-{- -- this tricks vim, enabling syntax highlighting
--}
--- ($ a) == (\f -> f a)
-map (+ 5) [5..10]
-map ($ 5) [(5 +), (10 +)]
 --}
 

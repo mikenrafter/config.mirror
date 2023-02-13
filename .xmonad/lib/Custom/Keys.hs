@@ -1,6 +1,5 @@
 {- language CPP -}
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE BlockArguments #-}
+{-# LANGUAGE LambdaCase, BlockArguments, TupleSections, ParallelListComp #-}
 module Custom.Keys where
 --{- imports
 --{- globals
@@ -8,7 +7,9 @@ import Custom.Grid
 import Custom.Prompts
 import Custom.Scratch
 import Custom.Vars
+import Custom.Misc
 import qualified Custom.Fullscreen as FS
+import Utility.Map
 --}
 --{- standards
 import XMonad
@@ -36,7 +37,7 @@ import XMonad.Actions.WithAll
 import qualified XMonad.Actions.Search as S
 import XMonad.Actions.Minimize
 import XMonad.Actions.TagWindows
-import XMonad.Layout.Hidden
+import XMonad.Actions.EasyMotion (selectWindow)
 --}
 --{- layouts
 import XMonad.Layout.LimitWindows (limitWindows)
@@ -48,6 +49,7 @@ import XMonad.Layout.BoringWindows as B
 import XMonad.Layout.SubLayouts
 import XMonad.Layout.WindowNavigation
 import XMonad.Layout.Spacing
+import XMonad.Layout.Hidden
 --}
 --{- prompt
 import XMonad.Prompt
@@ -63,247 +65,222 @@ import XMonad.Hooks.ManageDocks (ToggleStruts(..), SetStruts(..))
 import Data.List (isInfixOf)
 import qualified Data.Map as M
 import Data.Maybe (isJust, fromMaybe)
+import Data.Monoid (Ap(..))
+import Data.Bifunctor
 --}
---}
---{- keys
---{- type definitions
-moverrides :: [(String, X ())]
-mkeys :: [String] -> [String] -> [String] -> [(String, String)] -> [(String, X ())]
 --}
 --{- overrides
-moverrides =
- [ (a, mnotify "usage" b) | (a, b) <-
- [ ("M-S-/",        def)
- , ("M-S-<Return>", def)
- , ("M-p",          def)
- , ("M-S-p",        off)
- , ("M-S-c",        "M-backspace")
- -- M-q & M-S-q excluded as a safety precaution
- , ("M-<Space>",    def)
- , ("M-S-<Space>",  off)
- , ("M-n",          off)
- , ("M-<Tab>",      def)
- , ("M-S-<Tab>",    off)
- , ("M-j",          "M-r")
- , ("M-k",          "M-a")
- , ("M-m",          def)
- , ("M-<Return>",   def)
- , ("M-S-j",        "M-S-r")
- , ("M-S-k",        "M-S-a")
- , ("M-h",          def)
- , ("M-l",          off)
- , ("M-t",          "M-down")
- , ("M-,",          off)
- , ("M-.",          off)
+overrides :: [(String, X ())]
+overrides =
+ leader . map (second $ notify . message "usage") $
+ [ ("S-/",        def)
+ , ("S-<Return>", def)
+ , ("p",          def)
+ , ("S-p",        off)
+ , ("S-c",        "M-backspace")
+ -- q & S-q excluded as a safety precaution
+ , ("<Space>",    def)
+ , ("S-<Space>",  off)
+ , ("n",          off)
+ , ("<Tab>",      def)
+ , ("S-<Tab>",    off)
+ , ("j",          "M-r")
+ , ("k",          "M-a")
+ , ("m",          def)
+ , ("<Return>",   def)
+ , ("S-j",        "M-S-r")
+ , ("S-k",        "M-S-a")
+ , ("h",          def)
+ , ("l",          off)
+ , ("t",          "M-down")
+ , (",",          off)
+ , (".",          off)
  ]
- <> [ dyn  k off | k <- ['1'..'9'] ]
- <> [ dyn' k off | k <- ['1'..'9'] ]
- <> [ dyn  k off | k <- "wer" ]
- <> [ dyn' k off | k <- "wer" ]
- ]
- --{- where
+ <> dupe  o'n  off
+ <> dope  o'n  off
+ <> dupe "wer" off
+ <> dope "wer" off
  where
-  --{- type definitions
-  off, def :: String
-  dyn', dyn :: Char -> String -> (String, String)
-  --}
+  dope = dupe . subfix ss
+  o'n = ['1'..'9']
   off = "disabled"
   def = "???"
-  dyn  k a = ("M-" <> [k], a)
-  dyn' k a = ("M-S-" <> [k], a)
-  --}
 --}
 --{- my keys
-mkeys ws bgs fgs faves =
- -- Instead of clumsy log hook version of updatePointer, activate after every
- -- hotkey. This way it doesn't activate upon notifications!
- map (\(k, a) -> (k, a *> up)) ([
+keys :: Settings set => ((Settings -> set) -> set) -> [(String, X ())]
+keys the@settings =
+ -- logHook.updatePointer causes unwanted triggers --> keepUp :: manual
+ concat [[]
+--{- multimedia
+--{- play/pause/seek
+ ,[("<XF86AudioPrev>"  , player    "previous")
+ , ("<XF86AudioNext>"  , player    "next"    )
+ , ("S-<XF86AudioPrev>", player "-a previous")
+ , ("S-<XF86AudioNext>", player "-a next"    )
+ ]
+ , dupe             ["<XF86AudioPlay>", "<XF86AudioPause>", "<Pause>"]  (player    "play-pause")
+ , dupe (map (ms<>) ["<XF86AudioPlay>", "<XF86AudioPause>", "<Pause>"]) (player "-a play-pause")
+--}
+--{- volume up/down/mute
+ ,[("<XF86AudioLowerVolume>"  , quieter  maxStep)
+ , ("<XF86AudioRaiseVolume>"  , louder   maxStep)
+ , ("<XF86AudioMute>"         , toggleV         )
+ , ("S-<XF86AudioLowerVolume>", quieter' minStep)
+ , ("S-<XF86AudioRaiseVolume>", louder'  minStep)
+ ]
+--}
+--{- brightness up/down
+ , dupe ["<XF86MonBrightnessUp>"    ,"M--"]   (brighter maxStep)
+ , dupe ["<XF86MonBrightnessDown>"  ,"M-="]   (dimmer   maxStep)
+ , dupe ["S-<XF86MonBrightnessUp>"  ,"M-S--"] (brighter maxStep)
+ , dupe ["S-<XF86MonBrightnessDown>","M-S-="] (dimmer   minStep)
+--}
+--{- screenshots
+ ,[(  "<Print>",   full)
+ , ("M-<Print>", screen)
+ , ("S-<Print>",    box)
+ ]
+--}
+--{- misc
+ ,[("M-M1-<Space>", spawn "kbd")
+ , ("M-."         , notifs)
+ ]
+--}
+--}
+ , leader $ keepUp $ concat [[]
+ --{- static
+ , [
 --{- session management
-   ("M-q", mnotify "xmonad" "restarting"  <+> spawn "xmonad --restart")
- , ("M-C-q", io exitSuccess)
- , ("M-S-q", io exitSuccess)
- , ("M-l", spawn $ mlocker <> " &")
+   ("q"  , notify (message "xmonad" "restarting")  <+> spawn "xmonad --restart")
+ , ("C-q", io exitSuccess)
+ , ("S-q", io exitSuccess)
+ , ("l"  , lock)
  -- couldn't figure out how TF to pipe mBG in here, so...
- , ("M-0", mapM_ (\x -> unspawn x <+> spawn ("sleep 1;" <> x)) $ mtray (bg!1) : mrestart)  -- relaunch startup things
+ -- TODO: make cleaner
+ , ("0"  , mapM_ (\x -> unspawn x <+> spawn ("sleep 1;" <> x)) $ mtray (the bg 1) : mrestart)  -- relaunch startup things
 --}
 --{- general
- , ("M-<Return>",      spawn $ mterminal <> " -e " <> mshell)
- , ("M-S-<Return>",    spawn $ mterminal <> " -e " <> mshell)
+ , ("<Return>"     , prompt "")
+ , ("S-<Return>"   , prompt "")
 
- , ("M-<Backspace>",   kill1)
- , ("M-S-<Backspace>", killAll)
+ , ("<Backspace>"  , kill1)
+ , ("S-<Backspace>", killAll)
 
- , ("M-`",             windows copyToAll)
- , ("M-<Escape>",      killAllOtherCopies)
+ , ("`"            , windows copyToAll)
+ , ("<Escape>"     , killAllOtherCopies)
 --}
 --{- window navigation
 --  NOTE - dynamic keys, dynamically added based on values in Vars.hs
- -- , ("M-C-a", rotAllUp)                -- Rotate all up
- -- , ("M-C-r", rotAllDown)              -- Rotate all down
+ -- , ("C-a", rotAllUp)                -- Rotate all up
+ -- , ("C-r", rotAllDown)              -- Rotate all down
  
- , ("M-z",   withFocused hideWindow)
- , ("M-S-z", popNewestHiddenWindow)
+ , ("z"  , withFocused hideWindow)
+ , ("S-z", popNewestHiddenWindow)
 --}
 --{- layouts
- , ("M-S-<Tab>", sendMessage FirstLayout)
- , ("M-<Tab>",   sendMessage NextLayout)
- , ("M-S-<D>",   FS.withTag  \tg -> withTaggedGlobal tg FS.off <+> sinkAll)         -- sink all windows
- , ("M-<D>",     withFocused \w -> FS.off w >> (windows . W.sink) w )                          -- sink current window
-
--- ("M-C-S-<U>", withAll' FS.on) -- fullscreen all windows
--- ("M-C-<U>",   withAll' FS.on) -- fullscreen all windows
--- ("M-S-<U>", withTiled' FS.on) -- fullscreen all tiled windows
- , ("M-<U>", withFocused  FS.toggle  ) -- fullscreen current window
+ , ("S-<Tab>", sendMessage FirstLayout)
+ , ("<Tab>"  , sendMessage NextLayout)
+ , ("S-<D>"  , FS.withTag  \tg -> withTaggedGlobal tg FS.off <+> sinkAll)       -- sink all windows
+ , ("<D>"    , withFocused \w  -> FS.off w >> windows $ W.sink w)               -- sink current window
+ , ("<U>"    , withFocused  FS.toggle)                                          -- fullscreen current window
 --}
 --{- workspaces
 --  NOTE - dynamic keys, dynamically added based on values in Vars.hs
- , ("M-<Space>" , toggleWS' ["NSP"])
- , ("M-C-S-M1-<Space>", appendWorkspace "oioi")
- , ("M-C-S-M1-1", setWorkspaceIndex 5)
- , ("M-C-S-M1-2", addWorkspacePrompt $ promptConf bgs fgs)
- , ("M-C-S-M1-3", renameWorkspace  $ promptConf bgs fgs)
- , ("M-C-S-M1-4", addWorkspace "test")
- , ("M-C-S-M1-5", selectWorkspace  $ promptConf bgs fgs)
- , ("M-C-S-M1-6", addHiddenWorkspace "wow")
--- , ("M-C-S-M1-s", renameWorkspaceByName "ay")
- -- , ("M-M1-C-S-<Return>", activateProject currentProject)
---}
---{- multimedia
---{- play/pause/seek
- , ("<XF86AudioPrev>" , spawn "playerctl previous")
- , ("<XF86AudioPlay>" , spawn "playerctl play-pause")
- , ("<XF86AudioPause>", spawn "playerctl play-pause")
- , ("<Pause>",          spawn "playerctl play-pause")
- , ("<XF86AudioNext>" , spawn "playerctl next")
- , ("S-<XF86AudioPrev>" , spawn "playerctl -a previous")
- , ("S-<XF86AudioPlay>" , spawn "playerctl -a play-pause")
- , ("S-<XF86AudioPause>", spawn "playerctl -a play-pause")
- , ("S-<Pause>",          spawn "playerctl -a play-pause")
- , ("S-<XF86AudioNext>" , spawn "playerctl -a next")
---}
---{- volume up/down/mute
- , ("<XF86AudioLowerVolume>",   spawn $ mvol mvoln  "-")
- , ("<XF86AudioRaiseVolume>",   spawn $ mvol mvoln  "+")
- , ("<XF86AudioMute>",          spawn $ mmute)
- , ("S-<XF86AudioLowerVolume>", spawn $ mvol mvoln' "- unmute")
- , ("S-<XF86AudioRaiseVolume>", spawn $ mvol mvoln' "+ unmute")
---}
---{- brightness up/down
- , ("<XF86MonBrightnessDown>",   spawn $ mbright mbrightn  "-")
- , ("<XF86MonBrightnessUp>"  ,   spawn $ mbright mbrightn  "+")
- , ("S-<XF86MonBrightnessDown>", spawn $ mbright mbrightn' "-")
- , ("S-<XF86MonBrightnessUp>"  , spawn $ mbright mbrightn' "+")
- , ("S-M--",                     spawn $ mbright mbrightn' "-")
- , ("S-M-=",                     spawn $ mbright mbrightn' "+")
- , ("M--",                       spawn $ mbright mbrightn  "-")
- , ("M-=",                       spawn $ mbright mbrightn  "+")
---}
---{- screenshooting
- , ("<Print>",   spawn mscreenshotFull)
- , ("M-<Print>", spawn mscreenshotBox')
- , ("S-<Print>", spawn mscreenshotBox )
---}
---{- multi-keyboard layout management
- , ("M-M1-<Space>", spawn "kbd")
---}
---{- notifications
- , ("M-.", spawn mnotifTray)
---}
+ , ("<Space>", toggleWS' ["NSP"])
+-- TODO: setup projects properly
+-- ("C-S-M1-s", renameWorkspaceByName "ay")
+-- ("M1-C-S-<Return>", activateProject currentProject)
 --}
 {- sublayouts
  sublayouts options, tabbed sublayouts causes screen artifacts in my attempts.
- , ("M-u", sendMessage $ pullGroup U)  -- i j k l =  US, u n e i = US(COLEMAK)
- , ("M-n", sendMessage $ pullGroup L)
- , ("M-e", sendMessage $ pullGroup D)
- , ("M-i", sendMessage $ pullGroup R)
+ , ("u", sendMessage $ pullGroup U)  -- i j k l =  US, u n e i = US(COLEMAK)
+ , ("n", sendMessage $ pullGroup L)
+ , ("e", sendMessage $ pullGroup D)
+ , ("i", sendMessage $ pullGroup R)
 
- , ("M-C-<D>", withFocused (sendMessage . MergeAll))
- , ("M-C-<U>", withFocused (sendMessage . UnMerge))
+ , ("C-<D>", withFocused (sendMessage . MergeAll))
+ , ("C-<U>", withFocused (sendMessage . UnMerge))
 
- , ("M-C-a", onGroup W.focusUp')
- , ("M-C-r", onGroup W.focusDown')
+ , ("C-a", onGroup W.focusUp')
+ , ("C-r", onGroup W.focusDown')
 
- , ("M-f <L>", withFocused $ \w -> W.float w $ W.RationalRect 0.1 0.1 0.5 1.0)
- , ("M-f <L>", windows $ \w -> W.float w $ W.RationalRect 0.1 0.1 0.5 1.0)
+ , ("f <L>", withFocused $ \w -> W.float w $ W.RationalRect 0.1 0.1 0.5 1.0)
+ , ("f <L>", windows $ \w -> W.float w $ W.RationalRect 0.1 0.1 0.5 1.0)
 --}
  --{- gridselects
- , ("M-i", mgrids ) --fgs bgs)
- , ("M-o", (custom {- fgs bgs -}) spawn faves)
+ , ("i"      , bare $ nest (the shades) $ color the grids)
+ , ("o"      , bare $ nest (the shades) $ the faves)
  --}
- --{- fullscreen
--- , ("M-<U>", withFocused fs)
- --}
- ]
+ ] --}
 --{- dynamic keybinds
--- like DT's dynamic keys using list comprehension, but "M-a a" & "M-a M-a" are accepted
  --{- scratchpads
- <> twoK "M" "p" [(k, allNamedScratchpadAction mscratch k ) | k     <- mscratch'   ]  -- scratchpads
+ , hold mm "p" [(k, allNamedScratchpadAction scratches k )    |  k    <- scratchKeys   ]  -- scratchpads
  --}
  --{- prompts
- <> twoK "M" "s" [(k, S.promptSearch (promptConf' bgs fgs) f ) | (k,f) <- msearches   ]  -- search prompts
- <>              [("M-" <> k, f (promptConf' bgs fgs))         | (k,f) <- mprompts    ]  -- other prompts
+ , hold mm "s" $ map (second ($ Prompt.config)) engineMap -- search prompts
+ , subfix mm   $ map (second ($ Prompt.config)) promptMap -- other prompts
  --}
  --{- navigation
  --{- window movement
- <> mapKs "M"   mwinKeys [fUp,fDown]
- <> mapKs "M-S" mwinKeys [windows W.swapUp, windows W.swapDown]
+ , bind ""     winKeys [fUp,fDown]
+ , bind ms     winKeys [windows W.swapUp, windows W.swapDown]
+ ,[("r", selectWindow (emConfig settings) >>= (`whenJust` windows . W.focusWindow))]
  --}
  --{- workspace movement
- <> mapKs "M" (modifs ["M1-C","C-S", "M1","S", "C"] $ mwsKeys!1)
-  [ aPrev, aPrev                                                  -- shift all prev
-  , safeShift Prev, safeShift Prev                                -- shift prev
-  , prevWS                                                        -- prev
-  , safeMove Prev                                                 -- prev active
+ , bound $ boundSuffix (workspaceKeys!!0)
+  [ (["M1-C-","C-S-"], aPrev  )                                   -- shift all prev
+  , ([ma,ms], safeShift Prev  )                                   -- shift prev
+  , ([mc],              prevWS)                                   -- prev
+  , ([""],    safeMove  Prev  )                                   -- prev active
   ]
- <> mapKs "M" (modifs ["M1-C","C-S", "M1","S", "C"] $ mwsKeys!2)
-  [ aNext, aNext                                                  -- shift all
-  , safeShift Next, safeShift Next                                -- shift next
-  , nextWS                                                        -- next
-  , safeMove Next                                                 -- next active
+ , bound $ boundSuffix (workspaceKeys!!1)
+  [ (["M1-C-","C-S-"], aNext  )                                   -- shift all Next
+  , ([ma,ms], safeShift Next  )                                   -- shift Next
+  , ([mc],              nextWS)                                   -- Next
+  , ([""],    safeMove  Next  )                                   -- Next active
   ]
 
- <> [ ( concat ["M-", m, show k], windows $ f i )
-  | (i, k) <- zip (XMonad.workspaces $ def {workspaces=ws}) [1..9]
+ , [ ( concat [m, show k], windows $ f i )
+  | (i, k) <- zip (XMonad.workspaces $ def {workspaces=the workspaces}) [1..9]
   , (f, m) <- [(W.view, ""), (W.shift, "S-")]
   ]
 
  -- TODO, explain this gazelle
- <> [ ( concat ["M-C-", show k] , mapM_ (flip withNthWorkspace i) [W.shift, W.view] )
+ , [ ( concat ["C-", show k] , mapM_ (flip withNthWorkspace i) [W.shift, W.view] )
   | (k, i) <- zip [0..9] $ scon [0..9] ]
- <> [ ( concat ["M-C-S-", show k] , foldl (<+>) wreverse (take 10 $ repeat $ withNthWorkspace W.shift i) <+> withNthWorkspace W.view i)
+ , [ ( concat ["C-S-", show k] , foldl (<+>) wreverse (take 10 $ repeat $ withNthWorkspace W.shift i) <+> withNthWorkspace W.view i)
   | (k, i) <- zip [0..9] $ scon [0..9] ]
  --}
  --{- monitor movement
- <> [ ( concat ["M-M1-", m, [k]], screenWorkspace sc >>= flip whenJust (windows . f) )
+ , [ ( concat ["M1-", m, [k]], screenWorkspace sc >>= flip whenJust (windows . f) )
   | (k, sc) <- zip "rst" [2,1,0]
   , (f, m) <- [(W.view, ""), (W.shift, "S-"), (W.greedyView, "C-S-")]
   ]
  --}
  --}
  --{- floatKeys
- <> twoK "M" "f" [(k, withFocused $ windows . \w -> W.float w r)  | (k,r) <- mfloatMolds ]
+ , hold mm "f" [(k, withFocused $ windows . \w -> W.float w r)  | (k,r) <- mfloatMolds ]
  --}
  --}
- )
- --{- where
- where
-  --{- type definitions
-  aNext, aPrev, fUp, fDown :: X ()
-  fullFloat :: Window -> WindowSet -> WindowSet
-  --}
-  allSafe fwd bak = withAll (\_ -> safeShift fwd <+> safeMove bak) <+> safeMove fwd <+> wreverse <+> up -- leave `up` here, other up happens before
+ ]
+ ]
+ where --{-
+  player = open "playerctl"
+  -- TODO: execute raw stack actions, instead of this mess
+  allSafe fwd bak = withAll (const $ safeShift fwd <+> safeMove bak) <+> safeMove fwd <+> wreverse <+> up -- leave `up` here, other up happens before
   aNext = allSafe Next Prev
   aPrev = allSafe Prev Next
+  fullFloat :: Window -> WindowSet -> WindowSet
   fullFloat = flip W.float $ W.RationalRect 0 0 1 1
   up = updatePointer (0.5, 0.5) (0.75, 0.75)
-  wrev2 = \_ -> W.modify' $
-   -- completely reverse stack (kinda)
-   \(W.Stack f u d) -> W.Stack (last d) [] (reverse (init d) <> u <> [f])
-  wreverse = windows $ W.modify' $
-   -- completely reverse stack (kinda)
-   \(W.Stack f u d) -> W.Stack (last d) [] (reverse (init d) <> u <> [f])
+  keepUp = map $ second (*> up)
 
---{- disaster town
+  wrev2    =const    revWS
+  wreverse = windows revWS
+  revWS = W.modify' \(W.Stack f u d) ->
+   -- completely reverse stack (kinda)
+   W.Stack (last d) [] $ reverse (init d) <> u <> [f]
+--{- experiments
   -- complex functions to replace *.focusUp/down
   -- adds support for tab layout to B.focusUp
   -- adds support for floating window visibility whilst switching (broken ATM)
@@ -349,12 +326,8 @@ mmouses (XConfig {XMonad.modMask = modMask}) = M.fromList
  [ 
 --}
 --}
---}
 --{- utility functions
 --{- type definitions
--- TODO start building XMonad with a C Preprocessor, linked to Stack (not cabal,
--- since using nix)
--- #define XXX = X () -> X () -> X ()
 ifWS',    ifLay'    :: AXXX String
 ifWS ,    ifLay     :: String -> (WindowSet -> WindowSet) -> X ()
 ifFloat', ifTile'   :: XXX
@@ -365,28 +338,30 @@ modifs :: [String] -> [String]   -> [[String]]
 mapKs  :: String   -> [[String]] -> [X ()] -> [(String, X ())]
 twoK   :: String   -> String     -> [(String, X ())] -> [(String, X ())]
 --}
+predicateSet p fn bk = withWindowSet \ws -> if p ws then fn else bk
+ifWset a s       = predicateSet (isInfixOf s . a)
 --{- if workspace.name
-ifWS' s fn bk  = withWindowSet $ \ws -> if s `isInfixOf` (W.currentTag) ws then fn else bk
-ifWS  s fn     = ifWS' s (windows fn) $ pure ()
+ifWS' s fn bk  = ifWset W.currentTag
+ifWS  s        = flip ifWS' s (pure ()) . windows
 --}
 --{- if layout.name
-ifLay' s fn bk = withWindowSet $ \ws -> if s `isInfixOf` (description . W.layout . W.workspace . W.current) ws then fn else bk
-ifLay  s fn    = ifLay' s (windows fn) $ pure ()
+ifLay' s fn bk = ifWset $ description . W.layout . W.workspace . W.current
+ifLay  s       = flip ifLay' s (pure ()) . windows
 --}
 --{- if floating
 ifFloat' fn bk = withWindowSet $ \ws -> case W.peek ws of Just w | M.member w $ W.floating ws -> fn; _ -> bk
-ifFloat  fn    = ifFloat' (windows fn) $ pure ()
+ifFloat  s     = flip ifFloat' s (pure ()) . windows
 --}
 --{- if tiled
 ifTile'   = flip ifFloat'
-ifTile fn = ifTile' (windows fn) $ pure ()
+ifTile s  = flip ifTile' s (pure ()) . windows
 --}
 --{- WS movement
-nNSP = WSIs (return (\x -> W.tag x /= "NSP"))
-usednNSP = WSIs (return (\x -> isJust (W.stack x) && W.tag x /= "NSP"))
-safeMove direction = moveTo direction usednNSP
-safeShift' direction = shiftTo direction nNSP
-safeShift direction = safeShift' direction <+> safeMove direction
+nNSP     = WSIs $ return \x -> W.tag x /= "NSP"
+usednNSP = WSIs $ return \x -> isJust (W.stack x) && W.tag x /= "NSP"
+safeMove   direction = moveTo     direction usednNSP
+safeShift' direction = shiftTo    direction nNSP
+safeShift  direction = safeShift' direction <+> safeMove direction
 --}
 {- custom withNthWorkspace
 wNWS' :: ([WorkspaceId] -> [WorkspaceId]) -> [(String -> WindowSet -> WindowSet)] -> Int -> X ()
@@ -402,18 +377,6 @@ wNWS' tr jobs wnum = do
 --   of the workspace itself.
 wNWS :: [(String -> WindowSet -> WindowSet)] -> Int -> X ()
 wNWS = wNWS' id
---}
---{- dynamic keybinds
-modifs list keys = [ [ m <> "-" <> k | k <- keys] | m <- list] <> [keys]
-mapKs modif keys actions =
- concat [ [
-  (modif <> "-" <> k, actions!i) | k <- keys!i
-  ] | i <- [1 .. length actions] ]
-twoK modif first list =
- let mm = modif <> "-" in
- concat $ map
-  (\x -> [( concat [mm,first," ",x,k], f ) | (k,f) <- list ])
-  ["", mm]
 --}
 --}
 

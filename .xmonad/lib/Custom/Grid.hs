@@ -9,62 +9,78 @@ import XMonad
 import System.Random (randomRIO, randomR)
 --}
 --{- actions
-import XMonad.Actions.GridSelect
+import XMonad.Actions.GridSelect hiding (select)
+import qualified XMonad.Actions.GridSelect as G
 import XMonad.Actions.WindowMenu
 --}
 --{- data
 import Data.Bool
 import Data.String
-import Data.Random.List (randomElement)
+--port Data.Random.List (randomElement)
 --}
 --}
 --{- gridselect config
-mgsh = 50
-mgsw = mgsh * 2 -- (mgsh * 8) `div` 4 -- int version of (* 1.5)
-gsconfig =
- (buildDefaultGSConfig colors)
-  { gs_cellheight   = mgsh
-  , gs_cellwidth    = mgsw
+height = 50
+width  = height * 2
+config :: Colors -> GSConfig a
+config colors =
+ (buildDefaultGSConfig $ colorizer colors)
+  { gs_cellheight   = height
+  , gs_cellwidth    = width
   , gs_cellpadding  = 7
   , gs_originFractX = 0.5
   , gs_originFractY = 0.5
-  , gs_font         = mfont
+  , gs_font         = font
   }
 --}
 --{- grid mappings
-mgrids' =
- [ ("W.bring", bringSelected gsconfig)  -- bring selected window
- , ("W.goto",  goToSelected gsconfig)   -- goto selected window
- , ("W.Conf",  windowMenu)              -- window management menu
- , ("X.Conf",  custom spawn mconfigs)   -- my configs
- , ("X.Progs", custom spawn mapps)      -- my apps
- ]
-mgrids =
- flip custom grids \x->snd $ mgrids'!!x
- where grids = zip (map fst mgrids') [0..]
+grids colors =
+{-
+-- [ ("W | bring"  , bringSelected config) -- bring selected window
+-- , ("W | goto"   , goToSelected  config) -- goto selected window
+-- , ("W | Conf"   , windowMenu          ) -- window management menu
+-- , ("X | Conf"   , custom spawn configs) -- my configs
+-- , ("X | Apps"   , custom ($"") apps   ) -- my apps
+-- , ("X | Prompts", custom ($pc) prompts) -- my prompts
+-- ] where pc = Prompt.config
+--}
+ [ ("W | bring"  , item $ bringSelected cfg) -- bring selected window
+ , ("W | goto"   , item $ goToSelected  cfg) -- goto selected window
+ , ("W | Conf"   , item $ windowMenu       ) -- window management menu
+ , ("X | Conf"   , submenu spawn configs   ) -- my configs
+ , ("X | Apps"   , submenu ($"") apps      ) -- my apps
+ , ("X | Prompts", submenu ($pc) prompts   ) -- my prompts
+ ] where
+   pc = Prompt.config
+   submenu = sub colors
+   cfg = config color
 --{- utility functions
-nest prev next items = gridselect gsconfig items >>= maybe prev next
-custom = nest $ pure ()
-rand l = (l!) <$> randomRIO (1, length l)
-colors _ active = do
- fg <- liftIO $ rand fg'
- bg <- liftIO $ rand bg'
- if active
-  then return (fg, bg)
-  else return (bg, fg)
---}
---{- type definitions
-gsconfig :: GSConfig a
-custom :: (a -> X ()) -> [(String, a)] -> X ()
---custom :: (String -> X ()) -> [(String, a)] -> X ()
---nest :: X () -> (String -> X ()) -> [(String, X ())] -> [Char]
---rand :: (MonadIO m) => [a] -> m a
---rand :: liftIO
---rand :: [String] -> IO String
-rand :: [a] -> IO a
-colors :: a -> Bool -> X (String, String)
---}
 
+-- generic menu
+menu colors back action items = gridselect (config colors) items >>= maybe back action
+-- nestable submenus
+nest colors items = menu colors (return False)
+  (>>= \x -> if x then return True else nest colors items) items
+-- False -> non- / selected <- True
+sub colors = menu colors (return False) . (>> return True)
+-- allows mixing submenus & single items
+item = (>> return True)
+-- used to make any nested menus usable outside
+bare = (>> return ())
+
+custom :: Colors -> (a -> X ()) -> [(String, a)] -> X ()
+custom = flip menu $ pure ()
+
+colorizer :: Colors -> a -> Bool -> X (String, String)
+colorizer colors _ active = do
+ fg <- aFG colors
+ bg <- aBG colors
+ return if active
+  then (fg, bg)
+  else (bg, fg)
+
+--}
+--}
 {- references
 --}
 

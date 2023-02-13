@@ -1,13 +1,7 @@
 --xmonad #
 {-# OPTIONS_GHC -Wno-missing-signatures -Wno-orphans #-}
-{-# LANGUAGE FlexibleContexts #-} -- for L.Hidden
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE BlockArguments #-}
-
-{- LANGUAGE ViewPatterns #-} -- ?
-{- LANGUAGE ParallelListComp #-} -- ?
-{- LANGUAGE NoMonomorphismRestriction #-} -- ?
-{- LANGUAGE NamedFieldPuns #-} -- ?
+{- LANGUAGE FlexibleContexts, LambdaCase, BlockArguments, ViewPatterns #-} -- ?
+{- LANGUAGE ParallelListComp, NoMonomorphismRestriction, NamedFieldPuns #-} -- ?
 
 import XMonad.Hooks.FadeWindows
 -- my xmonad config, see ../.vimrc for navigation
@@ -17,7 +11,8 @@ import Custom.Grid
 import Custom.Keys
 import Custom.Prompts
 import Custom.Scratch
-import Custom.Vars as V
+import Custom.Vars hiding (workspaces)
+import qualified Custom.Vars as V
 import qualified Custom.Fullscreen as FS
 --}
 --{- standards
@@ -41,6 +36,7 @@ import Data.Maybe (fromJust)
 import XMonad.Actions.SpawnOn
 import XMonad.Actions.UpdatePointer
 import XMonad.Actions.TagWindows
+import XMonad.Actions.EasyMotion
 --}
 --{- hooks
 import XMonad.Hooks.DynamicLog  --(dynamicLogWithPP, pad, xmobarPP, xmobarColor, xmobarBorder, PP(..), shorten, xmobarStrip, filterOutWsPP)
@@ -117,18 +113,18 @@ import XMonad.Util.Run
 --}
 --{- autostart
 --{- type definitions
-mstartupHook :: [String] -> [String] -> String -> String -> X ()
+startup :: Settings -> X ()
 --}
-mstartupHook bcs fcs mBG mFG = do
+startup the = do
 -- setDefaultCursor xC_left_ptr
- FS.setTheme $ mtabConfig mBG mFG
- setWMName mwm
+ FS.setTheme $ color the tabConfig
+--setWMName mwm
  mapM_
   ( \x -> spawnOnce $ x <> " &" )
   $ mlock <> msession
  mapM_
   ( \x -> unspawn x <+> spawn ("sleep 1;" ++ x) )
-  $ mtray (bcs!1) : mrestart
+  $ mtray (the bg 0) : mrestart
  where
   mlock =
    [ "xset s " <> show (60 * mtimeout)
@@ -136,100 +132,50 @@ mstartupHook bcs fcs mBG mFG = do
    ]
 --}
 --{- workspaces
---{- type definitions
-tagWS :: String -> [(String, (String, X ()))] -> [(String, (String, X ()))]
-chop  ::[(String, (String, X ()))] -> [String]
-mWS   :: String -> String -> X () -> (String, (String, X ()))
-mregular', mfloats', mfulls' :: [(String, (String, X ()))]
-mregular , mfloats , mfulls , mworkspaces :: [String]
-mprojects :: [Project]
+tagWS = first . (<>)
 mWSIndices :: M.Map String Int
---}
---{- fn
-tagWS tag l = [(a ++ tag, b) | (a, b) <- l ]
-chop l = [a | (a, b) <- l]
-mWS name directory startup = ( name, (directory, startup) )
-mWSIndices = M.fromList $ zipWith (,) mworkspaces [1..]
-act ws = (xmobarAction ("xdotool key super+"<>show i) "12345" . pad) ws
- where i = fromJust $ M.lookup ws mWSIndices
---}
+mWSIndices = M.fromList $ zip workspaces [1..]
 
---{- regular
-mregular' =
- tagWS mreg
- [ mWS "work" "~/"
-   $ mapM_ spawnHere [mterminal, mfiles]
- , mWS "dev" "~/"
-   $ mapM_ spawnHere [mterminal, meditor ""]
- , mWS "web" "~/"
-   $ mapM_ spawnHere [mbrowser]
- , mWS "art" "~/"
-   $ mapM_ spawnHere ["gravit-designer", "gimp"]
- , mWS "chat" "~/"
-   $ mapM_ spawnHere ["thunderbird", "element-desktop"]
+-- number of dynamic workspaces
+projectSpace = 6
+(workspaces, workflows) = (
+ [ ("basic", [prompt, prompt]) -- 1
+ , ("multi", [browse]        ) -- 2
+ , ("full" , [spawn "Steam"] ) -- 3
+ ,    w "a",  w "b",   w "c"   -- 4,5,6
+-- ("chat" , [spawn "chats"] ) -- 7
+-- ("NSP"  , []              ) -- 8
  ]
---}
---{- floats
-mfloats' =
- tagWS mfloat
- [ mWS "A1" "~/"
-   $ mapM_ spawnHere []
- , mWS "A2" "~/"
-   $ mapM_ spawnHere []
- , mWS "A3" "~/"
-   $ mapM_ spawnHere []
+ ,
+-- TODO: implement workflows in some way (gridselect?)
+ [ ("dev", [prompt, editor]       )
+ , ("web", [browse]               )
+ , ("2D" , s ["gimp","krita"]     )
+ , ("vec", s ["gravit","inkscape"])
+ , ("3D" , s ["blender"]          )
  ]
---}
---{- fulls
-mfulls' =
- tagWS mfull
- [ mWS "B1" "~/"
-   $ mapM_ spawnHere ["lutris"]
- , mWS "B2" "~/"
-   $ mapM_ spawnHere []
- , mWS "B3" "~/"
-   $ mapM_ spawnHere []
- ]
---}
-
---{- lists
-mregular = chop mregular'
-mfloats = chop mfloats'
-mfulls = chop mfulls'
-mworkspaces =
- concat
- [ mregular, mfloats, mfulls
- , ["NSP"]
- ]
-
-mprojects =
- [
- Project
-  { projectName = a
-  , projectDirectory = b
-  , projectStartHook = Just $ do c
-  } | (a, (b, c)) <- concat [ mregular', mfloats', mfulls' ]
- ]
---}
+ ) where
+ s = map spawn
+ w = (,[])
 --}
 --{- hooks
 --{- type definitions
-mmanageHook :: XMonad.Query (Data.Monoid.Endo WindowSet)
-mhandleEventHook :: Event -> X All
-mlogHook, mbarHook :: Handle -> [String] -> [String] -> X ()
+manage :: Settings -> XMonad.Query (Data.Monoid.Endo WindowSet)
+events :: Settings -> Event -> X All
+log, bar :: Settings -> Handle -> [String] -> [String] -> X ()
 --mlayoutHook :: String -> String -> l0 Window
 --mlayoutHook :: ()
 --}
 --{- urgencyHook
 -- let windows mark themselves as urgent, add a border, and send a
 -- notification
-data LibNotifyUrgencyHook = LibNotifyUrgencyHook deriving (Read, Show)
+data Notify = Notify deriving (Read, Show)
 
-instance UrgencyHook LibNotifyUrgencyHook where
- urgencyHook LibNotifyUrgencyHook w = do
+instance UrgencyHook Notify where
+ urgencyHook Notify w = do
   name    <- getName w
-  Just ws <- fmap (W.findTag w) $ gets windowset
-  safeSpawn mnotify' $ mnotify'' <> [ws, show name]
+  Just ws <- W.findTag w <+> gets windowset
+  notify $ message ws (show name)
 
 --}
 --{- manageHook
@@ -261,7 +207,7 @@ usage:
  [otherConditions] << collage ... >| action -- standard + collage
  collage ... << [otherConditions] >| action -- also works as expected
 --}
-mmanageHook =
+manage the =
  let up = updatePointer (0.5, 0.5) (1, 1)
  in
  -- manage floating, and fullscreen
@@ -276,10 +222,10 @@ mmanageHook =
  --{- basic
  <+> composeOne
   [ collage [c,t] ["xmonad_conky"]        ?| doLower <+> doIgnore
-  , [ isDialog, currentWs ~~? mfloat ]    <<
+  , [ isDialog, {-ws ~~? mfloat-}]        <>
     collage [c,t] (popup <> floaters)     ?| doCenterFloat
   , collage [c,t] annoyances              ?| s'' 2
-  , [ isFullscreen, currentWs ~~? mfull ] <<
+  , [ isFullscreen, {-ws ~~? mfull-}]     <>
     collage [c,t] gaming                  ?| FS.start
   ] --}
  --{- workspaces
@@ -357,9 +303,7 @@ mmanageHook =
   c = className
   t = title
 --  never = return False
-  s n = doShift $ mregular!n
-  s' n = doShift $ mfloats!n
-  s'' n = doShift $ mfulls!n
+  s''@s'@s n = doShift $ (the workspaces !!)
   collage f v = [x ~? y | y <- v, x <- f]
 --  anyOfIs fns compare list = 
   -- see above, https://github.com/TheMC47/dotfiles/blob/master/.xmonad/src/Config.hs
@@ -407,14 +351,14 @@ mmanageHook =
 --}
 --{- activateHook
 -- focus element, let all others die
-mActivateHook :: ManageHook
-mActivateHook = composeOne
+activate :: ManageHook
+activate = composeOne
   [ className ~? "Element" -?> doFocus
   , pure True -?> doAskUrgent
   ]
 --}
 --{- handleEventHook
-mhandleEventHook =
+events =
  -- when a focused, fullscreen window is closed, refocus last window
 --     fadeWindowsEventHook
      refocusLastWhen
@@ -422,16 +366,16 @@ mhandleEventHook =
      <||> fmap not isFloating
      <||> return True
      )
- <+> blend dynamicPropertyChange propertyHooks
+ <+> blend dynamicPropertyChange properties
  <+> trayerAboveXmobarEventHook
  <+> Hacks.windowedFullscreenFixEventHook
- <+> uncurry swallowEventHook swallowHook
+ <+> uncurry swallowEventHook swallow
 --}
 --{- swallowHook
-swallowHook = (className =? mterminal <&&> fmap not ( title ~~? "S:"), return True)
+swallow = (className =? terminalc <&&> fmap not ( title ~~? "S:"), return True)
 --}
---{- propertyHooks
-propertyHooks =
+--{- propertyHook
+properties =
  [ ("WM_CLASS", composeOne
    [ className ~? "re.sonny.Junction" -?> doCenterFloat
    --className ~? "element" -?> doCenterFloat
@@ -440,7 +384,7 @@ propertyHooks =
 
 --}
 --{- fadeHook
-mfadeHook = composeAll
+fade = composeAll
  [    opaque
  ,    isUnfocused
  <&&> isFloating  --> transparency 0.05
@@ -450,7 +394,7 @@ mfadeHook = composeAll
 --}
 
 --{- logHook
-mlogHook pipe bcs fcs =
+log the pipe =
  -- counterpart to handleEventHook for refocusLast
  refocusLastLogHook
  -- change opacity of unfocused windows, 1 is opaque, 0 transparent
@@ -458,116 +402,123 @@ mlogHook pipe bcs fcs =
  -- for changing to/from the last focused workspace
  <+> workspaceHistoryHook
  -- pass pipe in, for status bar
- <+> mbarHook pipe fcs bcs
+ <+> bar the pipe
  -- handle mag-fullscreen events
  <+> FS.logHook
 --}
 --{- barHook
-mbarHook pipe fg bg = do
+bar the pipe = let
+ fc = the fg
+ bc = the bg
+ in do
  -- for copied windows, e.g media player
- copies <- wsContainingCopies
- let check x | x `elem` copies = xc (fg!3) (bg!2) $ " + "
-                   | otherwise = xc (fg!1) (bg!3) $ act x
+wsContainingCopies >>= \copies ->
+ let hasExtras x | x `elem` copies = xc (fg 2) (bg 1) $ " + "
+                       | otherwise = xc (fg 0) (bg 2) $ act x
+     c = xmobarColor
+     b = xmobarBorder
+
+     act ws = xmobarAction ("xdotool key super+"<>show (i ws)) "12345" $ pad ws
+     i = fromJust . flip M.lookup mWSIndices
+
  -- boilerplate + xmobar + scratchpads
- dynamicLogWithPP . filterOutWsPP ["NSP"] $ xmobarPP
+ in dynamicLogWithPP . filterOutWsPP ["NSP"] $ xmobarPP
    { ppOutput = hPutStrLn pipe
 
    , ppSep             = " "
    -- mark urgent WS's
-   , ppUrgent          = xc(fg!3) (bg!3) . act
-   , ppCurrent         = xc(fg!2) (bg!1) . xmobarBorder "Bottom" (fg!1) 4 . act
-   , ppHidden          = check
-   , ppHiddenNoWindows = xc(bg!4) (bg!2) . pad . take 2
-   , ppTitle           = \x -> xc(fg!5) (bg!2) . pad . shorten 40 $ if null x then "?" else x
+   , ppUrgent          = c (fg 2) (bg 2) . act
+   , ppCurrent         = c (fg 1) (bg 0) . b "Bottom" (fg 0) 4 . act
+   , ppHidden          = hasExtras
+   , ppHiddenNoWindows = c (bg 3) (bg 1) . pad . take 2
+   , ppTitle     = \x -> c (fg 4) (bg 1) . pad . shorten 40 $ if null x then "?" else x
    , ppTitleSanitize   = xmobarStrip
 
    -- other items
    , ppExtras = [windowCount]
-   , ppOrder  = \(ws:lay:title:extra) -> [take 10 lay, ws] <> extra <> [title]
-   , ppSort = mkWsSort getWsCompare
+   , ppOrder  = \(ws:lay:title:extra) -> [shorten 10 lay, ws] <> extra <> [title]
+   , ppSort   = mkWsSort getWsCompare
 
    }
-  where xc = xmobarColor
 --}
 --}
 
 --{- layout
 --{- type definitions
-mshowWNameTheme :: [Char] -> [Char] -> SWNConfig
+nameDisplay :: [Char] -> [Char] -> SWNConfig
 --}
 --{- global settings
 -- theming for tabs
-mtabConfig mFG mBG =
+tabConfig the =
  def
  { fontName            = "xft:Mononoki Nerd Font:regular:pixelsize=16"
- , activeColor         = mFG
- , activeBorderColor   = mBG
- , activeTextColor     = mBG
+ , activeColor         = fg
+ , activeBorderColor   = bg
+ , activeTextColor     = bg
 
- , inactiveColor       = mBG
- , inactiveBorderColor = mBG
- , inactiveTextColor   = mFG
- }
+ , inactiveColor       = bg
+ , inactiveBorderColor = bg
+ , inactiveTextColor   = fg
+ } where
+ bg = the back
+ fg = the fore
 -- i --> inner x*, inner y*, outer x*, outer y*
-mspacing i = smartSpacingWithEdge i
-nospace    = spacing 0
-lay name count space layout =
+lay name count space = id
 -- windowArrange $
-   renamed [Replace name]
- $ (if space > 0 then mspacing space else nospace)
- $ limitWindows (if count > 0 then count else 100)
- $ hiddenWindows
- $ fullscreen
- $ layout
+ . renamed [Replace name]
+ . limitWindows (if count > 0 then count else 100)
+ . hiddenWindows
+ . (if space > 0 then smartSpacingWithEdge else spacing) space
+ --fullscreen
 --}
 --{- layoutHook
-mlayoutHook mBG mFG =
-   mods
+layout the@settings =
+  mods
    -- windowNavigation .
    -- subLayout [0] (tabs mBG mFG)
-   $   dishess mBG mFG
--- ||| tabPlus mBG mFG
+   $   dishes settings
+-- ||| tabPlus settings
    ||| accordion
    ||| spiral
-   ||| spiral'
+   ||| golden
    ||| tall1
-   ||| tabs mBG mFG
+   ||| tabs settings
    ||| tall2
  where
+  bg = the back
+  fg = the fore
   -- modifications for all
-  mods =
-     smartBorders .
-     showWName' (mshowWNameTheme mBG mFG) .
-     avoidStruts .
+  mods = id
+   . smartBorders
+   . showWName' (nameDisplay settings)
+   . fullscreen
+   . avoidStruts
    --boringAuto . boringWindows .
      -- keep floating grouped above last focused tiled
-     trackFloating .
-     mouseResize
+   . trackFloating
+   --mouseResize
 --}
 --{- selected layouts
---             lay name  # ' ' $ layout
---tabPlus mBG mFG =  lay "+tb" 0 2 $ (layoutN 3 (relBox 0 0 0.5 1) (Just $ relBox 0 0 1 1)   $ tabs mBG mFG)
---                                 $ (layoutN 3 (relBox 0.5 0 1 1) Nothing                   $ tabs mBG mFG)
---                                 $  layoutAll (relBox 0 0.4 1 1)                           $ tabs mBG mFG
-dishess mBG mFG = lay "dis" 6 0 $ magnifier $ MultiDishes 2 4 (3/7)
---dishess mBG mFG = ( layoutN 6 (relBox 0 0 1 (4/7)) (Just $ relBox 0 0 1 1) $ magnifier $ MultiDishes 2 4 (3/7))
---                  $ layoutAll (relBox 0 (4/7) 1 1)                         $ full
---dishess mBG mFG = lay "dis" 0  2 $ (layoutN 6 (relBox 0 0 1 (4/7)) (Just $ relBox 0 0 1 1) $ magnifier $ MultiDishes 2 4 (3/7))
---                                 $  layoutAll (relBox 0 (4/7) 1 1)                         $ tabs mBG mFG
-accordion =    lay "acc" 0  2 $ Accordion
-spiral =       lay "spi" 8  2 $ LS.spiral (3/5)
-spiral' =      lay "+sp" 8  2 $ magnifier $ LS.spiral (3/5)
-tall1 =        lay "tl1" 10 2 $ Tall 1 (3/100) (1/2)
-tall2 =        lay "tl2" 20 3 $ Tall 2 (3/100) (1/2)
-tabs mBG mFG = lay "tab" 50 0 $ tabbed shrinkText $ mtabConfig mFG mBG
+--              lay name  # ' ' $ layout
+--tabPlus the = lay "+tb" 0 2 $ layoutN 3 (relBox 0 0 0.5 1) (Just $ relBox 0 0 1 1) t
+--                            $ layoutN 3 (relBox 0.5 0 1 1)  Nothing                t
+--                            $ layoutAll (relBox 0 0.4 1 1)                         t
+--                            where t = color the tabs
+dishes  the = lay "dis" 6  0 $ magnifier $ MultiDishes 2 4 (3/7)
+accordion   = lay "acc" 0  2 $ Accordion
+spiral      = lay "spi" 8  2 $ LS.spiral (3/5)
+golden      = lay "gld" 8  2 $ magnifier $ LS.spiral (3/5)
+tall1       = lay "tal" 10 2 $ Tall 1 (3/100) (1/2)
+tall2       = lay "tll" 20 3 $ Tall 2 (3/100) (1/2)
+tabs    the = lay "tab" 50 0 $ tabbed shrinkText $ color the tabConfig
 --}
 --{- showWorkspaceTheme
-mshowWNameTheme mBG mFG =
+nameDisplay the =
  def
  { swn_font    = "xft:Mononoki Nerd Font:regular:pixelsize=32"
  , swn_fade    = 0.5
- , swn_bgcolor = mBG
- , swn_color   = mFG
+ , swn_bgcolor = the back
+ , swn_color   = the fore
  }
 --}
 --}
@@ -577,76 +528,78 @@ main :: IO ()
 --}
 --{- definitions
 main = do
- pipe <- spawnPipe mbar
- --{- dynamic colors
- let getColors = tryReadFile . (mhome <>)
- let stringify colors = foldr1 (\a b -> a <> "\n" <> b) colors
-
- faves' <- getColors "/.faves" <|> pure ("")
- let faves = mapps <> (map (breakOn '\t') $ grabColors '\n' '#' faves')
-
- wmbc <- getColors "/.cache/wal/wmbc-DISABLED"
-     <|> getColors "/.wmbc"
-     <|> pure (stringify bg)
- wmfc <- getColors "/.cache/wal/wmfc-DISABLED"
-     <|> getColors "/.wmfc"
-     <|> pure (stringify fg)
- let fcs = map hex6 $ grabColors '\n' ' ' wmfc
-     bcs = map hex6 $ grabColors '\n' ' ' wmbc
- fc   <- rand $ prioritize fcs
- bc   <- rand $ prioritize bcs
-
- let
-  mFG = fc
-  mBG = bc
+ pipe <- panel
+ --{- dynamic attributes
+ -- IO
+ faves <- (apps<>) <+> parseIn [] [".faves"]
+        $ map (second open . tuple . splitOn '\t') . grabLines '#'
+ -- ((Box,Int),[String])
+ (bp,bs,bgs) <- parseIn (bc',bc,backgrounds) [".cache/wal/wmbc-DISABLED", ".wmbc"]
+          $ readColors
+ (fp,fs,fgs) <- parseIn (fc',fc,foregrounds) [".cache/wal/wmfc-DISABLED", ".wmfc"]
+          $ readColors
  --}
-  mk = mkeys mworkspaces bcs fcs faves
-  keys = ("M-h", checkKeymap (ewmh def `additionalKeysP` mk) mk) : mk
-  in
-  xmonad
+ -- choose colors randomly
+ bg <- aBG bp
+ fg <- aFG fp
+ --{- settings
+ let
+  the@settings = ($ Settings
+    { faves      = faves
+    , workspaces = workspaces
+    , tints      = (bg,fg)
+    , colors     = (bs,fs)
+    , colors'    = (bgs,fgs)
+    , shades     = (bp,fp)
+    })
+ --}
+ let
+  mk = keys settings
+  allKeys = (`addKeys` overrides `addKeys` mk)
+  keyz = ("M-h", checkKeymap (allKeys $ ewmh def) mk) : mk
+  urgentOnActivate = setEwmhActivateHook activate
+  in xmonad
   --}
-  --{- hooks  {
+  --{- hooks
   -- manage docks
+  . ewmh
   . Hacks.javaHack
   -- apply urgency hook
-  . withUrgencyHook LibNotifyUrgencyHook
+  . withUrgencyHook Notify
   -- apply urgency hook w/ borders
-  $ withUrgencyHookC BorderUrgencyHook { urgencyBorderColor = mFG } urgencyConfig { suppressWhen = Never }
- -- $ dynamicProjects mprojects
-  . setEwmhActivateHook doAskUrgent
+  . withUrgencyHookC BorderUrgencyHook { urgencyBorderColor = mFG } urgencyConfig { suppressWhen = Never }
+ -- dynamicProjects mprojects
+  . urgentOnActivate
   . ewmhFullscreen
   . docks
-  . ewmh
   $ def
-   { manageHook      = mmanageHook
-   , handleEventHook = mhandleEventHook
-   , logHook         = mlogHook pipe    bcs fcs
-   , startupHook     = mstartupHook     bcs fcs mBG mFG
-   , layoutHook      = mlayoutHook      mBG mFG
+   { manageHook      = manage
+   , handleEventHook = events
+   , logHook         = log the pipe
+   , startupHook     = startup settings
+   , layoutHook      = layout  settings
    --}
+  --}
    --{- settings
-   , workspaces         = mworkspaces
+   , workspaces         = V.workspaces
    , focusFollowsMouse  = False
    , clickJustFocuses   = True
-   , modMask     = super
-   , terminal    = mterminal
+   , modMask            = super
+   , terminal           = V.terminal
    --}
    --{- colors
-   , borderWidth        = borderW
-   , normalBorderColor  = mBG
-   , focusedBorderColor = mFG
+   , borderWidth        = V.border
+   , normalBorderColor  = the back
+   , focusedBorderColor = the fore
    --}
    } --}
    --{- apply keys
-   -- remove defaults listed in overrides
-   `removeKeysP` (map fst moverrides)
-   -- add overrides
-   `additionalKeysP` moverrides
-   -- remove conflicts with your config
-   `removeKeysP` (map fst moverrides)
-   -- apply your config
-   `additionalKeysP` keys
+   `addKeys` overrides
+   `addKeys` keyz
   --}
+
+-- remove conflicts before adding
+addKeys k = `removeKeysP` (map fst k) `additionalKeysP` k
 
 {- TODOs
 IfMax instead of layoutBuilder

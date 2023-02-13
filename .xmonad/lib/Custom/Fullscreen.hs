@@ -1,8 +1,6 @@
 {-# OPTIONS_GHC -Wno-missing-signatures -Wno-orphans #-}
-{-# LANGUAGE FlexibleContexts #-} -- for L.Hidden
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE BlockArguments #-}
-{-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE FlexibleContexts, LambdaCase, BlockArguments, TypeApplications #-}
+
 
 module Custom.Fullscreen
  ( logHook, start, refresh
@@ -26,8 +24,7 @@ logHook :: X ()
 logHook = do
  State (p, b) <- XS.get -- prev ws, and FS state
  Conf  (tg,t) <- XS.get -- tag and theme
- withWorkspace \i -> withF \ws ->
-  case ws of
+ withWorkspace \i -> withF \case
   -- if a window is present on the workspace
   Just w ->
    hasTag tg w >>= \isTagged ->
@@ -45,10 +42,11 @@ logHook = do
   otherwise -> XS.put ( State (i, False) )
  where
   withF f = withWindowSet \w -> f $ W.peek w
-  relax = broadcastMessage $ SetStruts [] [minBound .. maxBound]
-  strut = broadcastMessage $ SetStruts    [minBound .. maxBound] []
+--relax = broadcastMessage $ SetStruts [] [minBound .. maxBound]
+--strut = broadcastMessage $ SetStruts    [minBound .. maxBound] []
+  relax@strut = pure ()
   space bool = foldr1 (<+>)
-   $ flip map [setScreenSpacingEnabled, setWindowSpacingEnabled] \x -> x bool
+   $ for [setScreenSpacingEnabled, setWindowSpacingEnabled] \x -> x bool
   invisible t = t{decoHeight=0,decoWidth=0}
   setTheme t = broadcastMessage $ SetTheme t
   withWorkspace f = withWindowSet $ \w -> f $ show $ W.currentTag w
@@ -108,3 +106,9 @@ borderState bool w = do
         if bool
             then setWindowBorderWidth d w bw
             else setWindowBorderWidth d w 0
+
+
+
+-- utility
+for :: [a] -> (a -> b) -> [b]
+for = flip map
