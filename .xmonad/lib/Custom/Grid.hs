@@ -1,11 +1,13 @@
-{-# LANGUAGE BlockArguments #-}
+{-# LANGUAGE BlockArguments, RecordWildCards #-}
 module Custom.Grid where
 --{- imports
 --{- globals
 import Custom.Vars
+import qualified Custom.Prompts as Prompt
+import Custom.Prompts (prompts)
 --}
 --{- standard
-import XMonad
+import XMonad hiding (config)
 import System.Random (randomRIO, randomR)
 --}
 --{- actions
@@ -22,8 +24,8 @@ import Data.String
 --{- gridselect config
 height = 50
 width  = height * 2
-config :: Colors -> GSConfig a
-config colors =
+--nfig :: Colors -> GSConfig a
+config (Z{..}) =
  (buildDefaultGSConfig $ colorizer colors)
   { gs_cellheight   = height
   , gs_cellwidth    = width
@@ -34,7 +36,7 @@ config colors =
   }
 --}
 --{- grid mappings
-grids colors =
+grids (Z{..}) =
 {-
 -- [ ("W | bring"  , bringSelected config) -- bring selected window
 -- , ("W | goto"   , goToSelected  config) -- goto selected window
@@ -47,34 +49,35 @@ grids colors =
  [ ("W | bring"  , item $ bringSelected cfg) -- bring selected window
  , ("W | goto"   , item $ goToSelected  cfg) -- goto selected window
  , ("W | Conf"   , item $ windowMenu       ) -- window management menu
- , ("X | Conf"   , submenu spawn configs   ) -- my configs
+ , ("X | Conf"   , submenu id    configs   ) -- my configs
  , ("X | Apps"   , submenu ($"") apps      ) -- my apps
  , ("X | Prompts", submenu ($pc) prompts   ) -- my prompts
  ] where
-   pc = Prompt.config
-   submenu = sub colors
-   cfg = config color
+   pc = Prompt.config settings
+   submenu = sub settings
+   cfg = config settings
 --{- utility functions
 
 -- generic menu
-menu colors back action items = gridselect (config colors) items >>= maybe back action
+menu settings back action items = gridselect (config settings) items >>= maybe back action
 -- nestable submenus
-nest colors items = menu colors (return False)
-  (>>= \x -> if x then return True else nest colors items) items
+nest settings items = menu settings (return False)
+  (>>= \x -> if x then return True else nest settings items) items
 -- False -> non- / selected <- True
-sub colors = menu colors (return False) . (>> return True)
+sub settings = menu settings (return False) . ((>> return True) .)
 -- allows mixing submenus & single items
 item = (>> return True)
 -- used to make any nested menus usable outside
+bare :: X a -> X ()
 bare = (>> return ())
 
-custom :: Colors -> (a -> X ()) -> [(String, a)] -> X ()
+--stom :: Colors -> (a -> X ()) -> [(String, a)] -> X ()
 custom = flip menu $ pure ()
 
 colorizer :: Colors -> a -> Bool -> X (String, String)
 colorizer colors _ active = do
- fg <- aFG colors
- bg <- aBG colors
+ fg <- liftIO $ aFG colors
+ bg <- liftIO $ aBG colors
  return if active
   then (fg, bg)
   else (bg, fg)

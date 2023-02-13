@@ -1,4 +1,9 @@
+{-# LANGUAGE BlockArguments, TupleSections #-}
 module Utility.Map where
+import Data.Bifunctor
+import Data.Monoid (Ap(..))
+import XMonad ((<+>))
+subfix :: Semigroup a => a -> [(a, b)] -> [(a, b)]
 subfix = map . prefix
 prefix mod (k,a) = (mod<>k,a)
 -- main modifier/combo
@@ -31,11 +36,12 @@ multi mods binds = [ (m<>k,a) | (k,a) <- binds, m <- mods ]
 greedy = multi $ factor [ma,mc,ms]
 
 -- many keybinds -> one action
-dupe list action = (,action) <+> list
+dupe list action = map (,action) list
 -- map dupe
 bound = concat . map (uncurry dupe)
 -- adds a suffix to elements being used in `bound`
-boundSuffix suffix = map \l, a -> (map (<>suffix) l,a)
+--undSuffix suffix = first $ map (<>suffix)
+boundSuffix suffix = first \l -> [i<>s | i <- l, s <- suffix]
 
 -- [binds] <--> [actions], maps them 1-1
-bind mod = zipWith \k a -> (mod<>k,a)
+bind mod x y = concat $ zipWith (\k a -> dupe (map (mod<>) k) a) x y

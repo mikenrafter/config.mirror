@@ -34,8 +34,8 @@ logHook = do
      XS.put ( State (i, isTagged) ) >>
      -- apply updates
      case isTagged of
-      True  -> borderState False w <+> setTheme (invisible t) <+> relax <+> space False
-      False -> borderState True  w <+> setTheme t             <+> strut <+> space True
+      True  -> borderState False w <+> setTheme (invisible t) <+> space False
+      False -> borderState True  w <+> setTheme t             <+> space True
     -- otherwise do nothing
     else pure ()
   -- if no window
@@ -44,7 +44,7 @@ logHook = do
   withF f = withWindowSet \w -> f $ W.peek w
 --relax = broadcastMessage $ SetStruts [] [minBound .. maxBound]
 --strut = broadcastMessage $ SetStruts    [minBound .. maxBound] []
-  relax@strut = pure ()
+--relax@strut = pure ()
   space bool = foldr1 (<+>)
    $ for [setScreenSpacingEnabled, setWindowSpacingEnabled] \x -> x bool
   invisible t = t{decoHeight=0,decoWidth=0}

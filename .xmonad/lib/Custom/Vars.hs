@@ -1,9 +1,9 @@
-{-# LANGUAGE LambdaCase, BlockArguments, TupleSections #-}
+{-# LANGUAGE LambdaCase, BlockArguments, TupleSections, RecordWildCards #-}
 module Custom.Vars where
 --{- imports
 --{- standards
 --port qualified XMonad.Core
-import XMonad hiding (terminal)
+import XMonad hiding (terminal, Color(..))
 import XMonad.Prelude hiding (for)
 import qualified XMonad.StackSet as W
 import System.IO.Unsafe (unsafePerformIO)
@@ -12,7 +12,7 @@ import System.Random (randomRIO)
 --}
 --{- data
 import Data.List
-import Data.List.Split (wordsBy)
+import Data.List.Split (wordsBy, splitOn)
 import Data.Char
 import Data.Traversable hiding (for)
 import qualified Data.Map as M
@@ -38,21 +38,21 @@ alt   = mod1Mask :: KeyMask
 
 -- keys for switching windows
 -- left, right
-mwinKeys =
+windowKeys =
  -- down
- [ ["a","n"]
+ [ ["s","n"]
  -- up
- , ["r","e"]]
+ , ["t","e"]]
 -- keys for switching workspaces
 -- left, right
-mwsKeys =
+workspaceKeys =
  -- down
  [ ["<L>","<KP_Page_Up>",    "<Page_Up>"]
  -- up
  , ["<R>","<KP_Page_Down>","<Page_Down>"]]
 -- keys for managing fullscreen
 -- fullscreen, windowed
-mfsKeys =
+fullscreenKeys =
  -- down
  [ ["<U>"]
  -- up
@@ -68,11 +68,14 @@ start = spawn :: String -> X ()
 with' = (<>)
 with  = with' . (<>" ")
 plus s f = f<>" "<>s
-simply = flip . const
+simply f _ _ = f
 --{- settings
-font    = "xft:Mononoki Nerd Font:bold:size=10"
+mononoki t s = "xft:Mononoki Nerd Font:"<>t<>":size="<>show s
+font    = mononoki "bold"    10
+font'   = mononoki "regular" 16
 name    = "V0ID|BRING3R"
 home    = unsafePerformIO $ getEnv "HOME"
+maxStep, minStep, timeout :: Int
 maxStep = 5
 minStep = 2
 timeout = 5 -- in minutes
@@ -89,9 +92,9 @@ view''  = files
 prompt''= with term shell
 edit''  = with term editor
 
--- versions that accept names
-browse' = simply browse
-view'   = simply view
+-- string versions that accept names
+browse' = const browser
+view'   = const files
 prompt' = scratch shell
 edit'   = scratch editor
 
@@ -114,8 +117,8 @@ shellc    = terminal
 editorc   = terminal
 --}
 --{- util
-panel :: X Handle
-panel  = spawnPipe "bar"
+panel :: IO Handle
+panel  = spawnPipe $ "bar "<>home<>" "<>home<>"/.xmonad/xmobar.conf"
 notifs = start  "notif-center"
 tray   = open "stalonetray" . joins " " . args where
  --{- tray args
@@ -158,7 +161,8 @@ toggleV  = open  vol "toggle"
 brighter = tweak bri "+"
 dimmer   = tweak bri "-"
 
-lock     = start "slock"
+lock     = start locker
+locker   = "slock"
 
 -- screenshot
 full     = open  "maim |" $ clip <> img
@@ -173,10 +177,10 @@ img = " -t image/png"
 --}
 --{- configs
 configs = map (second edit)
-  [ ("Bashrc", "~/.bashrc")
-  , ("Xmonad", "~/.xmonad/xmonad.hs")
-  , ("Xmobar", "~/.xmonad/xmobar.conf")
-  , ("Fishrc", "~/.config/fish/config.fish")
+  [ ("Bashrc", home<>"/.bashrc")
+  , ("Xmonad", home<>"/.xmonad/xmonad.hs")
+  , ("Xmobar", home<>"/.xmonad/xmobar.conf")
+  , ("Fishrc", home<>"/.config/fish/config.fish")
   ]
 --}
 --{- apps
@@ -219,7 +223,7 @@ msession =
 script = open . with "dash"
 -- run on every restart as well
 mrestart =
- [ script "~/.wmrc"
+ [ script (home<>"/.wmrc") ""
 -- , "udiskie --appindicator"
  --, "parcellite"
  ]
@@ -243,37 +247,22 @@ aren't,are          :: [Window] -> WindowBoxes -> Bool
 --}
 --{- colors
 
-type Box    = Int -> String
-type FG     = (Box,Int)
-type BG     = (Box,Int)
-type Colors = (FG, BG) -- see aFG & aBG for specific format
-
--- the@settings are declared in main::IO()
--- the :: (  Settings -> a) -> a
--- the =  ($ Settings ... )
-
+-- random fg/bg
 -- usage: aXG shades/colors
-aBG  = uncurry fmap . second rand . fst -- ((fg,fl),_) -> Random
-aFG  = uncurry fmap . second rand . snd -- (_,(bg,bl)) -> Random
--- usage: the back/fore
-back = fst . tints
-fore = snd . tints
--- usage: the bg/fg 0/1/2/..
-bg   = fst . fst . colors
-fg   = fst . snd . colors
-bg'  = fst . fst . shades
-fg'  = fst . snd . shades
--- usage: the (colored decoratedLayout)
-colored f = uncurry f . tints
--- usage: color the decoratedLayout
-color the = the . colored
+aXG  = uncurry fmap . second rand
+aBG  = aXG . fst
+aFG  = aXG . snd
+
+-- usage: color the tabs == tabs back fore
+colored :: (String, String) -> (String -> String -> a) -> a
+colored = flip uncurry
 
 
-readColors x = (prioritize colors,ofList colors,colors) where colors = map hex6 $ grabs ' ' '-' x
+readColors = map hex6 . grabs ' ' '-'
 ofList ls = (,len) $ (ls!!) . (mod len) where len = length ls
 
 prioritize = prioritize' gravity
-prioritize' :: (Int,Int) -> [String] -> (Box,Int)
+prioritize' :: (Int,Int) -> [String] -> Color
 prioritize' (s,w) l = (,total) $ (l!!) . locate . (mod total) where
   -- group them into  ↑↑↑↑↑↑↑↑ standard color format
   total = head factors
@@ -306,7 +295,7 @@ lFilter :: [(String,X ())] -> String -> [X ()]
 lFilter pairs str = [ b | (a,b) <- pairs, a == str]
 
 -- blends [(monoid functor arguments,),] into multiple monoids
-blend f = foldr1 fmap . map (uncurry f)
+blend f l = foldr1 (<+>) $ map (uncurry f) l
 
 
 breakOn :: Char -> String -> (String, String)
@@ -334,8 +323,8 @@ prune :: (Char -> Bool) -> String -> String
 prune p = takeWhile p . dropWhile (not . p)
 trim = prune $ child " \t"
 
-tuple (a:b:[]) = (a,b)
-tuple [      ] = error "invalid tupling"
+tuple (a:b:_) = (a,b)
+tuple [     ] = error "invalid tupling"
 {-wordsWhen pred fn str =
  case dropWhile pred str of
   "" -> []
@@ -357,19 +346,14 @@ windowCount = gets $ Just . show . length . W.integrate' . W.stack . W.workspace
 groupBy fn = shiftToSame $ fmap Just fn
 --}
 --{- IO
-tryReadFile :: FilePath -> IO (Maybe String)
-tryReadFile f = do
- guard =<< doesFileExist f
- (return . Just) =<< readFile f
+getFile n = readFile $ with' (home<>"/") n
 
-getFile = tryReadFile . with' "~/"
-
-parseIn :: String -> [String] -> IO (IO String -> IO String)
-parseIn backup files =
- foldl1 (<|>) (for files getFile) <|> pure Nothing
+--parseIn :: a -> [String] -> IO (IO a -> IO a)
+parseIn backup files parse =
+ foldl1 (<|>) (for files getFile) <|> pure ""
  >>= return . \case
-  Just x  -> (<+> return x)
-  Nothing -> const $ return backup
+  "" -> backup
+  x  -> parse x
 --}
 
 --{- if item in stack, filter amongst stacks
@@ -419,24 +403,35 @@ findProcess = with "pgrep -i -d ' '" . takeWhile (`elem` valid)
 unspawn = open "kill" . wraps "`" . findProcess
 --}
 --}
-
-data Settings = Settings
+--{- settings
+type Colors = (Color,Color)
+type Color  = (Box, Int)
+type Box    = Int -> String
+type Settings = Z
+data Z = Z
   { faves      :: [(String,X ())]
   , workspaces :: [String]
   -- primary bg/fg
   , tints      :: (String,String)
+  , back       :: String -- ^
+  , fore       :: String -- ^
   , colors     :: Colors
+  , bg         :: Box
+  , fg         :: Box
   , colors'    :: ([String],[String])
+  , bgs        :: [String]
+  , fgs        :: [String]
   -- prioritized colors:
   , shades     :: Colors
+  , bg'        :: Box
+  , fg'        :: Box
+  , settings   :: Z
   }
+--}
 
--- deprecated by tuple output
---ioCount l = (length l + fst gravity + 1) / snd gravity
---ndOf l = prioritize l <+> rand (prioCount l)
 
-rand :: Int -> X Int
-rand = liftIO . randomRIO . (0,)
+rand :: Int -> IO Int
+rand = randomRIO . (0,)
 child = flip elem
 
 {- references

@@ -1,10 +1,10 @@
 {- language CPP -}
-{-# LANGUAGE LambdaCase, BlockArguments, TupleSections, ParallelListComp #-}
+{-# LANGUAGE LambdaCase, BlockArguments, TupleSections, ParallelListComp, RecordWildCards #-}
 module Custom.Keys where
 --{- imports
 --{- globals
 import Custom.Grid
-import Custom.Prompts
+import Custom.Prompts as Prompt
 import Custom.Scratch
 import Custom.Vars
 import Custom.Misc
@@ -12,7 +12,8 @@ import qualified Custom.Fullscreen as FS
 import Utility.Map
 --}
 --{- standards
-import XMonad
+import XMonad hiding (workspaces)
+import qualified XMonad as XM
 import System.Exit (exitSuccess)
 import qualified XMonad.Util.PureX as P
 import qualified XMonad.Util.Stack as U
@@ -53,7 +54,7 @@ import XMonad.Layout.Hidden
 --}
 --{- prompt
 import XMonad.Prompt
-import XMonad.Prompt.Shell
+import XMonad.Prompt.Shell hiding (prompt)
 import XMonad.Prompt.RunOrRaise
 --}
 --{- utils
@@ -96,19 +97,21 @@ overrides =
  , (",",          off)
  , (".",          off)
  ]
- <> dupe  o'n  off
- <> dope  o'n  off
- <> dupe "wer" off
- <> dope "wer" off
+ <> dupe (list  o'n ) off
+ <> dope (list  o'n ) off
+ <> dupe (list "wer") off
+ <> dope (list "wer") off
  where
-  dope = dupe . subfix ss
+  dupe list msg = map (,msg) list
+  list = map \x -> [x]
+  dope = dupe . map (ms<>)
   o'n = ['1'..'9']
   off = "disabled"
   def = "???"
 --}
 --{- my keys
-keys :: Settings set => ((Settings -> set) -> set) -> [(String, X ())]
-keys the@settings =
+keys :: Settings -> [(String, X ())]
+keys (Z{..}) =
  -- logHook.updatePointer causes unwanted triggers --> keepUp :: manual
  concat [[]
 --{- multimedia
@@ -155,9 +158,9 @@ keys the@settings =
  , ("C-q", io exitSuccess)
  , ("S-q", io exitSuccess)
  , ("l"  , lock)
- -- couldn't figure out how TF to pipe mBG in here, so...
  -- TODO: make cleaner
- , ("0"  , mapM_ (\x -> unspawn x <+> spawn ("sleep 1;" <> x)) $ mtray (the bg 1) : mrestart)  -- relaunch startup things
+ --("0"  , mapM_ (\x -> unspawn x <+> spawn ("sleep 1;" <> x)) $ tray (bg 0) : mrestart)  -- relaunch startup things
+ , ("0"  , mapM_ id $ (tray (bg 0)) : mrestart)
 --}
 --{- general
  , ("<Return>"     , prompt "")
@@ -180,9 +183,9 @@ keys the@settings =
 --{- layouts
  , ("S-<Tab>", sendMessage FirstLayout)
  , ("<Tab>"  , sendMessage NextLayout)
- , ("S-<D>"  , FS.withTag  \tg -> withTaggedGlobal tg FS.off <+> sinkAll)       -- sink all windows
- , ("<D>"    , withFocused \w  -> FS.off w >> windows $ W.sink w)               -- sink current window
- , ("<U>"    , withFocused  FS.toggle)                                          -- fullscreen current window
+ , ("S-<D>"  , FS.withTag  \tg -> withTaggedGlobal tg FS.off <+> sinkAll) -- sink all windows
+ , ("<D>"    , withFocused \w  -> FS.off w >> windows (W.sink w))         -- sink current window
+ , ("<U>"    , withFocused  FS.toggle)                                    -- fullscreen current window
 --}
 --{- workspaces
 --  NOTE - dynamic keys, dynamically added based on values in Vars.hs
@@ -208,32 +211,32 @@ keys the@settings =
  , ("f <L>", windows $ \w -> W.float w $ W.RationalRect 0.1 0.1 0.5 1.0)
 --}
  --{- gridselects
- , ("i"      , bare $ nest (the shades) $ color the grids)
- , ("o"      , bare $ nest (the shades) $ the faves)
+ , ("i"      , bare $ nest settings $ grids settings)
+ , ("o"      , bare $ nest settings $ map (second item) faves)
  --}
  ] --}
 --{- dynamic keybinds
  --{- scratchpads
- , hold mm "p" [(k, allNamedScratchpadAction scratches k )    |  k    <- scratchKeys   ]  -- scratchpads
+ , hold mm "p" [(k, allNamedScratchpadAction scratchpads k )    |  k    <- scratchKeys   ]  -- scratchpads
  --}
  --{- prompts
- , hold mm "s" $ map (second ($ Prompt.config)) engineMap -- search prompts
- , subfix mm   $ map (second ($ Prompt.config)) promptMap -- other prompts
+ , hold mm "s" $ map (second ($ Prompt.config settings)) engineMap -- search prompts
+ , subfix mm   $ map (second ($ Prompt.config settings)) promptMap -- other prompts
  --}
  --{- navigation
  --{- window movement
- , bind ""     winKeys [fUp,fDown]
- , bind ms     winKeys [windows W.swapUp, windows W.swapDown]
+ , bind ""     windowKeys [fUp,fDown]
+ , bind ms     windowKeys [windows W.swapUp, windows W.swapDown]
  ,[("r", selectWindow (emConfig settings) >>= (`whenJust` windows . W.focusWindow))]
  --}
  --{- workspace movement
- , bound $ boundSuffix (workspaceKeys!!0)
+ , bound $ map (boundSuffix (workspaceKeys!!0))
   [ (["M1-C-","C-S-"], aPrev  )                                   -- shift all prev
   , ([ma,ms], safeShift Prev  )                                   -- shift prev
   , ([mc],              prevWS)                                   -- prev
   , ([""],    safeMove  Prev  )                                   -- prev active
   ]
- , bound $ boundSuffix (workspaceKeys!!1)
+ , bound $ map (boundSuffix (workspaceKeys!!1))
   [ (["M1-C-","C-S-"], aNext  )                                   -- shift all Next
   , ([ma,ms], safeShift Next  )                                   -- shift Next
   , ([mc],              nextWS)                                   -- Next
@@ -241,7 +244,7 @@ keys the@settings =
   ]
 
  , [ ( concat [m, show k], windows $ f i )
-  | (i, k) <- zip (XMonad.workspaces $ def {workspaces=the workspaces}) [1..9]
+  | (i, k) <- zip (XM.workspaces $ def {XM.workspaces=workspaces}) [1..9]
   , (f, m) <- [(W.view, ""), (W.shift, "S-")]
   ]
 
@@ -259,7 +262,7 @@ keys the@settings =
  --}
  --}
  --{- floatKeys
- , hold mm "f" [(k, withFocused $ windows . \w -> W.float w r)  | (k,r) <- mfloatMolds ]
+ , hold mm "f" $ bound $ [(k, withFocused $ windows . \w -> W.float w r)  | (k,r) <- moldMap]
  --}
  --}
  ]
@@ -334,27 +337,22 @@ ifFloat', ifTile'   :: XXX
 ifFloat , ifTile    :: (WindowSet -> WindowSet) -> X ()
 nNSP, usednNSP      :: WSType
 safeShift', safeShift, safeMove :: Direction1D -> X ()
-modifs :: [String] -> [String]   -> [[String]]
-mapKs  :: String   -> [[String]] -> [X ()] -> [(String, X ())]
-twoK   :: String   -> String     -> [(String, X ())] -> [(String, X ())]
 --}
-predicateSet p fn bk = withWindowSet \ws -> if p ws then fn else bk
-ifWset a s       = predicateSet (isInfixOf s . a)
 --{- if workspace.name
-ifWS' s fn bk  = ifWset W.currentTag
-ifWS  s        = flip ifWS' s (pure ()) . windows
+ifWS' s fn bk  = withWindowSet $ \ws -> if s `isInfixOf` (W.currentTag) ws then fn else bk
+ifWS  s fn     = ifWS' s (windows fn) $ pure ()
 --}
 --{- if layout.name
-ifLay' s fn bk = ifWset $ description . W.layout . W.workspace . W.current
-ifLay  s       = flip ifLay' s (pure ()) . windows
+ifLay' s fn bk = withWindowSet $ \ws -> if s `isInfixOf` (description . W.layout . W.workspace . W.current) ws then fn else bk
+ifLay  s fn    = ifLay' s (windows fn) $ pure ()
 --}
 --{- if floating
 ifFloat' fn bk = withWindowSet $ \ws -> case W.peek ws of Just w | M.member w $ W.floating ws -> fn; _ -> bk
-ifFloat  s     = flip ifFloat' s (pure ()) . windows
+ifFloat  fn    = ifFloat' (windows fn) $ pure ()
 --}
 --{- if tiled
 ifTile'   = flip ifFloat'
-ifTile s  = flip ifTile' s (pure ()) . windows
+ifTile fn = ifTile' (windows fn) $ pure ()
 --}
 --{- WS movement
 nNSP     = WSIs $ return \x -> W.tag x /= "NSP"

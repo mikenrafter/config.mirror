@@ -1,7 +1,9 @@
+{-# LANGUAGE BlockArguments #-}
 module Custom.Scratch where
 --{- imports
 --{- globals
 import Custom.Vars
+import Utility.Misc
 --}
 --{- standards
 import XMonad
@@ -19,12 +21,12 @@ scratchKeys =
 scratchPairs =
  [ (1, scratch shell    , eqScratch) -- t erminal
  , (1, edit'            , eqScratch) -- n otes / editor
- , (1, c "vlc"          , matchApp)  -- m edia viewer
- , (1, view'            , cmdClass)  -- f ile viewer
- , (1, c "bitwarden"    , cmdClass)  -- p assword manager
- , (0, c "qalculate-gtk", cmdClass)  -- c alculator
- , (0, c "pavucontrol"  , cmdClass)  -- v olume management
- , (0, c "easyeffects"  , title      =? "EasyEffects")
+ , (1, c "vlc"          , matchApp ) -- m edia viewer
+ , (1, view'            , cmdClass ) -- f ile viewer
+ , (1, c "bitwarden"    , cmdClass ) -- p assword manager
+ , (0, c "qalculate-gtk", cmdClass ) -- c alculator
+ , (0, c "pavucontrol"  , cmdClass ) -- v olume management
+ , (0, c "easyeffects"  , c $ title  =? "EasyEffects")
  , (1, scratch "btm"    , eqScratch) -- s ystem monitor
  ]
  where
@@ -40,17 +42,18 @@ scratchPairs =
 
 scratchpads =
   flip2 zipWith scratchKeys scratchPairs
-  \key (mold,cmd,query) ->
-    let titled = "S:"<>caps key in
-    NS (cmd titled) (query (titled, cmd)) (meld mold)
+  \key (mold,cmd,query) -> let
+    titled = "S:"<>caps key
+    exec = cmd titled
+    in NS key exec (query (titled, exec)) (meld mold)
 
-meld n = (defaultFloating : map customFloating molds)!!n
+meld = (!!) $ defaultFloating : map customFloating molds
 
 --}
 --{- floating boxes
-mfloatMolds =
+moldMap = zip keys molds where
  -- keys designed to work with both qwerty and colemak
- let keys = ["f"] : mwinKeys <>
+ keys = ["f"] : windowKeys <>
   ([ ["S-f"]
  {- old ver semi-qwerty compatible
  [",","."],["/"], ["l","i"],[";", "o", "'"]]
@@ -61,7 +64,6 @@ mfloatMolds =
   ,  ["i"],["S-i"]
   ,  ["o"],["S-o"]
   ])
-  in zip keys molds
 
 molds =
  [ tl xPad yPad 1    1 -- full  mold
@@ -80,9 +82,9 @@ molds =
  where
  b = W.RationalRect
  r (x,y,w,h) = W.RationalRect x y w h
- yPad = 0.05
- xPad = 0.033
- half l = join $ (-) . min l . (1-)
+ yPad  = 0.05
+ xPad  = 0.033
+ half  = min . (1-) . (2*)
  clamp = max 0.01
  bound = max . (1-)
  big   anchor = anchor xPad yPad 0.5  0.5

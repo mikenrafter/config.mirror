@@ -1,12 +1,13 @@
-{-# LANGUAGE BlockArguments, TupleSections #-}
+{-# LANGUAGE BlockArguments, TupleSections, RecordWildCards #-}
 module Custom.Prompts where
 --{- imports
 --{- globals
-import Custom.Vars
+import qualified Custom.Vars as V
+import Custom.Vars hiding (font)
 import Utility.Map
 --}
 --{- standards
-import XMonad
+import XMonad hiding (config)
 import qualified Data.Map as M
 import qualified XMonad.Actions.Search as S
 import qualified XMonad.StackSet as W
@@ -30,14 +31,14 @@ import XMonad.Prompt.Shell
 --}
 --}
 --{- config
-config' = config { autoComplete = Nothing }
-config  = def
-  { font                = mfont
-  , bgColor             = bgs !! 0
-  , fgColor             = fgs !! 0
-  , bgHLight            = bgs !! 0
-  , fgHLight            = fgs !! 1
-  , borderColor         = bgs !! 2
+config' (Z{..}) = (config settings) { autoComplete = Nothing }
+config  (Z{..}) = def
+  { font                = V.font
+  , bgColor             = bg 0
+  , fgColor             = fg 0
+  , bgHLight            = bg 0
+  , fgHLight            = fg 1
+  , borderColor         = bg 2
   , promptBorderWidth   = 2
   , promptKeymap        = promptKeys -- vimLikeXPKeymap
   , position            = Bottom -- CenteredAt { xpCenterY = 0.025, xpWidth = 1 } -- Top
@@ -58,8 +59,7 @@ config  = def
 --TODO: EZConfig
 promptKeys =
  M.fromList $
---ap (first (controlMask .))   -- control + <key>
- map (first $ (,) controlMask)   -- control + <key>
+ map (first (controlMask,))   -- control + <key>
  [ (xK_v        ,  pasteString)
  , (xK_Right    ,  moveWord Next)
  , (xK_Left     ,  moveWord Prev)
@@ -67,7 +67,7 @@ promptKeys =
  , (xK_Delete   ,  killWord Next)
  ]
  <>
- map (first $ (,) 0) -- <key>
+ map (first (0,)) -- <key>
  [ (xK_Return   , setSuccess True >> setDone True)
  , (xK_KP_Enter , setSuccess True >> setDone True)
  , (xK_BackSpace, deleteString Prev)
@@ -98,12 +98,12 @@ misc@misc' =
  ]
 --}
 --{- search engines
-engineMap = bound $ pair engines'
+engineMap = bound $ pair engines
  [ ["<Space>", "1"]
  , ["y"      , "2"]
  , ["a"      , "3"]
  , ["h"      , "4"]
- , ["n"      , "5"]
+ , ["w"      , "5"]
  , ["u"      , "6"]
  ]
 engines' =
@@ -114,7 +114,7 @@ engines' =
  , ("news"  , "ddg.gg/?ia=news&iar=news&q="         )
  , ("slang" , "urbandictionary.com/define.php?term=")
  ]
-engines = for engines' \(t,u) -> (t, S.promptSearch $ S.searchEngine t u)
+engines = for engines' \(t,u) -> (t, flip S.promptSearch $ S.searchEngine t u)
 --}
 
 promptMap = concat [engineMap,miscMap]
