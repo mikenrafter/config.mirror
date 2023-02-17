@@ -9,4 +9,5 @@
 *.log
 .nix/results
 .xmonad/prompt_history
+.xmonad/prompt-history
 .xmonad/xmonad-x86_64-linux

@@ -20,6 +20,7 @@ import Data.Bool
 import Data.String
 --port Data.Random.List (randomElement)
 --}
+import Debug.Trace
 --}
 --{- gridselect config
 height = 50
@@ -50,7 +51,7 @@ grids (Z{..}) =
  , ("W | goto"   , item $ goToSelected  cfg) -- goto selected window
  , ("W | Conf"   , item $ windowMenu       ) -- window management menu
  , ("X | Conf"   , submenu id    configs   ) -- my configs
- , ("X | Apps"   , submenu ($"") apps      ) -- my apps
+ , ("X | Apps"   , submenu id    faves     ) -- my apps
  , ("X | Prompts", submenu ($pc) prompts   ) -- my prompts
  ] where
    pc = Prompt.config settings
@@ -59,7 +60,7 @@ grids (Z{..}) =
 --{- utility functions
 
 -- generic menu
-menu settings back action items = gridselect (config settings) items >>= maybe back action
+menu settings back action items = gridselect (config settings) items >>= \x -> traceShow "MENU" $ maybe back action x
 -- nestable submenus
 nest settings items = menu settings (return False)
   (>>= \x -> if x then return True else nest settings items) items
@@ -78,6 +79,8 @@ colorizer :: Colors -> a -> Bool -> X (String, String)
 colorizer colors _ active = do
  fg <- liftIO $ aFG colors
  bg <- liftIO $ aBG colors
+-- fg <- return "#8fc"
+-- bg <- return "#333"
  return if active
   then (fg, bg)
   else (bg, fg)

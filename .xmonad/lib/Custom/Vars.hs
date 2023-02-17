@@ -8,7 +8,7 @@ import XMonad.Prelude hiding (for)
 import qualified XMonad.StackSet as W
 import System.IO.Unsafe (unsafePerformIO)
 import System.Environment (getEnv)
-import System.Random (randomRIO)
+import System.Random.Stateful (uniformRM, globalStdGen)
 --}
 --{- data
 import Data.List
@@ -213,6 +213,10 @@ bc = ofList backgrounds
 
 fc' = prioritize foregrounds
 bc' = prioritize backgrounds
+
+bfc = ofList foregrounds
+bbc = ofList backgrounds
+bkc = (bbc,bfc)
 --}
 --{- session startup
 -- run once
@@ -249,7 +253,9 @@ aren't,are          :: [Window] -> WindowBoxes -> Bool
 
 -- random fg/bg
 -- usage: aXG shades/colors
+aXG :: Color -> IO String
 aXG  = uncurry fmap . second rand
+aBG, aFG :: Colors -> IO String
 aBG  = aXG . fst
 aFG  = aXG . snd
 
@@ -259,11 +265,14 @@ colored = flip uncurry
 
 
 readColors = map hex6 . grabs ' ' '-'
-ofList ls = (,len) $ (ls!!) . (mod len) where len = length ls
+ofList ls = (,len) $ (ls!!) . (`mod` len) where len = length ls
 
 prioritize = prioritize' gravity
 prioritize' :: (Int,Int) -> [String] -> Color
-prioritize' (s,w) l = (,total) $ (l!!) . locate . (mod total) where
+prioritize' (0,_) _ = error "zero gravity"
+prioritize' (_,0) _ = error "zero gravity"
+prioritize' _ [] = error "empty color list"
+prioritize' (s,w) l@(_:_) = (,total) $ (l!!) . locate . (`mod` total) where
   -- group them into  ↑↑↑↑↑↑↑↑ standard color format
   total = head factors
   -- get the index for a given choice
@@ -282,7 +291,7 @@ prioritize' (s,w) l = (,total) $ (l!!) . locate . (mod total) where
 
 -- when seq < 4 chars, double e.g #123 -> #112233
 hex6 :: String -> String
-hex6 (c:cs) = take 6 $ '#' : duplicate cs where
+hex6 (c:cs) = take 7 $ '#' : duplicate cs where
  len = if 4 > length cs then 1 else 2
  duplicate (x:xs) = replicate len x <> duplicate xs
  duplicate [    ] = []
@@ -431,7 +440,7 @@ data Z = Z
 
 
 rand :: Int -> IO Int
-rand = randomRIO . (0,)
+rand = flip uniformRM globalStdGen . (0,)
 child = flip elem
 
 {- references

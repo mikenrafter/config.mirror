@@ -189,7 +189,7 @@ keys (Z{..}) =
 --}
 --{- workspaces
 --  NOTE - dynamic keys, dynamically added based on values in Vars.hs
- , ("<Space>", toggleWS' ["NSP"])
+ , ("r", toggleWS' ["NSP"])
 -- TODO: setup projects properly
 -- ("C-S-M1-s", renameWorkspaceByName "ay")
 -- ("M1-C-S-<Return>", activateProject currentProject)
@@ -211,8 +211,11 @@ keys (Z{..}) =
  , ("f <L>", windows $ \w -> W.float w $ W.RationalRect 0.1 0.1 0.5 1.0)
 --}
  --{- gridselects
+--, ("o"      , menu settings (pure ()) id    $ [("test",pure())])
+--, ("o"      , menu (pure ()) id    $ [("test",pure())])
  , ("i"      , bare $ nest settings $ grids settings)
  , ("o"      , bare $ nest settings $ map (second item) faves)
+-- , ("o"      , bare $ nest settings $ map (second $ item . ($"")) apps)
  --}
  ] --}
 --{- dynamic keybinds
@@ -227,7 +230,7 @@ keys (Z{..}) =
  --{- window movement
  , bind ""     windowKeys [fUp,fDown]
  , bind ms     windowKeys [windows W.swapUp, windows W.swapDown]
- ,[("r", selectWindow (emConfig settings) >>= (`whenJust` windows . W.focusWindow))]
+ ,[("<Space>", selectWindow (emConfig settings) >>= (`whenJust` windows . W.focusWindow))]
  --}
  --{- workspace movement
  , bound $ map (boundSuffix (workspaceKeys!!0))

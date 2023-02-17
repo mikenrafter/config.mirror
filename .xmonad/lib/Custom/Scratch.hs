@@ -82,22 +82,22 @@ molds =
  where
  b = W.RationalRect
  r (x,y,w,h) = W.RationalRect x y w h
- yPad  = 0.05
- xPad  = 0.033
- half  = min . (1-) . (2*)
- clamp = max 0.01
- bound = max . (1-)
+ yPad   = 0.05
+ xPad   = 0.033
+ half x = (subtract x) . min (1-x)
+ clamp  = max 0.01
+ bound  = max . (1-)
  big   anchor = anchor xPad yPad 0.5  0.5
  small anchor = anchor xPad yPad 0.3  0.3
  -- apply padding
  -- anchor top-left
- tl x y w h = r (        x,         y,         half w x,         half h y)
+ tl x y w h = r (        x,         y,         half x w,         half y h)
  -- anchor top-right
- tr x y w h = r (bound w x,         y, clamp $ half w x,         half h y)
+ tr x y w h = r (bound w x,         y, clamp $ half x w,         half y h)
  -- anchor bottom-left
- bl x y w h = r (        x, bound h y,         half w x, clamp $ half h y)
+ bl x y w h = r (        x, bound h y,         half x w, clamp $ half y h)
  -- anchor bottom-right
- br x y w h = r (bound w x, bound h y, clamp $ half w x, clamp $ half h y)
+ br x y w h = r (bound w x, bound h y, clamp $ half x w, clamp $ half y h)
 --}
 
 {- references
