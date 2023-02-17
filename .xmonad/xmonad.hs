@@ -54,7 +54,7 @@ import XMonad.Hooks.SetWMName
 import XMonad.Hooks.WorkspaceHistory
 import XMonad.Hooks.RefocusLast
 import XMonad.Hooks.Place
-import XMonad.Hooks.WindowSwallowing
+import Custom.WindowSwallowing
 import XMonad.Hooks.DynamicProperty
 --}
 --{- layouts
@@ -375,10 +375,27 @@ events (Z{..}) =
  <+> blend dynamicPropertyChange properties
  <+> trayerAboveXmobarEventHook
  <+> Hacks.windowedFullscreenFixEventHook
- <+> uncurry swallowEventHook swallow
+-- <+> swallowEventHook
+ <+> swallowHook
+     (\c p -> hideWindow p)
+     storeConfig
+     (restoreDeleted
+       (windows . insertIntoStack)
+--       (\_ _ _ -> windows . insertIntoStack)
+--       (\_ _ _ -> sendMessage . PopSpecificHiddenWindow)
+--     supplantSwallower
+
+       \oldStack oldFloating childWindow parent -> do
+       supplantSwallower oldStack oldFloating childWindow parent
+       -- X.L.hidden ignores irrelevant pop requests
+       hideWindow parent
+       sendMessage $ PopSpecificHiddenWindow parent
+     )
+     -- my check
+     swallow (return True)
 --}
 --{- swallowHook
-swallow = (className =? terminalc <&&> fmap not ( title ~~? "S:"), return True)
+swallow = className =? caps terminalc
 --}
 --{- propertyHook
 properties =
@@ -439,7 +456,7 @@ bar (Z{..}) pipe = do
  
     -- other items
     , ppExtras = [windowCount]
-    , ppOrder  = \(ws:lay:title:extra) -> [shorten 10 lay, ws] <> extra <> [title]
+    , ppOrder  = \(ws:lay:title:extra) -> [shorten 30 lay, ws] <> extra <> [title]
     , ppSort   = mkWsSort getWsCompare
  
     }
@@ -467,7 +484,6 @@ lay name count space = id
 -- windowArrange $
  . renamed [Replace name]
  . limitWindows (if count > 0 then count else 100)
- . hiddenWindows
  . (if space > 0 then smartSpacingWithEdge else spacing) space
  --fullscreen
 --}
@@ -488,8 +504,10 @@ layout (Z{..}) =
   -- modifications for all
   mods = id
    . smartBorders
+   . renamed [KeepWordsRight 1]
    . showWName' (nameDisplay settings)
    . fullscreen
+   . hiddenWindows
    . avoidStruts
    --boringAuto . boringWindows .
      -- keep floating grouped above last focused tiled
@@ -533,7 +551,7 @@ main = do
  bgs    <- parseIn backgrounds [".cache/wal/wmbc-DISABLED", ".wmbc"] $ readColors
  fgs    <- parseIn foregrounds [".cache/wal/wmfc-DISABLED", ".wmfc"] $ readColors
  let
-   faves = apps <> mfaves
+   faves = map (second $ ($"")) $ apps <> mfaves
    -- colors
    bc = ofList     bgs
    fc = ofList     fgs
