@@ -115,6 +115,7 @@ import XMonad.Hooks.UrgencyHook
 import XMonad.Util.NamedWindows
 --port XMonad.Util.Run
 --}
+import XMonad.Actions.ShowText
 --}
 --{- autostart
 startup (Z{..}) = do
@@ -393,6 +394,7 @@ events (Z{..}) =
      )
      -- my check
      swallow (return True)
+ <+> handleTimerEvent
 --}
 --{- swallowHook
 swallow = className =? caps terminalc

@@ -69,6 +69,10 @@ import Data.Maybe (isJust, fromMaybe)
 import Data.Monoid (Ap(..))
 import Data.Bifunctor
 --}
+import XMonad.Actions.Sift as W
+import qualified XMonad.Actions.ConstrainedResize as Sqr
+import XMonad.Actions.TiledWindowDragging
+import XMonad.Actions.ShowText
 --}
 --{- overrides
 overrides :: [(String, X ())]
@@ -147,6 +151,8 @@ keys (Z{..}) =
 --{- misc
  ,[("M-M1-<Space>", spawn "kbd")
  , ("M-."         , notifs)
+ , ("<XF86MenuKB>", notifs)
+ , ("<XF86MenuPB>", notify $ message "test" "123")
  ]
 --}
 --}
@@ -229,7 +235,7 @@ keys (Z{..}) =
  --{- navigation
  --{- window movement
  , bind ""     windowKeys [fUp,fDown]
- , bind ms     windowKeys [windows W.swapUp, windows W.swapDown]
+ , bind ms     windowKeys [windows W.siftUp, windows W.siftDown]
  ,[("<Space>", selectWindow (emConfig settings) >>= (`whenJust` windows . W.focusWindow))]
  --}
  --{- workspace movement
