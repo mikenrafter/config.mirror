@@ -118,7 +118,7 @@ editorc   = terminal
 --}
 --{- util
 panel :: IO Handle
-panel  = spawnPipe $ "bar "<>home<>" "<>home<>"/.xmonad/xmobar.conf"
+panel  = spawnPipe $ "bar "<>home<>" "<>home<>"/.xmonad/xmobar.hs"
 notifs = start  "notif-center"
 tray   = open "stalonetray" . joins " " . args where
  --{- tray args

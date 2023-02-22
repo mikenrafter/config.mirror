@@ -79,8 +79,6 @@ colorizer :: Colors -> a -> Bool -> X (String, String)
 colorizer colors _ active = do
  fg <- liftIO $ aFG colors
  bg <- liftIO $ aBG colors
--- fg <- return "#8fc"
--- bg <- return "#333"
  return if active
   then (fg, bg)
   else (bg, fg)

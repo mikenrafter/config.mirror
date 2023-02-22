@@ -5,6 +5,7 @@ import Custom.Vars
 import XMonad
 import XMonad.Actions.EasyMotion as E
 import qualified XMonad.StackSet as W
+import XMonad.Actions.ShowText
 --}
 
 emConfig :: Z -> EasyMotionConfig
@@ -18,4 +19,11 @@ emConfig (Z{..}) = def
  , txtCol    = fore
  , bgCol     = back
  , overlayF  = E.proportional 0.4 -- (W.RationalRect 0.1 0.1 0.1 0.1)
+ }
+
+stConfig :: Z -> ShowTextConfig
+stConfig (Z{..}) = def
+ { st_font = mononoki "regular" 32
+ , st_fg   = fore
+ , st_bg   = back
  }
