@@ -37,7 +37,7 @@
 --   applications running in their own PID namespace, such as those in
 --   Flatpak, can't set a correct @_NET_WM_PID@ even if they wanted to.
 -----------------------------------------------------------------------------
-module Custom.WindowSwallowing
+module Tweaks.WindowSwallowing
   ( -- * Usage
     -- $usage
     swallowEventHook, swallowEventHookSub, swallowHook,

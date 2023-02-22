@@ -1,9 +1,7 @@
-
 {-# LANGUAGE MultiParamTypeClasses      #-}
 {-# LANGUAGE PatternGuards              #-}
 {-# LANGUAGE TypeSynonymInstances       #-}
 {-# LANGUAGE LambdaCase                 #-}
-{-# LANGUAGE BlockArguments             #-}
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  XMonad.Layout.Magnifier
@@ -23,7 +21,7 @@
 -----------------------------------------------------------------------------
 
 
-module Custom.Magnifier
+module Tweaks.Magnifier
     ( -- * Usage
       -- $usage
 
@@ -62,7 +60,7 @@ import qualified XMonad.StackSet as S
 
 import XMonad.Actions.TagWindows (hasTag)
 import qualified XMonad.Util.ExtensibleState as XS
-import qualified Custom.Fullscreen as FS
+import qualified Modules.Fullscreen as FS
 
 -- $usage
 -- You can use this module with the following in your @~\/.xmonad\/xmonad.hs@:
@@ -129,7 +127,6 @@ magnify
     -> ModifiedLayout Magnifier l a
 magnify cz mt start = ModifiedLayout $
     Mag 1 (fromRational cz, fromRational cz) (bool Off On start) mt
-
 
 -- | Increase the size of the window that has focus
 magnifier :: l a -> ModifiedLayout Magnifier l a
@@ -203,8 +200,8 @@ data MagnifyThis
 
 -- | Only apply magnifier to windows with the fullscreen tag
 onlyFullscreen :: NewLayout Window -> NewLayout Window
-onlyFullscreen mainmod r s wrs = do
- FS.Conf (tg,_) <- XS.get
+onlyFullscreen mainmod r s wrs =
+ FS.withTag $ \tg ->
  hasTag tg (S.focus s) >>= \case
   True  -> mainmod r s wrs
   False -> return (wrs, Nothing)
@@ -271,3 +268,4 @@ fit (Rectangle sx sy sw sh) (Rectangle x y w h) = Rectangle x' y' w' h'
           y' = max sy (y - max 0 (y + fi h - sy - fi sh))
           w' = min sw w
           h' = min sh h
+

@@ -1,6 +1,7 @@
 {-# LANGUAGE MultiWayIf #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE PatternGuards #-}
+{-# LANGUAGE BlockArguments #-}
 
 -----------------------------------------------------------------------------
 -- |
@@ -19,11 +20,11 @@
 -- therein. It also allows the user to interact with xmonad by clicking on
 -- panels and window lists.
 -----------------------------------------------------------------------------
-module Custom.EwmhDesktops (
+module Tweaks.EwmhDesktops (
     -- * Usage
     -- $usage
     ewmh,
-    ewmhFullscreen,
+    ewmhFullscreen, ewmhFullscreen',
 
     -- * Customization
     -- $customization
@@ -46,7 +47,7 @@ module Custom.EwmhDesktops (
     ewmhDesktopsLogHookCustom,
     ewmhDesktopsEventHook,
     ewmhDesktopsEventHookCustom,
-    fullscreenEventHook,
+    fullscreenEventHook, fullscreenEventHook',
     fullscreenStartup,
     ) where
 
@@ -64,8 +65,6 @@ import XMonad.Util.WorkspaceCompare
 import XMonad.Util.WindowProperties (getProp32)
 import qualified XMonad.Util.ExtensibleConf as XC
 import qualified XMonad.Util.ExtensibleState as XS
-
-import qualified Custom.Fullscreen as FS
 
 -- $usage
 -- You can use this module with the following in your @~\/.xmonad\/xmonad.hs@:
@@ -87,9 +86,9 @@ import qualified Custom.Fullscreen as FS
 -- | Add EWMH support for workspaces (virtual desktops) to the given
 -- 'XConfig'.  See above for an example.
 ewmh :: XConfig a -> XConfig a
-ewmh c = c { startupHook     = ewmhDesktopsStartup <+> startupHook c
-           , handleEventHook = ewmhDesktopsEventHook <+> handleEventHook c
-           , logHook         = ewmhDesktopsLogHook <+> logHook c }
+ewmh c = c { startupHook     = ewmhDesktopsStartup <> startupHook c
+           , handleEventHook = ewmhDesktopsEventHook <> handleEventHook c
+           , logHook         = ewmhDesktopsLogHook <> logHook c }
 
 
 -- $customization
@@ -295,6 +294,10 @@ instance ExtensionClass WindowDesktops where initialValue = WindowDesktops (M.si
 newtype ActiveWindow = ActiveWindow Window deriving Eq
 instance ExtensionClass ActiveWindow where initialValue = ActiveWindow (complement none)
 
+-- | Cached @_NET_DESKTOP_VIEWPORT@
+newtype MonitorTags = MonitorTags [WorkspaceId] deriving (Show,Eq)
+instance ExtensionClass MonitorTags where initialValue = MonitorTags []
+
 -- | Compare the given value against the value in the extensible state. Run the
 -- action if it has changed.
 whenChanged :: (Eq a, ExtensionClass a) => a -> X () -> X ()
@@ -339,6 +342,32 @@ ewmhDesktopsLogHook' EwmhDesktopsConfig{workspaceSort, workspaceRename} = withWi
     let activeWindow' = fromMaybe none (W.peek s)
     whenChanged (ActiveWindow activeWindow') $ setActiveWindow activeWindow'
 
+    -- Set desktop Viewport
+    let visibleScreens = W.current s : W.visible s
+        currentTags    = map (W.tag . W.workspace) visibleScreens
+    whenChanged (MonitorTags currentTags) $ mkViewPorts s (map W.tag ws)
+
+-- | Create the viewports from the current 'WindowSet' and a list of
+-- already sorted workspace IDs.
+mkViewPorts :: WindowSet -> [WorkspaceId] -> X ()
+mkViewPorts winset = setDesktopViewport . concat . mapMaybe (viewPorts M.!?)
+  where
+    foc = W.current winset
+    -- Hidden workspaces are mapped to the current screen's viewport.
+    viewPorts :: M.Map WorkspaceId [Position]
+    viewPorts = M.fromList $ map mkVisibleViewPort (foc : W.visible winset)
+                          ++ map (mkViewPort foc)  (W.hidden winset)
+
+    mkViewPort :: WindowScreen -> WindowSpace -> (WorkspaceId, [Position])
+    mkViewPort scr w = (W.tag w, mkPos scr)
+
+    mkVisibleViewPort :: WindowScreen -> (WorkspaceId, [Position])
+    mkVisibleViewPort x = mkViewPort x (W.workspace x)
+
+    mkPos :: WindowScreen -> [Position]
+    mkPos scr = [rect_x (rect scr), rect_y (rect scr)]
+      where rect = screenRect . W.screenDetail
+
 ewmhDesktopsEventHook' :: Event -> EwmhDesktopsConfig -> X All
 ewmhDesktopsEventHook'
         ClientMessageEvent{ev_window = w, ev_message_type = mt, ev_data = d}
@@ -348,7 +377,7 @@ ewmhDesktopsEventHook'
         let ws = sort' $ W.workspaces s
 
         a_cd <- getAtom "_NET_CURRENT_DESKTOP"
-        a_d <- getAtom "_NET_WM_DESKTOP"
+        a_d  <- getAtom "_NET_WM_DESKTOP"
         a_aw <- getAtom "_NET_ACTIVE_WINDOW"
         a_cw <- getAtom "_NET_CLOSE_WINDOW"
 
@@ -378,8 +407,14 @@ ewmhDesktopsEventHook' _ _ = mempty
 
 -- | Add EWMH fullscreen functionality to the given config.
 ewmhFullscreen :: XConfig a -> XConfig a
-ewmhFullscreen c = c { startupHook     = startupHook c <+> fullscreenStartup
-                     , handleEventHook = handleEventHook c <+> fullscreenEventHook }
+ewmhFullscreen c = c { startupHook     = startupHook     c <> fullscreenStartup
+                     , handleEventHook = handleEventHook c <> fullscreenEventHook }
+
+-- | Same as above, but allows for custom fullscreen behavior
+ewmhFullscreen' :: (Window -> X ()) -> (Window -> X ()) -> XConfig a -> XConfig a
+ewmhFullscreen' full tile c =
+  c { startupHook   = startupHook     c <> fullscreenStartup
+  , handleEventHook = handleEventHook c <> fullscreenEventHook' full tile }
 
 -- | Advertises EWMH fullscreen support to the X server.
 {-# DEPRECATED fullscreenStartup "Use ewmhFullscreen instead." #-}
@@ -393,31 +428,37 @@ fullscreenStartup = setFullscreenSupported
 -- Note this is not included in 'ewmh'.
 {-# DEPRECATED fullscreenEventHook "Use ewmhFullscreen instead." #-}
 fullscreenEventHook :: Event -> X All
-fullscreenEventHook (ClientMessageEvent _ _ _ dpy win typ (action:dats)) = do
+fullscreenEventHook = fullscreenEventHook' (windows . flip W.float (W.RationalRect 0 0 1 1)) (windows . W.sink)
+
+-- | Same as above, but allows for custom fullscreen behavior
+fullscreenEventHook' :: (Window -> X ()) -> (Window -> X ()) -> Event -> X All
+fullscreenEventHook' full tile (ClientMessageEvent _ _ _ dpy win typ (action:dats)) = (do
   managed <- isClient win
+  when managed do
   wmstate <- getAtom "_NET_WM_STATE"
+  when (wmstate == typ) do
   fullsc <- getAtom "_NET_WM_STATE_FULLSCREEN"
+  when (fi fullsc `elem` dats) do
   wstate <- fromMaybe [] <$> getProp32 wmstate win
 
   let isFull = fromIntegral fullsc `elem` wstate
-
-      -- Constants for the _NET_WM_STATE protocol:
-      remove = 0
-      add = 1
-      toggle = 2
       chWstate f = io $ changeProperty32 dpy win wmstate aTOM propModeReplace (f wstate)
 
-  when (managed && typ == wmstate && fi fullsc `elem` dats) $ do
-    when (action == add || (action == toggle && not isFull)) $ do
-      chWstate (fi fullsc:)
-      FS.on win
-    when (action == remove || (action == toggle && isFull)) $ do
-      chWstate $ delete (fi fullsc)
-      FS.off win
+  when (action == add || (action == toggle && not isFull)) do
+    chWstate (fi fullsc:)
+    full win
+  when (action == remove || (action == toggle && isFull)) do
+    chWstate $ delete (fi fullsc)
+    tile win
 
-  return $ All True
+  ) *> (return $ All True)
+  where
+    -- Constants for the _NET_WM_STATE protocol:
+    remove = 0
+    add = 1
+    toggle = 2
 
-fullscreenEventHook _ = return $ All True
+fullscreenEventHook' _ _ _ = return $ All True
 
 setNumberOfDesktops :: (Integral a) => a -> X ()
 setNumberOfDesktops n = withDisplay $ \dpy -> do
@@ -463,6 +504,12 @@ setActiveWindow w = withDisplay $ \dpy -> do
     a <- getAtom "_NET_ACTIVE_WINDOW"
     io $ changeProperty32 dpy r a wINDOW propModeReplace [fromIntegral w]
 
+setDesktopViewport :: [Position] -> X ()
+setDesktopViewport positions = withDisplay $ \dpy -> do
+    r <- asks theRoot
+    a <- io $ internAtom dpy "_NET_DESKTOP_VIEWPORT" True
+    io $ changeProperty32 dpy r a cARDINAL propModeReplace (map fi positions)
+
 setSupported :: X ()
 setSupported = withDisplay $ \dpy -> do
     r <- asks theRoot
@@ -477,6 +524,7 @@ setSupported = withDisplay $ \dpy -> do
                          ,"_NET_ACTIVE_WINDOW"
                          ,"_NET_WM_DESKTOP"
                          ,"_NET_WM_STRUT"
+                         ,"_NET_DESKTOP_VIEWPORT"
                          ]
     io $ changeProperty32 dpy r a aTOM propModeReplace (fmap fromIntegral supp)
 
@@ -494,3 +542,4 @@ addSupported props = withDisplay $ \dpy -> do
 
 setFullscreenSupported :: X ()
 setFullscreenSupported = addSupported ["_NET_WM_STATE", "_NET_WM_STATE_FULLSCREEN"]
+

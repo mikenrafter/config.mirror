@@ -16,6 +16,9 @@ import Custom.Scratch
 import Custom.Vars hiding (workspaces, terminal, workspaces)
 import qualified Custom.Vars as V
 import qualified Custom.Fullscreen as FS
+import Tweaks.EwmhDesktops
+import Tweaks.WindowSwallowing
+import Tweaks.Magnifier
 --}
 --{- standards
 import XMonad hiding (workspaces, manage, keys)
@@ -46,7 +49,6 @@ import XMonad.Actions.TagWindows
 --{- hooks
 import XMonad.Hooks.DynamicLog  --(dynamicLogWithPP, pad, xmobarPP, xmobarColor, xmobarBorder, PP(..), shorten, xmobarStrip, filterOutWsPP)
 -- for some fullscreen events, also for xcomposite in obs.
-import Custom.EwmhDesktops
 import XMonad.Hooks.FadeInactive
 import XMonad.Hooks.ManageDocks -- (avoidStruts, docksEventHook, checkDock, manageDocks, ToggleStruts(..))
 import XMonad.Hooks.ManageHelpers hiding ((~?))
@@ -54,7 +56,6 @@ import XMonad.Hooks.SetWMName
 import XMonad.Hooks.WorkspaceHistory
 import XMonad.Hooks.RefocusLast
 import XMonad.Hooks.Place
-import Custom.WindowSwallowing
 import XMonad.Hooks.DynamicProperty
 --}
 --{- layouts
@@ -70,7 +71,6 @@ import XMonad.Layout.LayoutBuilder
 --}
 --{- effects
 --{- testing
-import Custom.Magnifier
 --import XMonad.Layout.Magnifier -- of use
 import XMonad.Layout.CenteredMaster -- of use
 import qualified XMonad.Layout.HintedTile as HT
@@ -590,7 +590,7 @@ main = do
   . withUrgencyHookC BorderUrgencyHook { urgencyBorderColor = fore } def { suppressWhen = Never }
  -- dynamicProjects mprojects
   . urgentOnActivate
-  . ewmhFullscreen
+  . ewmhFullscreen' FS.on FS.off
   . docks
   $ def
    { manageHook      = manage  settings
