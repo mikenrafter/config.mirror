@@ -1,5 +1,5 @@
 -- intended to be imported as Qualified
-module Custom.Conditions
+module Modules.Conditions
   ( condition, when
   , get, set, toggle
   , Conditions(..)

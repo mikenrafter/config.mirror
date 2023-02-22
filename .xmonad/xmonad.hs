@@ -15,7 +15,7 @@ import Custom.Prompts
 import Custom.Scratch
 import Custom.Vars hiding (workspaces, terminal, workspaces)
 import qualified Custom.Vars as V
-import qualified Custom.Fullscreen as FS
+import qualified Modules.Fullscreen as FS
 import Tweaks.EwmhDesktops
 import Tweaks.WindowSwallowing
 import Tweaks.Magnifier

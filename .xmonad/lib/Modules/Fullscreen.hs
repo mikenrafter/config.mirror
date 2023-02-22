@@ -1,7 +1,7 @@
 {-# LANGUAGE LambdaCase, BlockArguments #-}
 
 -- intended to be imported as Qualified
-module Custom.Fullscreen
+module Modules.Fullscreen
  ( logHook, start, refresh
  , off, on, toggle
  , withTag, withTheme
@@ -57,10 +57,10 @@ withTheme :: (Theme  -> X a) -> X a
 setTag    ::  String -> X ()
 setTheme  ::  Theme  -> X ()
 
-withTheme f = XS.get >>= \(Conf (_,t )) -> f t
 withTag   f = XS.get >>= \(Conf (tg,_)) -> f tg
-setTheme  t = withTag    \tg -> XS.put $ Conf (tg, t)
+withTheme f = XS.get >>= \(Conf (_,t )) -> f t
 setTag   tg = withTheme  \t  -> XS.put $ Conf (tg, t)
+setTheme  t = withTag    \tg -> XS.put $ Conf (tg, t)
 
 enabled :: Window -> X Bool
 enabled _ = XS.get >>= \(State (_,b)) -> return b
@@ -99,6 +99,3 @@ borderState bool w =
   then asks $ borderWidth . config
   else return (0 :: Dimension)
 --}
--- utility
-for :: [a] -> (a -> b) -> [b]
-for = flip map

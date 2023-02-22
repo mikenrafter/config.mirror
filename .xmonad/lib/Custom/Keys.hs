@@ -8,8 +8,9 @@ import Custom.Prompts as Prompt
 import Custom.Scratch
 import Custom.Vars
 import Custom.Misc
-import qualified Custom.Fullscreen as FS
+import qualified Modules.Fullscreen as FS
 import Utility.Map
+import qualified Modules.Conditions as C
 --}
 --{- standards
 import XMonad hiding (workspaces)
@@ -73,7 +74,6 @@ import XMonad.Actions.Sift as W
 import qualified XMonad.Actions.ConstrainedResize as Sqr
 import XMonad.Actions.TiledWindowDragging
 import XMonad.Actions.ShowText
-import qualified Custom.Conditions as C
 --}
 --{- overrides
 overrides :: [(String, X ())]
