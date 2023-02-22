@@ -73,6 +73,7 @@ import XMonad.Actions.Sift as W
 import qualified XMonad.Actions.ConstrainedResize as Sqr
 import XMonad.Actions.TiledWindowDragging
 import XMonad.Actions.ShowText
+import qualified Custom.Conditions as C
 --}
 --{- overrides
 overrides :: [(String, X ())]
@@ -117,7 +118,11 @@ overrides =
 keys :: Settings -> [(String, X ())]
 keys (Z{..}) =
  -- logHook.updatePointer causes unwanted triggers --> keepUp :: manual
- concat [[]
+ debugCheck $ concat [[]
+ --{- debug key(s)
+ ,[("M-;", C.toggle "debug" >>= flashText (stConfig settings) 1 . debugStr)
+ ]
+ --}
 --{- multimedia
 --{- play/pause/seek
  ,[("<XF86AudioPrev>"  , player    "previous")
@@ -286,6 +291,9 @@ keys (Z{..}) =
   fullFloat = flip W.float $ W.RationalRect 0 0 1 1
   up = updatePointer (0.5, 0.5) (0.75, 0.75)
   keepUp = map $ second (*> up)
+
+  debugCheck = map \(k,a) -> (k,C.when "debug" (flashText (stConfig settings) 0.3 k) *> a)
+  debugStr c = "DEBUGG" <> if c then "ING" else "ED!"
 
   wrev2    =const    revWS
   wreverse = windows revWS
