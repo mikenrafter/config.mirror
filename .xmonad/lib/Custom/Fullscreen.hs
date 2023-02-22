@@ -1,7 +1,6 @@
-{-# OPTIONS_GHC -Wno-missing-signatures -Wno-orphans #-}
-{-# LANGUAGE FlexibleContexts, LambdaCase, BlockArguments, TypeApplications #-}
+{-# LANGUAGE LambdaCase, BlockArguments #-}
 
-
+-- intended to be imported as Qualified
 module Custom.Fullscreen
  ( logHook, start, refresh
  , off, on, toggle
@@ -10,16 +9,16 @@ module Custom.Fullscreen
  , enabled, query
  , Conf(..)
  ) where
-
-import XMonad hiding (logHook, refresh, spawn)
+--{- imports
+import XMonad hiding (logHook, refresh)
 import qualified XMonad.Util.ExtensibleState as XS
 import XMonad.StackSet as W
-import XMonad.Actions.TagWindows
-import XMonad.Hooks.ManageDocks (ToggleStruts(..), SetStruts(..))
-import XMonad.Layout.Spacing
-import XMonad.Layout.Decoration
 
---{- fs hook
+import XMonad.Actions.TagWindows
+import XMonad.Layout.Decoration
+import XMonad.Layout.Spacing
+--}
+--{- logHook
 logHook :: X ()
 logHook = do
  State (p, b) <- XS.get -- prev ws, and FS state
@@ -34,26 +33,25 @@ logHook = do
      XS.put ( State (i, isTagged) ) >>
      -- apply updates
      case isTagged of
-      True  -> borderState False w <+> setTheme (invisible t) <+> space False
-      False -> borderState True  w <+> setTheme t             <+> space True
+-- TODO: remove need to manage borders & spacing
+      True  -> borderState False w <+> invisible t <+> space
+      False -> borderState True  w <+> visible   t <+> space
     -- otherwise do nothing
     else pure ()
   -- if no window
   otherwise -> XS.put ( State (i, False) )
  where
   withF f = withWindowSet \w -> f $ W.peek w
---relax = broadcastMessage $ SetStruts [] [minBound .. maxBound]
---strut = broadcastMessage $ SetStruts    [minBound .. maxBound] []
---relax@strut = pure ()
-  space bool = foldr1 (<+>)
-   $ for [setScreenSpacingEnabled, setWindowSpacingEnabled] \x -> x bool
-  invisible t = t{decoHeight=0,decoWidth=0}
+  -- strange workaround to keep spacing behaving properly when ewmh's FS hook is
+  -- above spacing/struts
+  space = setScreenSpacingEnabled True
+  invisible t = setTheme t{decoHeight=0,decoWidth=0}
+  visible     = setTheme
   setTheme t = broadcastMessage $ SetTheme t
   withWorkspace f = withWindowSet $ \w -> f $ show $ W.currentTag w
   focus'WS f = withWindowSet $ \w -> whenJust (W.peek w) $ f withWorkspace
 --}
-
--- easy read/write functions
+--{- easy read/write functions
 withTag   :: (String -> X a) -> X a
 withTheme :: (Theme  -> X a) -> X a
 setTag    ::  String -> X ()
@@ -69,10 +67,8 @@ enabled _ = XS.get >>= \(State (_,b)) -> return b
 
 query :: Query Bool
 query = ask >>= liftX . enabled
-
-
-
--- quality of life functions
+--}
+--{- quality of life functions
 off, on :: Window -> X ()
 
 refresh  = withTag \tg -> withTaggedGlobalP tg W.sink >> logHook
@@ -82,33 +78,27 @@ toggle w = withTag \tg ->
  hasTag tg w >>= \case
   True  -> off w
   False -> on w
-
-
-
 start :: ManageHook
 start = ask >>= \x -> liftX $ on x >> idHook
-
-
-data Conf = Conf (String, Theme)
+--}
+--{- plumbing
+data Conf = Conf (String, Theme) deriving (Show,Read)
 instance ExtensionClass Conf where
  initialValue = Conf ("FS", def Theme)
+ extensionType = PersistentExtension
 
-data State = State (String, Bool)
+data State = State (String, Bool) deriving (Show,Read)
 instance ExtensionClass State where
  initialValue = State ("", False)
+ extensionType = PersistentExtension
 
--- Extended variant of X.A.NoBorders
 borderState :: Bool -> Window -> X ()
-borderState bool w = do
-    bw <- asks (borderWidth . config)
-    withDisplay \d -> io do
-        cw <- wa_border_width <$> getWindowAttributes d w
-        if bool
-            then setWindowBorderWidth d w bw
-            else setWindowBorderWidth d w 0
-
-
-
+borderState bool w =
+  withDisplay . (\b d -> io $ setWindowBorderWidth d w b)
+  =<< if bool
+  then asks $ borderWidth . config
+  else return (0 :: Dimension)
+--}
 -- utility
 for :: [a] -> (a -> b) -> [b]
 for = flip map

@@ -488,31 +488,22 @@ lay name count space = id
  --fullscreen
 --}
 --{- layoutHook
-layout (Z{..}) =
-  mods
-   -- windowNavigation .
-   -- subLayout [0] (color the tabs)
+layout (Z{..}) = id
+   . renamed [KeepWordsRight 1]
+   . showWName' (nameDisplay settings)
+   . hiddenWindows
+   . trackFloating
+   . fullscreen
+   . avoidStruts
+   . smartBorders
+     -- keep floating grouped above last focused tiled
    $   dishes
--- ||| tabPlus
    ||| accordion
    ||| spiral
    ||| golden
    ||| tall1
    ||| tabs settings
    ||| tall2
- where
-  -- modifications for all
-  mods = id
-   . smartBorders
-   . renamed [KeepWordsRight 1]
-   . showWName' (nameDisplay settings)
-   . fullscreen
-   . hiddenWindows
-   . avoidStruts
-   --boringAuto . boringWindows .
-     -- keep floating grouped above last focused tiled
-   . trackFloating
-   --mouseResize
 --}
 --{- selected layouts
 --              lay name  # ' ' $ layout
