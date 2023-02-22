@@ -305,31 +305,36 @@ keys (Z{..}) =
    -- <+> ifFloat' (ifFloat (W.swapUp <+> W.focusMaster)) B.focusDown
    --}
 --}
-{- mouse bindings
-mmouseBindings :: XConfig Layout -> M.Map (ButtonMask, Button) (Window -> X ())
-mmouseBindings (XConfig {XMonad.modMask = modMask}) = M.fromList $
-    -- mod-button1, Set the window to floating mode and move by dragging
-    [ ((modMask, button1), (\w -> focus w <+> mouseMoveWindow w))
-    -- mod-button2, Raise the window to the top of the stack
-    , ((modMask, button2), (\w -> focus w <+> windows W.swapMaster))
-    -- mod-button3, Set the window to floating mode and resize by dragging
-    , ((modMask, button3), (\w -> focus w <+> Flex.mouseResizeWindow w))
-    -- you may also bind events to the mouse scroll wheel (button4 and button5)
-    ]
-mmouses (XConfig {XMonad.modMask = modMask}) = M.fromList
-    -- mod-button1 %! Set the window to floating mode and move by dragging
-    [ ((modMask, button1), \w -> focus w <+> mouseMoveWindow w
-                                          <+> windows W.shiftMaster)
-    -- mod-button2 %! Raise the window to the top of the stack
-    , ((modMask, button2), windows . (W.shiftMaster .) . W.focusWindow)
-    -- mod-button3 %! Set the window to floating mode and resize by dragging
-    , ((modMask, button3), \w -> focus w <+> mouseResizeWindow w
-                                         <+> windows W.shiftMaster
-                                         <+> ifClick (snapMagicMove (Just 50) (Just 50) w))
-)
-    -- you may also bind events to the mouse scroll wheel (button4 and button5)
-    ]
- [ 
+--{- mouse bindings
+mmouseBindings :: [((ButtonMask, Button),Window -> X ())]
+mmouseBindings =
+  --  L -> float >> move
+  -- "L -> dragTiled
+  --  M -> float >> top
+  --  R -> float >> resize
+  -- "R -> float >> resize +aspect ratio
+  [ m  button1 \w -> focus w <+> mouseMoveWindow w
+                             <+> windows W.shiftMaster
+                             <+> ((snapTo    (Just 100) (Just 100) w)
+                                  `whenClickElse`
+                                  (snapTo    (Just 30 ) (Just 30 ) w))
+  , ms button1 dragWindow
+  , m  button2 \w -> focus w <+> windows W.swapMaster
+  , m  button3 \w -> focus w <+> Sqr.mouseResizeWindow w False
+                             <+> ((snapEdges (Just 100) (Just 100) w)
+                                  `whenClickElse`
+                                  (snapEdges (Just 30 ) (Just 30 ) w))
+  , ms button3 \w -> focus w <+> Sqr.mouseResizeWindow w True
+  -- you may also bind events to the mouse scroll wheel (button4 and button5)
+  ]
+  where
+    m  = (,) . (s,)
+    ms = (,) . (s .|. sh,)
+    s  = super
+    sh = shiftMask
+    whenClickElse = ifClick' 333
+    snapTo = snapMagicMove
+    snapEdges = snapMagicResize [L,R,U,D]
 --}
 --}
 --{- utility functions

@@ -101,7 +101,7 @@ import XMonad.Layout.WindowNavigation
 --}
 --{- utils
 import qualified XMonad.Util.ExtensibleState as XS
-import XMonad.Util.EZConfig (additionalKeysP, removeKeysP, checkKeymap)
+import XMonad.Util.EZConfig
 import XMonad.Util.NamedScratchpad
 import XMonad.Util.Run (runProcessWithInput, safeSpawn, spawnPipe)
 import XMonad.Util.SpawnOnce
@@ -623,10 +623,12 @@ main = do
    --{- apply keys
    `addKeys` overrides
    `addKeys` keyz
+   `addMouse` mmouseBindings
   --}
 
 -- remove conflicts before adding
-addKeys c k = c `removeKeysP` (map fst k) `additionalKeysP` k
+addKeys  c k = c `removeKeysP` (map fst k) `additionalKeysP` k
+addMouse c k = c `removeMouseBindings` (map fst k) `additionalMouseBindings` k
 
 {- TODOs
 IfMax instead of layoutBuilder
